@@ -1,0 +1,53 @@
+[versions]
+
+kotlin = "1.9.10"
+
+kotlinx-serialization = "1.6.0"
+
+kotlinx-cli = "0.3.6"
+
+kotlinx-coroutines = "1.7.3"
+
+shadow = "8.1.1"
+
+discord-jda = "5.0.0-beta.13"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+shadow-plugin = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+
+[libraries]
+
+# kotlin stdlib
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+
+# kotlin extra
+
+kotlin-cli = { group = "org.jetbrains.kotlinx", name = "kotlinx-cli", version.ref = "kotlinx-cli" }
+
+# kotlinx.serialization
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+#kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
+#kotlinx-serialization-hocon = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-hocon", version.ref = "kotlinx-serialization" }
+#kotlinx-serialization-protobuf = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
+
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-code", version.ref = "kotlinx-coroutines" }
+
+discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
+
+# jda-ktx looks promising, but if it drops support, I'm in big trouble. I'll jsut make my own stuff
+
+# extra
+
+# simple logging facade for Java
+slf4j = { group = "org.slf4j", name = "slf4j-api", version = "2.0.9" }
+# SLF4K logging for Kotlin
+## SLF4K is a set of kotlin extensions for SLF4J
+slf4k = { group = "ca.solo-studios", name = "slf4k", version = "0.5.3" }
+# Logback backend for slf4j
+## The reliable, generic, fast and flexible logging framework for Java
+logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.4.0" }
