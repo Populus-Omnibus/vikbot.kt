@@ -8,6 +8,9 @@ import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableList
 import io.github.populus_omnibus.vikbot.api.interactions.invoke
 import io.github.populus_omnibus.vikbot.api.invoke
 import io.github.populus_omnibus.vikbot.bot.BotConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.Permission
@@ -79,7 +82,7 @@ object VikBotHandler : EventListener {
         this.config = config
         val client: JDA = JDABuilder.createDefault(config.token).apply {
             // configure here
-            setActivity(Activity.playing("emotes.kosmx.dev | following instructions"))
+            setActivity(Activity.playing(config.initActivity))
             disableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGE_TYPING)
             enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
             addEventListeners(this@VikBotHandler)
@@ -101,22 +104,28 @@ object VikBotHandler : EventListener {
     }
 
     override fun onEvent(event: GenericEvent) {
-        try {
-            when (event) {
-                is MessageReceivedEvent -> messageReceivedEvent(event)
-                is MessageUpdateEvent -> messageUpdateEvent(event)
-                is ReadyEvent -> initEvent.forEach { subscriber -> subscriber(event) }
-                is GuildReadyEvent -> guildInitEvent.forEach { subscriber -> subscriber(event) }
-                is SlashCommandInteractionEvent -> {
-                    commandMap[event.name]?.bindAndInvoke(event)
-                        ?: logger.error{ "executed command was not found: ${event.name}" }
+        logger.info { "Handling event type ${event::class.simpleName}" }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                when (event) {
+                    is MessageReceivedEvent -> messageReceivedEvent(event)
+                    is MessageUpdateEvent -> messageUpdateEvent(event)
+                    is ReadyEvent -> initEvent.forEach { subscriber -> subscriber(event) }
+                    is GuildReadyEvent -> guildInitEvent.forEach { subscriber -> subscriber(event) }
+                    is SlashCommandInteractionEvent -> {
+                        commandMap[event.name]?.bindAndInvoke(event)
+                            ?: logger.error { "executed command was not found: ${event.name}" }
+                    }
+
+                    is ButtonInteractionEvent -> buttonEvents(event.button.id, event, "button")
+                    is ModalInteractionEvent -> modalEvents(event.modalId, event, "modal")
+                    is CommandAutoCompleteInteractionEvent -> commandMap[event.name]?.autoCompleteAction(event)
+                        ?: run { event.replyChoiceStrings("error").complete() }
                 }
-                is ButtonInteractionEvent -> buttonEvents(event.button.id, event, "button")
-                is ModalInteractionEvent -> modalEvents(event.modalId, event, "modal")
-                is CommandAutoCompleteInteractionEvent -> commandMap[event.name]?.autoCompleteAction(event) ?: run { event.replyChoiceStrings("error") }
+            } catch (e: Throwable) {
+                logger.error(e) { "Error while handling $event: ${e.message}" }
             }
-        } catch (e: Throwable) {
-            logger.error(e) { "Error while handling $event: ${e.message}" }
         }
     }
 

@@ -3,7 +3,7 @@ package io.github.populus_omnibus.vikbot.api
 
 class Event<T>: Iterable<T> {
     companion object {
-        fun <T> simple() = Event<(T) -> EventResult>()
+        fun <T> simple() = Event<suspend (T) -> EventResult>()
     }
 
     private val subscribersMap = mutableMapOf<Int, T>()
@@ -37,7 +37,9 @@ class Event<T>: Iterable<T> {
     override fun iterator(): Iterator<T> = toList().iterator()
 
 }
-operator fun <X, P> Event<out (X) -> TypedEventResult<P>>.invoke(x: X): TypedEventResult<P> {
+
+@JvmName("typedInvoke")
+suspend operator fun <X, P> Event<out suspend (X) -> TypedEventResult<P>>.invoke(x: X): TypedEventResult<P> {
     for (subscriber in subscribers) {
         val result = subscriber(x)
         if (result.consume) {
@@ -47,7 +49,7 @@ operator fun <X, P> Event<out (X) -> TypedEventResult<P>>.invoke(x: X): TypedEve
     return TypedEventResult(null)
 }
 
-operator fun <X> Event<out (X) -> EventResult>.invoke(x: X): EventResult {
+suspend operator fun <X> Event<out suspend (X) -> EventResult>.invoke(x: X): EventResult {
     for (subscriber in subscribers) {
         val result = subscriber(x)
         if (result.consume) {
@@ -57,7 +59,7 @@ operator fun <X> Event<out (X) -> EventResult>.invoke(x: X): EventResult {
     return EventResult()
 }
 
-fun <T, P> Event<(T) -> TypedEventResult<P>>.subscribe(index: Int, f: (T) -> P? ) = set(index) { t ->
+fun <T, P> Event< suspend (T) -> TypedEventResult<P>>.subscribe(index: Int, f: suspend (T) -> P? ) = set(index) { t ->
     TypedEventResult(
         f(t)
     )

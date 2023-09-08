@@ -7,6 +7,7 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
+import io.github.populus_omnibus.vikbot.api.synchronized
 import io.github.populus_omnibus.vikbot.bot.isAdmin
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -27,14 +28,15 @@ import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
+import java.awt.Color
 import java.io.File
 import java.util.*
 
 object Tags {
 
-    private var tags: MutableMap<String, Record> = mutableMapOf()
+    private var tags: MutableMap<String, Record> = mutableMapOf<String, Record>().synchronized()
 
-    private val attachmentMap = mutableMapOf<String, Pair<Instant, () -> EncodedFileUpload>>()
+    private val attachmentMap = mutableMapOf<String, Pair<Instant, () -> EncodedFileUpload>>().synchronized()
 
     private fun getTagMessage(tag: String): MessageCreateData? {
         return tags[tag]?.let { selected ->
@@ -246,7 +248,7 @@ object Tags {
 
         override val isAutoComplete = true
 
-        override fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
+        override suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
             val selected: List<String> = (event.focusedOption.value.takeIf(String::isNotBlank)?.let { string ->
                 tags.filter { it.key.contains(string) }.takeIf { it.isNotEmpty() }
             } ?: tags).map { (key) -> key }
