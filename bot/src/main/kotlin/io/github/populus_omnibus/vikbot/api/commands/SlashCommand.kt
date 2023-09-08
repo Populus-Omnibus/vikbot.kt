@@ -8,6 +8,7 @@ import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
@@ -141,8 +142,9 @@ open class SlashCommand(name: String, val description: String, configure: SlashC
             return super.get(event) ?: default
         }
     }
-
 }
 
-
+fun SlashCommandData.adminOnly(target: Boolean = true) {
+    defaultPermissions = if (target) DefaultMemberPermissions.DISABLED else DefaultMemberPermissions.ENABLED
+}
 
