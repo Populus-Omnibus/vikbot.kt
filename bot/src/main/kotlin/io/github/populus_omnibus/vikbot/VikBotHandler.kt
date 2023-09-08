@@ -47,6 +47,7 @@ object VikBotHandler : EventListener {
     val buttonEvents = IdentifiableList<IdentifiableInteractionHandler<ButtonInteractionEvent>>()
     val modalEvents = IdentifiableList<IdentifiableInteractionHandler<ModalInteractionEvent>>()
 
+    lateinit var config: BotConfig
 
     private val timer = Timer()
 
@@ -73,10 +74,8 @@ object VikBotHandler : EventListener {
 
     }
 
-    lateinit var config: BotConfig
 
-    fun start(config: BotConfig) {
-        this.config = config
+    fun start() {
         val client: JDA = JDABuilder.createDefault(config.token).apply {
             // configure here
             setActivity(Activity.playing("emotes.kosmx.dev | following instructions"))
