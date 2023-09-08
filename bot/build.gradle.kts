@@ -15,6 +15,8 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlin.cli)
 
+    implementation(libs.kotlinx.coroutines.core)
+
     // Logger stuff
     implementation(libs.slf4j)
     implementation(libs.slf4k)
