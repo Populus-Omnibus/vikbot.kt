@@ -17,6 +17,7 @@ data class BotConfig(
     //var mailChannel: ULong,
     val embedColor: String = "#03FCC2", //HEX VALUE
     val adminId: Long,
+    val serverEntries: MutableMap<ULong, ServerEntry>,
 ) {
 
 
@@ -29,4 +30,33 @@ data class BotConfig(
             json.encodeToStream(this, output)
         }
     }
+
+    fun getOrAddEntry(serverId: ULong?) : ServerEntry? {
+        if(serverId == null || serverId == 0UL){
+            return null
+        }
+        return serverEntries.getOrPut(serverId, ::ServerEntry)
+    }
 }
+
+@Serializable
+data class ServerEntry(
+    var newsChannel: ULong? = null,
+    var reportChannel: ULong? = null,
+    var roles: MutableList<Pair<RoleEntry, String>> = mutableListOf(), //second is the group in which the role is
+) {
+    fun getGroups(): List<String> {
+        return roles.map { it.second }.distinct()
+    }
+    fun getRolesOfGroup(groupName: String): List<RoleEntry> {
+        return roles.filter { it.second == groupName }.map { it.first }
+    }
+}
+
+@Serializable
+data class RoleEntry(
+    val roleId: ULong,
+    val emoteName: String, //the full name of the emote that will be displayed in the role selector
+    val fullName: String, //custom name for the role, can be different from the role's actual name
+    val description: String, //the description that will be displayed in the role selector
+)
