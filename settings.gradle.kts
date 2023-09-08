@@ -10,7 +10,6 @@ plugins {
 }
 
 rootProject.name = "vikbot"
-include(":api")
 include(":bot")
 
 

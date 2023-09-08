@@ -37,6 +37,8 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-code", version.ref = "kotlinx-coroutines" }
 
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.4.1" }
+
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
 # jda-ktx looks promising, but if it drops support, I'm in big trouble. I'll jsut make my own stuff
@@ -51,3 +53,10 @@ slf4k = { group = "ca.solo-studios", name = "slf4k", version = "0.5.3" }
 # Logback backend for slf4j
 ## The reliable, generic, fast and flexible logging framework for Java
 logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.4.0" }
+
+[bundles]
+
+kotlinx-serialization = [
+    "kotlinx-serialization-core",
+    "kotlinx-serialization-json",
+]
