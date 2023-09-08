@@ -142,43 +142,6 @@ open class SlashCommand(name: String, val description: String, configure: SlashC
         }
     }
 
-
-
-    // Context local thingy
-    /*
-    class CoroutineLocalEvent(var event: SlashCommandInteractionEvent? = null) : AbstractCoroutineContextElement(CoroutineLocalEvent) {
-        companion object Key : CoroutineContext.Key<CoroutineLocalEvent>
-    }
-
-    class ContextLocalCommandEvent : ThreadContextElement<SlashCommandInteractionEvent?>, ReadWriteProperty<Any?, SlashCommandInteractionEvent?> {
-        companion object Key : CoroutineContext.Key<ContextLocalCommandEvent>
-        private var state by ThreadLocal<SlashCommandInteractionEvent?>()
-
-        override val key: CoroutineContext.Key<*>
-            get() = Key
-
-        override fun updateThreadContext(context: CoroutineContext): SlashCommandInteractionEvent? {
-            val oldState = state
-            state = context[CoroutineLocalEvent]?.event
-            return oldState
-        }
-
-        override fun restoreThreadContext(context: CoroutineContext, oldState: SlashCommandInteractionEvent?) {
-            context[CoroutineLocalEvent]?.event = state
-            state = oldState
-        }
-
-        override fun getValue(thisRef: Any?, property: KProperty<*>): SlashCommandInteractionEvent? {
-            return state
-        }
-
-        override fun setValue(thisRef: Any?, property: KProperty<*>, value: SlashCommandInteractionEvent?) {
-            state = value
-        }
-
-    }
-    /
-     */
 }
 
 
