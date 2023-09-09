@@ -2,10 +2,7 @@ package io.github.populus_omnibus.vikbot.api.commands
 
 import io.github.populus_omnibus.vikbot.api.getValue
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asContextElement
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
@@ -53,11 +50,9 @@ open class SlashCommand(name: String, val description: String, configure: SlashC
     internal val event by eventThreadLocal
 
 
-    open fun bindAndInvoke(event: SlashCommandInteractionEvent) {
-        CoroutineScope(eventThreadLocal.asContextElement(event)).launch {
-            launch(Dispatchers.IO) {
-                invoke(event)
-            }
+    open suspend fun bindAndInvoke(event: SlashCommandInteractionEvent) = coroutineScope {
+        withContext(eventThreadLocal.asContextElement(event)) {
+            invoke(event)
         }
         logger.info{ "finished running command" }
     }
@@ -81,7 +76,7 @@ open class SlashCommand(name: String, val description: String, configure: SlashC
         }
     }
 
-    open fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
+    open suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
         options.find { it.name == event.focusedOption.name }?.optionType?.autoCompleteAction(event)
             ?: run { event.replyChoiceStrings("error").queue() }
     }

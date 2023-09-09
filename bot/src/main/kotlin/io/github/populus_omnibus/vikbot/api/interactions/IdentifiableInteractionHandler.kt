@@ -7,8 +7,8 @@ import kotlin.reflect.KProperty
 private val logger by org.slf4j.kotlin.toplevel.getLogger()
 open class IdentifiableHandler(val id: String)
 
-open class IdentifiableInteractionHandler<T: Event>(id: String, val function: IdentifiableInteractionHandler<T>.(T) -> Unit = {}): IdentifiableHandler(id), (T) -> Unit {
-    override fun invoke(event: T) {
+open class IdentifiableInteractionHandler<T: Event>(id: String, val function: IdentifiableInteractionHandler<T>.(T) -> Unit = {}): IdentifiableHandler(id), suspend (T) -> Unit {
+    override suspend fun invoke(event: T) {
         function(event)
     }
 }
@@ -37,7 +37,7 @@ class IdentifiableList<T : IdentifiableHandler>(private val list: MutableList<T>
 
 }
 
-operator fun <T: IdentifiableInteractionHandler<E>, E: Event> IdentifiableList<T>.invoke(id: String?, event: E, type: String) {
+suspend operator fun <T: IdentifiableInteractionHandler<E>, E: Event> IdentifiableList<T>.invoke(id: String?, event: E, type: String) {
     this[id?.split(":")?.get(0)]?.invoke(event)
         ?: logger.error("executed $type event was not found: $id")
 }
