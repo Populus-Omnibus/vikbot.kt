@@ -20,7 +20,7 @@ object RoleSelector {
     operator fun invoke(bot: VikBotHandler) {
         bot.commands += CommandGroup("roleselector", "Admin-only commands for adding and editing role selectors"
         ) { this.adminOnly() }.also { commandGroup ->
-            commandGroup += object : SlashCommand("addgroup", "add a new role selector group") {
+            commandGroup += object : SlashCommand("add", "add a new role selector group") {
                 val groupName by option("name", "name of the group", SlashOptionType.STRING).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
@@ -33,7 +33,7 @@ object RoleSelector {
             }
 
 
-            commandGroup += object : SlashCommand("deletegroup", "remove a role selector group") {
+            commandGroup += object : SlashCommand("delete", "remove a role selector group") {
                 val groupName by option("name", "name of the group",
                     RoleSelectorGroupAutocompleteString(config.serverEntries)).required()
 
@@ -44,7 +44,7 @@ object RoleSelector {
                 }
             }
 
-            commandGroup += object : SlashCommand("listgroups", "list all role selector groups for this server") {
+            commandGroup += object : SlashCommand("list", "list all role selector groups for this server") {
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     val groups = config.serverEntries[event.guild?.idLong]?.roleGroups?.keys ?: run{
                         event.reply("server has no groups").complete()
@@ -54,7 +54,7 @@ object RoleSelector {
                 }
             }
 
-            commandGroup += object : SlashCommand("editgroup", "select roles to include in group") {
+            commandGroup += object : SlashCommand("edit", "select roles to include in group") {
                 val groupName by option("name", "name of the group",
                     RoleSelectorGroupAutocompleteString(config.serverEntries)).required()
 
