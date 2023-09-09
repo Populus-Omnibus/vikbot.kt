@@ -2,11 +2,15 @@ package io.github.populus_omnibus.vikbot.bot.modules
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.VikBotHandler.config
+import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.createMemory
+import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
+import io.github.populus_omnibus.vikbot.bot.RoleEntry
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -15,6 +19,9 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
 
 object RoleSelector {
+
+    //message id and role group name + all roles
+    private val paginatedGroupEdits = createMemory<Long, Pair<String, MutableList<RoleEntry>>>()
 
     @Module
     operator fun invoke(bot: VikBotHandler) {
@@ -54,21 +61,45 @@ object RoleSelector {
                 }
             }
 
-            commandGroup += object : SlashCommand("edit", "select roles to include in group") {
+            commandGroup += object : SlashCommand("editchoices", "select roles to include in group") {
                 val groupName by option("name", "name of the group",
                     RoleSelectorGroupAutocompleteString(config.serverEntries)).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName) ?: run {
+                    //if such a role group does not exist, fail
+                    if ((config.serverEntries[event.guild?.idLong]?.roleGroups)?.contains(groupName) == true) {
                         event.reply("group not found").complete()
                         return
                     }
-                    val selectMenu = EntitySelectMenu.create("rolegroupedit-${event.guild?.id}", EntitySelectMenu.SelectTarget.ROLE)
+
+                    val selectMenu = EntitySelectMenu.create("rolegroupedit:${groupName}", EntitySelectMenu.SelectTarget.ROLE)
                         .setRequiredRange(0, 25).build()
-                    event.reply("").addActionRow(selectMenu).complete()
+                    event.reply("").addActionRow(selectMenu).setEphemeral(true).complete()
                 }
             }
         }
+        bot.entitySelectEvents += IdentifiableInteractionHandler("rolegroupedit") { event ->
+            //get all roles belonging to the group referenced by the component's id
+            val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(event.componentId.split(":").elementAtOrNull(1))
+            val selected = event.interaction.values
+        }
+
+
+        //Handle paginated role group edit messages
+        bot.reactionEvent[64] = { event ->
+            // check if we need to handle reaction
+            if(paginatedGroupEdits.containsKey(event.messageIdLong)) {
+                //handle
+            }
+            EventResult.PASS
+        }
+
+
+        //TODO:
+        //to modify roles within a group as an admin
+        //list all groups in a pageable format
+        //for changing the emote, use a reaction handler - maintain the message for 15-30 minutes
+        //for changing the name and description, a button shows a modal with the input fields
     }
 }
 

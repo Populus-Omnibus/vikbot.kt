@@ -21,8 +21,11 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent
+import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
@@ -38,6 +41,7 @@ object VikBotHandler : EventListener {
 
     val messageReceivedEvent = Event.simple<MessageReceivedEvent>()
     val messageUpdateEvent = Event.simple<MessageUpdateEvent>()
+    val reactionEvent = Event.simple<GenericMessageReactionEvent>()
 
     val initEvent = mutableListOf<(ReadyEvent) -> Unit>().apply { add(::registerCommands) }
     val guildInitEvent = mutableListOf<(GuildReadyEvent) -> Unit>().apply{ add(::registerOwnerCommands) }
@@ -49,6 +53,8 @@ object VikBotHandler : EventListener {
 
     val buttonEvents = IdentifiableList<IdentifiableInteractionHandler<ButtonInteractionEvent>>()
     val modalEvents = IdentifiableList<IdentifiableInteractionHandler<ModalInteractionEvent>>()
+    val stringSelectEvents = IdentifiableList<IdentifiableInteractionHandler<StringSelectInteractionEvent>>()
+    val entitySelectEvents = IdentifiableList<IdentifiableInteractionHandler<EntitySelectInteractionEvent>>()
 
     lateinit var config: BotConfig
 
@@ -119,6 +125,8 @@ object VikBotHandler : EventListener {
 
                     is ButtonInteractionEvent -> buttonEvents(event.button.id, event, "button")
                     is ModalInteractionEvent -> modalEvents(event.modalId, event, "modal")
+                    is StringSelectInteractionEvent -> stringSelectEvents(event.componentId, event, "stringSelect")
+                    is EntitySelectInteractionEvent -> entitySelectEvents(event.componentId, event, "entitySelect")
                     is CommandAutoCompleteInteractionEvent -> commandMap[event.name]?.autoCompleteAction(event)
                         ?: run { event.replyChoiceStrings("error").complete() }
                 }
