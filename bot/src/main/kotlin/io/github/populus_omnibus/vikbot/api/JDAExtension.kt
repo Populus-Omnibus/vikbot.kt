@@ -9,7 +9,7 @@ import kotlin.time.Duration.Companion.minutes
 
 fun IGuildChannelContainer.getTextChannelById(channelId: ULong) = getTextChannelById(channelId.toLong())
 
-fun <T> MutableMap<String, Pair<Instant, T>>.maintainEvent(delay: Int = 15): () -> Unit = object : () -> Unit {
+fun <K, T> MutableMap<K, Pair<Instant, T>>.maintainEvent(delay: Int = 15): () -> Unit = object : () -> Unit {
     var lastMaintained = Clock.System.now()
 
     override fun invoke() {
@@ -20,6 +20,8 @@ fun <T> MutableMap<String, Pair<Instant, T>>.maintainEvent(delay: Int = 15): () 
         }
     }
 }
+
+fun <K, T> createMemory(): MutableMap<K, Pair<Instant, T>> = mutableMapOf<K, Pair<Instant, T>>().synchronized()
 
 // allow threadLocal to be delegate.
 operator fun <T> ThreadLocal<T>.getValue(thisRef: Any?, property: KProperty<*>): T = get()

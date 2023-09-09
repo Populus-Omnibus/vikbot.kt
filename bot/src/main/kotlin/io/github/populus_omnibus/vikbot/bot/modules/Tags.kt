@@ -5,12 +5,12 @@ import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
+import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.synchronized
 import io.github.populus_omnibus.vikbot.bot.isAdmin
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -28,7 +28,6 @@ import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
-import java.awt.Color
 import java.io.File
 import java.util.*
 
@@ -36,7 +35,7 @@ object Tags {
 
     private var tags: MutableMap<String, Record> = mutableMapOf<String, Record>().synchronized()
 
-    private val attachmentMap = mutableMapOf<String, Pair<Instant, () -> EncodedFileUpload>>().synchronized()
+    private val attachmentMap = createMemory<String, () -> EncodedFileUpload>()
 
     private fun getTagMessage(tag: String): MessageCreateData? {
         return tags[tag]?.let { selected ->
