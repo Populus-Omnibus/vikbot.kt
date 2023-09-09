@@ -17,7 +17,7 @@ data class BotConfig(
     //var mailChannel: ULong,
     val embedColor: Int = 0x03FCC2, //HEX VALUE
     val adminId: Long,
-    val serverEntries: MutableMap<ULong, ServerEntry> = mutableMapOf(),
+    val serverEntries: MutableMap<Long, ServerEntry> = mutableMapOf(),
 ) {
 
 
@@ -31,8 +31,8 @@ data class BotConfig(
         }
     }
 
-    fun getOrAddEntry(serverId: ULong?) : ServerEntry? {
-        if(serverId == null || serverId == 0UL){
+    fun getOrAddEntry(serverId: Long?) : ServerEntry? {
+        if(serverId == null || serverId == 0L){
             return null
         }
         return serverEntries.getOrPut(serverId, ::ServerEntry)
