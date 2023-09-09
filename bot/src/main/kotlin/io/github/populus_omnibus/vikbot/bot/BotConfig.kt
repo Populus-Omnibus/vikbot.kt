@@ -44,12 +44,13 @@ data class BotConfig(
 data class ServerEntry(
     var newsChannel: ULong? = null,
     var reportChannel: ULong? = null,
-    public val roleGroups: MutableMap<String, MutableList<RoleEntry>> = mutableMapOf<String, MutableList<RoleEntry>>().synchronized(), //second is the group in which the role is
+    var deletedMessagesChannel: ULong? = null,
+    val roleGroups: MutableMap<String, MutableList<RoleEntry>> = mutableMapOf<String, MutableList<RoleEntry>>().synchronized(), //second is the group in which the role is
 )
 
 @Serializable
 data class RoleEntry(
-    val roleId: ULong,
+    val roleId: Long,
     val emoteName: String, //the full name of the emote that will be displayed in the role selector
     val fullName: String, //custom name for the role, can be different from the role's actual name
     val description: String, //the description that will be displayed in the role selector
