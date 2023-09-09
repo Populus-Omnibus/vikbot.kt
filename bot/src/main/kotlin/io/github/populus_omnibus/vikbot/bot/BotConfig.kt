@@ -1,5 +1,6 @@
 package io.github.populus_omnibus.vikbot.bot
 
+import io.github.populus_omnibus.vikbot.api.synchronized
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -17,7 +18,7 @@ data class BotConfig(
     //var mailChannel: ULong,
     val embedColor: Int = 0x03FCC2, //HEX VALUE
     val adminId: Long,
-    val serverEntries: MutableMap<Long, ServerEntry> = mutableMapOf(),
+    val serverEntries: MutableMap<Long, ServerEntry> = mutableMapOf<Long, ServerEntry>().synchronized(),
 ) {
 
 
@@ -43,7 +44,7 @@ data class BotConfig(
 data class ServerEntry(
     var newsChannel: ULong? = null,
     var reportChannel: ULong? = null,
-    public val roleGroups: MutableMap<String, MutableList<RoleEntry>> = mutableMapOf(), //second is the group in which the role is
+    public val roleGroups: MutableMap<String, MutableList<RoleEntry>> = mutableMapOf<String, MutableList<RoleEntry>>().synchronized(), //second is the group in which the role is
 )
 
 @Serializable

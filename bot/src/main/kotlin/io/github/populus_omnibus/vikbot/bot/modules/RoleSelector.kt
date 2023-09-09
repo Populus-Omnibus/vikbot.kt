@@ -79,7 +79,7 @@ class RoleSelectorGroupAutocompleteString(
     override val optionMapping = OptionMapping::getAsString
     override val isAutoComplete = true
 
-    override fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
+    override suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
         val groups = entries[event.guild?.idLong ?: 0]?.roleGroups?.keys ?: run {
             event.replyChoiceStrings().complete()
             return
