@@ -36,11 +36,11 @@ class CommandGroup(name: String, description: String, configure: SlashCommandDat
         commands += command
     }
 
-    override fun bindAndInvoke(event: SlashCommandInteractionEvent) {
+    override suspend fun bindAndInvoke(event: SlashCommandInteractionEvent) {
         commands[event.subcommandName]?.bindAndInvoke(event) ?: logger.error {"executed command event was not found: ${event.fullCommandName}" }
     }
 
-    override fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
+    override suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
         commands[event.subcommandName!!]?.autoCompleteAction(event) ?: run { event.replyChoiceStrings("error").queue() }
     }
 

@@ -17,7 +17,7 @@ interface SlashOptionType<T> {
         get() = false
 
     val optionMapping: (OptionMapping) -> T
-    fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {}
+    suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {}
 
     companion object {
 
