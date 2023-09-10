@@ -17,6 +17,8 @@ data class BotConfig(
     //var mailChannel: ULong,
     val embedColor: String = "#03FCC2", //HEX VALUE
     val adminId: Long,
+    val vikAuthPort: Int = 12345,
+    val vikAuthFernet: String,
 ) {
 
 
