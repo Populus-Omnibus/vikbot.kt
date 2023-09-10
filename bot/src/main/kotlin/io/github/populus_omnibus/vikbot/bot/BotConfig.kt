@@ -51,7 +51,7 @@ data class ServerEntry(
 @Serializable
 data class RoleEntry(
     val roleId: Long,
-    val emoteName: String, //the full name of the emote that will be displayed in the role selector
-    val fullName: String, //custom name for the role, can be different from the role's actual name
-    val description: String, //the description that will be displayed in the role selector
+    val emoteName: String? = null, //the full name of the emote that will be displayed in the role selector
+    val fullName: String? = null, //custom name for the role, can be different from the role's actual name
+    val description: String? = null, //the description that will be displayed in the role selector
 )
