@@ -1,27 +1,11 @@
 package io.github.populus_omnibus.vikbot.api
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import net.dv8tion.jda.api.entities.channel.attribute.IGuildChannelContainer
 import java.util.*
 import kotlin.reflect.KProperty
-import kotlin.time.Duration.Companion.minutes
 
 fun IGuildChannelContainer.getTextChannelById(channelId: ULong) = getTextChannelById(channelId.toLong())
-
-fun <K, T> MutableMap<K, Pair<Instant, T>>.maintainEvent(delay: Int = 15, expireFunction: (K, T) -> Unit = {_, _ ->}): () -> Unit = object : () -> Unit {
-    var lastMaintained = Clock.System.now()
-
-    override fun invoke() {
-        if (lastMaintained + 1.minutes < Clock.System.now()) {
-            val now = Clock.System.now()
-            lastMaintained = now
-            entries.removeIf { (key, pair) -> (pair.first + delay.minutes > now).also {
-                if (it) expireFunction(key, pair.second)
-            } }
-        }
-    }
-}
 
 fun <K, T> createMemory(): MutableMap<K, Pair<Instant, T>> = mutableMapOf<K, Pair<Instant, T>>().synchronized()
 
@@ -30,3 +14,4 @@ operator fun <T> ThreadLocal<T>.getValue(thisRef: Any?, property: KProperty<*>):
 operator fun <T> ThreadLocal<T>.setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(value)
 
 fun <K, V> MutableMap<K, V>.synchronized(): MutableMap<K, V> = Collections.synchronizedMap(this)
+

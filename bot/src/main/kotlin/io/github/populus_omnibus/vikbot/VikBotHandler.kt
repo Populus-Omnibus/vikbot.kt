@@ -39,6 +39,7 @@ import java.util.*
 object VikBotHandler : EventListener {
     private val logger by getLogger()
 
+
     val messageReceivedEvent = Event.simple<MessageReceivedEvent>()
     val messageUpdateEvent = Event.simple<MessageUpdateEvent>()
     val reactionEvent = Event.simple<GenericMessageReactionEvent>()
@@ -47,6 +48,7 @@ object VikBotHandler : EventListener {
     val guildInitEvent = mutableListOf<(GuildReadyEvent) -> Unit>().apply{ add(::registerOwnerCommands) }
 
     val maintainEvent = mutableListOf<() -> Unit>()
+    val shutdownEvent = mutableListOf<() -> Unit>()
 
     val commands = mutableListOf<SlashCommand>()
     val ownerServerCommands = mutableListOf<SlashCommand>()
@@ -56,6 +58,9 @@ object VikBotHandler : EventListener {
     val stringSelectEvents = IdentifiableList<IdentifiableInteractionHandler<StringSelectInteractionEvent>>()
     val entitySelectEvents = IdentifiableList<IdentifiableInteractionHandler<EntitySelectInteractionEvent>>()
 
+    private lateinit var _jda : JDA
+    val jda : JDA
+        get() = _jda
     lateinit var config: BotConfig
 
     private val timer = Timer()
@@ -93,11 +98,14 @@ object VikBotHandler : EventListener {
             addEventListeners(this@VikBotHandler)
 
         }.build().apply { awaitReady() }
+        _jda = client
 
         logger.info("Bot is ready")
 
         Runtime.getRuntime().addShutdownHook(Thread {
             logger.info("Shutting down")
+            timer.cancel()
+            shutdownEvent.forEach { it() }
             client.shutdown()
         })
 
