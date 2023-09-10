@@ -9,14 +9,16 @@ import kotlin.time.Duration.Companion.minutes
 
 fun IGuildChannelContainer.getTextChannelById(channelId: ULong) = getTextChannelById(channelId.toLong())
 
-fun <K, T> MutableMap<K, Pair<Instant, T>>.maintainEvent(delay: Int = 15): () -> Unit = object : () -> Unit {
+fun <K, T> MutableMap<K, Pair<Instant, T>>.maintainEvent(delay: Int = 15, expireFunction: (K, T) -> Unit = {_, _ ->}): () -> Unit = object : () -> Unit {
     var lastMaintained = Clock.System.now()
 
     override fun invoke() {
         if (lastMaintained + 1.minutes < Clock.System.now()) {
             val now = Clock.System.now()
             lastMaintained = now
-            entries.removeIf { (_, pair) -> pair.first + delay.minutes > now }
+            entries.removeIf { (key, pair) -> (pair.first + delay.minutes > now).also {
+                if (it) expireFunction(key, pair.second)
+            } }
         }
     }
 }
