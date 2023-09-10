@@ -17,6 +17,8 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.crypto.fernet)
+
     // Logger stuff
     implementation(libs.slf4j)
     implementation(libs.slf4k)
