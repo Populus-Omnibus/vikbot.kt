@@ -8,6 +8,7 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
+import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.api.synchronized
 import io.github.populus_omnibus.vikbot.bot.isAdmin
 import kotlinx.datetime.Clock
@@ -212,7 +213,7 @@ object Tags {
             }
         }
 
-        bot.maintainEvent += attachmentMap.maintainEvent()
+        bot += attachmentMap.maintainEvent()
 
         bot.modalEvents += IdentifiableInteractionHandler("tagEdit") {event ->
             val id = event.modalId.split(":")[1]
