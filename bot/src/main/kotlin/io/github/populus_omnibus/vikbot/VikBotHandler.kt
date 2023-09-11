@@ -21,8 +21,11 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent
+import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
@@ -36,20 +39,29 @@ import java.util.*
 object VikBotHandler : EventListener {
     private val logger by getLogger()
 
+
     val messageReceivedEvent = Event.simple<MessageReceivedEvent>()
     val messageUpdateEvent = Event.simple<MessageUpdateEvent>()
+    val reactionEvent = Event.simple<GenericMessageReactionEvent>()
 
     val initEvent = mutableListOf<(ReadyEvent) -> Unit>().apply { add(::registerCommands) }
     val guildInitEvent = mutableListOf<(GuildReadyEvent) -> Unit>().apply{ add(::registerOwnerCommands) }
 
     val maintainEvent = mutableListOf<() -> Unit>()
+    val shutdownEvent = mutableListOf<() -> Unit>()
 
     val commands = mutableListOf<SlashCommand>()
     val ownerServerCommands = mutableListOf<SlashCommand>()
 
     val buttonEvents = IdentifiableList<IdentifiableInteractionHandler<ButtonInteractionEvent>>()
     val modalEvents = IdentifiableList<IdentifiableInteractionHandler<ModalInteractionEvent>>()
+    val stringSelectEvents = IdentifiableList<IdentifiableInteractionHandler<StringSelectInteractionEvent>>()
+    val entitySelectEvents = IdentifiableList<IdentifiableInteractionHandler<EntitySelectInteractionEvent>>()
 
+    private lateinit var _jda : JDA
+    val jda : JDA
+        get() = _jda
+    lateinit var config: BotConfig
 
     private val timer = Timer()
 
@@ -76,10 +88,8 @@ object VikBotHandler : EventListener {
 
     }
 
-    lateinit var config: BotConfig
 
-    fun start(config: BotConfig) {
-        this.config = config
+    fun start() {
         val client: JDA = JDABuilder.createDefault(config.token).apply {
             // configure here
             setActivity(Activity.playing(config.initActivity))
@@ -88,11 +98,14 @@ object VikBotHandler : EventListener {
             addEventListeners(this@VikBotHandler)
 
         }.build().apply { awaitReady() }
+        _jda = client
 
         logger.info("Bot is ready")
 
         Runtime.getRuntime().addShutdownHook(Thread {
             logger.info("Shutting down")
+            timer.cancel()
+            shutdownEvent.forEach { it() }
             client.shutdown()
         })
 
@@ -120,6 +133,8 @@ object VikBotHandler : EventListener {
 
                     is ButtonInteractionEvent -> buttonEvents(event.button.id, event, "button")
                     is ModalInteractionEvent -> modalEvents(event.modalId, event, "modal")
+                    is StringSelectInteractionEvent -> stringSelectEvents(event.componentId, event, "stringSelect")
+                    is EntitySelectInteractionEvent -> entitySelectEvents(event.componentId, event, "entitySelect")
                     is CommandAutoCompleteInteractionEvent -> commandMap[event.name]?.autoCompleteAction(event)
                         ?: run { event.replyChoiceStrings("error").complete() }
                 }
