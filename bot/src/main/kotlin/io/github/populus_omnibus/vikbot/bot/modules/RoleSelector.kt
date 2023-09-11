@@ -126,7 +126,19 @@ object RoleSelector {
             //for changing the emote, use a reaction handler - maintain the message for 15-30 minutes
             //for changing the name and description, a button shows a modal with the input fields
             commandGroup += object :
-                SlashCommand("editlooks", "edit the description and emote linked to roles of a group") {}
+                SlashCommand("editlooks", "edit the description and emote linked to roles of a group") {
+                val groupName by option(
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
+                ).required()
+                //TODO: implement
+            }
+
+            commandGroup += object : SlashCommand("publish", "INACTIVE - publish the selected group") {
+                val groupName by option(
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
+                ).required()
+                //TODO: implement
+            }
 
             commandGroup += object : SlashCommand("prune", "remove invalid roles from groups") {
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
