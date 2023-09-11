@@ -12,6 +12,7 @@ import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteraction
 import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.bot.RoleEntry
+import io.github.populus_omnibus.vikbot.bot.RoleEntry.RoleDescriptor
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
@@ -74,11 +75,13 @@ object RoleSelector {
                         return
                     }
                     //first sorted map call sorts out the order
-                    val paired = groups.toSortedMap().map { entry ->
-                        entry.key!! to entry.value.map { role ->
-                            Pair(guildRoles.firstOrNull { it.idLong == role.roleId }, role)
-                        }.sortedBy { it.first?.name ?: it.second.fullName }
-                    }.toMap()
+                    val paired = groups.toSortedMap().map { group ->
+                        group.key!! to group.value.mapNotNull { entry ->
+                            guildRoles.find { it.idLong == entry.roleId }?.let {
+                                validateFromApiRole(it, entry)
+                            }
+                        }
+                    }
 
                     val outputStringData = paired.map { (groupId, rolePairs) ->
                         //this is the string that will be output for each group
@@ -88,10 +91,12 @@ object RoleSelector {
                     event.reply(outputStringData.joinToString("\n")).complete()
                 }
 
-                private fun formattedOutput(source: Pair<Role?, RoleEntry>) : String {
-                    val (emote, name1, name2, description) = dataFromRolePair(source)
-                    return "**$name1** $emote\n\t\t($name2 | $description)"
+                fun formattedOutput(source: RoleEntry): String {
+                    source.descriptor.let {
+                        return "**${it.apiName}** ${it.emoteName}\n\t\t(${it.fullName} | ${it.description})"
+                    }
                 }
+
             }
 
             commandGroup += object : SlashCommand("editchoices", "select roles to include in group") {
@@ -115,9 +120,15 @@ object RoleSelector {
                 }
             }
 
+            //TODO:
+            //to modify roles within a group as an admin
+            //list all groups in a pageable format
+            //for changing the emote, use a reaction handler - maintain the message for 15-30 minutes
+            //for changing the name and description, a button shows a modal with the input fields
             commandGroup += object :
                 SlashCommand("editlooks", "edit the description and emote linked to roles of a group") {}
-            commandGroup += object : SlashCommand("prunegroups", "remove invalid roles from groups") {
+
+            commandGroup += object : SlashCommand("prune", "remove invalid roles from groups") {
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     pruneRoles(bot)
                     event.reply("groups pruned!").setEphemeral(true).complete()
@@ -134,23 +145,25 @@ object RoleSelector {
                 return@IdentifiableInteractionHandler
             }
 
-            val selected = event.interaction.values
-            group.removeIf { roleEntry -> !selected.map { it.idLong }.contains(roleEntry.roleId) }
-            selected.filter { sel -> !group.map { it.roleId }.contains(sel.idLong) }.forEach {
-                group.add(RoleEntry(it.idLong))
-            }
-            config.save()
+            val selected = event.interaction.values.filterIsInstance<Role>()
+                .toMutableList() //can only receive roles, but check just in case
+            updateRolesFromReality(selected, group)
             event.hook.sendMessage("edited group").complete()
         }
+
+
     }
 
-    private fun dataFromRolePair(it: Pair<Role?, RoleEntry>): List<String> {
-        val (apiRole, entry) = it
-        val emote = entry.emoteName ?: ""
-        val name1 = apiRole?.name ?: entry.fullName ?: "<name error>"
-        val name2 = entry.fullName ?: apiRole?.name ?: "<name error>"
-        val description = entry.description ?: "<no desc>"
-        return listOf(emote,name1,name2,description)
+    private fun validateFromApiRole(apiRole: Role, storedRole: RoleEntry): RoleEntry {
+        return RoleEntry(apiRole.idLong, storedRole.descriptor.copy(apiName = apiRole.name))
+    }
+
+    private fun updateRolesFromReality(from: List<Role>, to: List<RoleEntry>): List<RoleEntry> {
+        return from.asSequence().map { role ->
+            to.find { it.roleId == role.idLong }?.let {
+                validateFromApiRole(role, it)
+            } ?: RoleEntry(role.idLong, RoleDescriptor("", role.name, role.name, ""))
+        }.toList()
     }
 
     private fun pruneRoles(bot: VikBotHandler) {
@@ -166,14 +179,7 @@ object RoleSelector {
             }
         }
     }
-
-    //TODO:
-    //to modify roles within a group as an admin
-    //list all groups in a pageable format
-    //for changing the emote, use a reaction handler - maintain the message for 15-30 minutes
-    //for changing the name and description, a button shows a modal with the input fields
 }
-
 
 class RoleSelectorGroupAutocompleteString(
     private val entries: Map<Long, ServerEntry>
