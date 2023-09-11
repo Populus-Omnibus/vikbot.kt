@@ -15,7 +15,15 @@ object McAuth : SlashCommand("mcauth", "register offline minecraft account") {
     private val validator = Regex("[\\d\\w_]+")
 
     override suspend fun invoke(event: SlashCommandInteractionEvent) = coroutineScope {
-        event.reply("cmd").setEphemeral(true).complete()
+        if (displayName.length < 4 || displayName.length > 16) {
+            event.reply("Invalid display name, it must contain at least 4 and most 16 characters")
+                .setEphemeral(true)
+                .complete()
+        } else if (!displayName.matches(validator)) {
+            event.reply("Invalid display name, only a-z A-Z digit and _ are allowed")
+        } else {
+            // TODO
+        }
     }
 
 }
