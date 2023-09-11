@@ -82,19 +82,14 @@ object RoleSelector {
 
                     val outputStringData = paired.map { (groupId, rolePairs) ->
                         //this is the string that will be output for each group
-                        val groupOutput = rolePairs.joinToString("\n\t") { rolePairToFormattedOutput(it) }
+                        val groupOutput = rolePairs.joinToString("\n\t") { formattedOutput(it) }
                         "**__${groupId}__**\n\t$groupOutput"
                     }
                     event.reply(outputStringData.joinToString("\n")).complete()
                 }
 
-
-                private fun rolePairToFormattedOutput(it: Pair<Role?, RoleEntry>): String {
-                    val (apiRole, entry) = it
-                    val emote = entry.emoteName ?: ""
-                    val name1 = apiRole?.name ?: entry.fullName ?: "<name error>"
-                    val name2 = entry.fullName ?: apiRole?.name ?: "<name error>"
-                    val description = entry.description ?: "<no desc>"
+                private fun formattedOutput(source: Pair<Role?, RoleEntry>) : String {
+                    val (emote, name1, name2, description) = dataFromRolePair(source)
                     return "**$name1** $emote\n\t\t($name2 | $description)"
                 }
             }
@@ -129,6 +124,7 @@ object RoleSelector {
                 }
             }
         }
+
         bot.entitySelectEvents += IdentifiableInteractionHandler("rolegroupedit") { event ->
             //get all roles belonging to the group referenced by the component's id
             event.deferReply().setEphemeral(true).complete()
@@ -148,7 +144,16 @@ object RoleSelector {
         }
     }
 
-    fun pruneRoles(bot: VikBotHandler) {
+    private fun dataFromRolePair(it: Pair<Role?, RoleEntry>): List<String> {
+        val (apiRole, entry) = it
+        val emote = entry.emoteName ?: ""
+        val name1 = apiRole?.name ?: entry.fullName ?: "<name error>"
+        val name2 = entry.fullName ?: apiRole?.name ?: "<name error>"
+        val description = entry.description ?: "<no desc>"
+        return listOf(emote,name1,name2,description)
+    }
+
+    private fun pruneRoles(bot: VikBotHandler) {
         val allRoles = bot.jda.guilds.map {
             it to it.roles
         }
