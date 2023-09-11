@@ -93,7 +93,7 @@ object RoleSelector {
 
                 fun formattedOutput(source: RoleEntry): String {
                     source.descriptor.let {
-                        return "**${it.apiName}** ${it.emoteName}\n\t\t(${it.fullName} | ${it.description})"
+                        return "**${it.apiName}** ${it.emoteName}\n\t\t(${it.fullName} \\|\\| ${it.description})"
                     }
                 }
 
@@ -107,7 +107,7 @@ object RoleSelector {
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     //if such a role group does not exist, fail
                     val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName)
-                    if (group.isNullOrEmpty()) {
+                    if(group == null){
                         event.reply("group not found or empty").setEphemeral(true).complete()
                         return
                     }
@@ -139,15 +139,20 @@ object RoleSelector {
         bot.entitySelectEvents += IdentifiableInteractionHandler("rolegroupedit") { event ->
             //get all roles belonging to the group referenced by the component's id
             event.deferReply().setEphemeral(true).complete()
-            val groupName = event.componentId.split(":").elementAtOrNull(1)
-            val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName) ?: run {
+            val groupName = event.componentId.split(":").elementAtOrNull(1) ?: run {
+                event.reply("error processing command!").setEphemeral(true).complete()
+                return@IdentifiableInteractionHandler
+            }
+            val serverGroups = config.serverEntries[event.guild?.idLong]?.roleGroups
+            val group = serverGroups?.get(groupName) ?: run {
                 event.reply("group not found").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
-
             val selected = event.interaction.values.filterIsInstance<Role>()
                 .toMutableList() //can only receive roles, but check just in case
-            updateRolesFromReality(selected, group)
+
+            serverGroups[groupName] = updateRolesFromReality(selected, group).toMutableList()
+            config.save()
             event.hook.sendMessage("edited group").complete()
         }
 
