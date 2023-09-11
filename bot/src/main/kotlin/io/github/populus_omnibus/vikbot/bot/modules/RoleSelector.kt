@@ -13,7 +13,9 @@ import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.bot.RoleEntry
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -32,7 +34,8 @@ object RoleSelector {
             msg.delete().queue()
         }
 
-        bot.commands += CommandGroup("roleselector", "Admin-only commands for adding and editing role selectors"
+        bot.commands += CommandGroup(
+            "roleselector", "Admin-only commands for adding and editing role selectors"
         ) { this.adminOnly() }.also { commandGroup ->
             commandGroup += object : SlashCommand("add", "add a new role selector group") {
                 val groupName by option("name", "name of the group", SlashOptionType.STRING).required()
@@ -48,14 +51,17 @@ object RoleSelector {
 
 
             commandGroup += object : SlashCommand("delete", "remove a role selector group") {
-                val groupName by option("name", "name of the group",
-                    RoleSelectorGroupAutocompleteString(config.serverEntries)).required()
+                val groupName by option(
+                    "name", "name of the group",
+                    RoleSelectorGroupAutocompleteString(config.serverEntries)
+                ).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     val removed = config.serverEntries[event.guild?.idLong]?.roleGroups?.remove(groupName)
                     config.save()
-                    val reply = event.reply("$groupName ${if (removed == null) "does not exist" else "has been removed"}")
-                    if(removed == null) reply.setEphemeral(true)
+                    val reply =
+                        event.reply("$groupName ${if (removed == null) "does not exist" else "has been removed"}")
+                    if (removed == null) reply.setEphemeral(true)
                     reply.complete()
                 }
             }
@@ -97,20 +103,34 @@ object RoleSelector {
             }
 
             commandGroup += object : SlashCommand("editchoices", "select roles to include in group") {
-                val groupName by option("name", "name of the group",
-                    RoleSelectorGroupAutocompleteString(config.serverEntries)).required()
+                val groupName by option(
+                    "name", "name of the group",
+                    RoleSelectorGroupAutocompleteString(config.serverEntries)
+                ).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     //if such a role group does not exist, fail
-                    if ((config.serverEntries[event.guild?.idLong]?.roleGroups)?.contains(groupName) == false) {
-                        event.reply("group not found").setEphemeral(true).complete()
+                    val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName)
+                    if (group.isNullOrEmpty()) {
+                        event.reply("group not found or empty").setEphemeral(true).complete()
                         return
                     }
 
-                    val selectMenu = EntitySelectMenu.create("rolegroupedit:${groupName}", EntitySelectMenu.SelectTarget.ROLE)
-                        .setRequiredRange(0, 25).build()
+                    val selectMenu =
+                        EntitySelectMenu.create("rolegroupedit:${groupName}", EntitySelectMenu.SelectTarget.ROLE)
+                            .setRequiredRange(0, 25).build()
                     expiringReplies += event.reply("This message is deleted after 14 minutes as the interaction expires.\nEditing: $groupName")
                         .addActionRow(selectMenu).complete()
+                }
+            }
+
+            commandGroup += object :
+                SlashCommand("editlooks", "edit the description and emote linked to roles of a group") {
+            }
+            commandGroup += object : SlashCommand("prunegroups", "remove invalid roles from groups") {
+                override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                    pruneRoles(bot)
+                    event.reply("groups pruned!").setEphemeral(true).complete()
                 }
             }
         }
@@ -131,25 +151,30 @@ object RoleSelector {
             config.save()
             event.hook.sendMessage("edited group").complete()
         }
-
-
-        //Handle paginated role group edit messages
-        /*bot.reactionEvent[64] = { event ->
-            // check if we need to handle reaction
-            if(paginatedGroupEdits.containsKey(event.messageIdLong)) {
-                //handle
-            }
-            EventResult.PASS
-        }*/
-
-
-        //TODO:
-        //to modify roles within a group as an admin
-        //list all groups in a pageable format
-        //for changing the emote, use a reaction handler - maintain the message for 15-30 minutes
-        //for changing the name and description, a button shows a modal with the input fields
     }
+
+    fun pruneRoles(bot: VikBotHandler) {
+        val allRoles = bot.jda.guilds.map {
+            it to it.roles
+        }
+        config.serverEntries.entries.forEach { entry ->
+            val guildRoles = allRoles.firstOrNull { it.first.idLong == entry.key }?.second
+                ?: return@forEach
+            val guildGroups = entry.value.roleGroups
+            guildGroups.forEach {
+                //remove any roles not present in actual server roles
+                it.value.removeIf { role -> guildRoles.any { gr -> gr.idLong == role.roleId } }
+            }
+        }
+    }
+
+    //TODO:
+    //to modify roles within a group as an admin
+    //list all groups in a pageable format
+    //for changing the emote, use a reaction handler - maintain the message for 15-30 minutes
+    //for changing the name and description, a button shows a modal with the input fields
 }
+
 
 class RoleSelectorGroupAutocompleteString(
     private val entries: Map<Long, ServerEntry>
