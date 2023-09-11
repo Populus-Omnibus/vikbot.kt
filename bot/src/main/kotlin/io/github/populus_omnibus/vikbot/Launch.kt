@@ -24,13 +24,13 @@ object Launch {
 
         parser.parse(args)
 
-        val config = File(configFile).inputStream().use { input ->
+        VikBotHandler.config = File(configFile).inputStream().use { input ->
             Json.decodeFromStream<BotConfig>(input)
         }
 
         // dynamic module loading
         ModuleLoader(VikBotHandler)
 
-        VikBotHandler.start(config)
+        VikBotHandler.start()
     }
 }
