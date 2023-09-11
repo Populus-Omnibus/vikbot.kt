@@ -17,7 +17,7 @@ import org.slf4j.kotlin.error
 import org.slf4j.kotlin.getLogger
 import java.util.function.Predicate
 
-class CommandGroup(name: String, description: String, configure: SlashCommandData.() -> Unit = {}) : SlashCommand(name, description, configure) {
+open class CommandGroup(name: String, description: String, configure: SlashCommandData.() -> Unit = {}) : SlashCommand(name, description, configure) {
     private val logger by getLogger()
 
     override val configure: SlashCommandData.() -> Unit
