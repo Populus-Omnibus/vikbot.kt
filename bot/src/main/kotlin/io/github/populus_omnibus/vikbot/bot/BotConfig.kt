@@ -1,6 +1,8 @@
 package io.github.populus_omnibus.vikbot.bot
 
 import io.github.populus_omnibus.vikbot.api.synchronized
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.internal.synchronized
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -24,9 +26,10 @@ data class BotConfig(
 
     @Transient
     private val json = Json { prettyPrint = true }
+    private companion object Lock
 
-    @OptIn(ExperimentalSerializationApi::class)
-    fun save() {
+    @OptIn(ExperimentalSerializationApi::class, InternalCoroutinesApi::class)
+    fun save() = synchronized(Lock) {
         File("bot.config.json").outputStream().use { output ->
             json.encodeToStream(this, output)
         }
