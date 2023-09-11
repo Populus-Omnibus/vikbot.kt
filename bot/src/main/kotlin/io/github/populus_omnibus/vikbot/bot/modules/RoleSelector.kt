@@ -13,9 +13,7 @@ import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.bot.RoleEntry
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
-import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -52,8 +50,7 @@ object RoleSelector {
 
             commandGroup += object : SlashCommand("delete", "remove a role selector group") {
                 val groupName by option(
-                    "name", "name of the group",
-                    RoleSelectorGroupAutocompleteString(config.serverEntries)
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
                 ).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
@@ -104,8 +101,7 @@ object RoleSelector {
 
             commandGroup += object : SlashCommand("editchoices", "select roles to include in group") {
                 val groupName by option(
-                    "name", "name of the group",
-                    RoleSelectorGroupAutocompleteString(config.serverEntries)
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
                 ).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
@@ -125,8 +121,7 @@ object RoleSelector {
             }
 
             commandGroup += object :
-                SlashCommand("editlooks", "edit the description and emote linked to roles of a group") {
-            }
+                SlashCommand("editlooks", "edit the description and emote linked to roles of a group") {}
             commandGroup += object : SlashCommand("prunegroups", "remove invalid roles from groups") {
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     pruneRoles(bot)
@@ -158,8 +153,7 @@ object RoleSelector {
             it to it.roles
         }
         config.serverEntries.entries.forEach { entry ->
-            val guildRoles = allRoles.firstOrNull { it.first.idLong == entry.key }?.second
-                ?: return@forEach
+            val guildRoles = allRoles.firstOrNull { it.first.idLong == entry.key }?.second ?: return@forEach
             val guildGroups = entry.value.roleGroups
             guildGroups.forEach {
                 //remove any roles not present in actual server roles
