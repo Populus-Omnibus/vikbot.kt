@@ -28,7 +28,7 @@ data class BotConfig(
 
     @Transient
     private val json = Json { prettyPrint = true }
-    private companion object Lock
+    companion object Lock
 
     @OptIn(ExperimentalSerializationApi::class, InternalCoroutinesApi::class)
     fun save() = synchronized(Lock) {
