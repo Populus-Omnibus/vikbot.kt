@@ -35,7 +35,7 @@ import kotlin.reflect.KProperty
  * }
  * ```
  */
-open class SlashCommand(name: String, val description: String, configure: SlashCommandData.() -> Unit = {}, private val execute: SlashCommand.(SlashCommandInteractionEvent) -> Unit = {})
+open class SlashCommand(name: String, val description: String, configure: SlashCommandData.() -> Unit = {}, private val execute: suspend SlashCommand.(SlashCommandInteractionEvent) -> Unit = {})
     : IdentifiableHandler(id = name) {
     val name: String
         get() = id

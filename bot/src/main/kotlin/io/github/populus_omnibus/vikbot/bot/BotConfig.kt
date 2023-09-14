@@ -21,12 +21,14 @@ data class BotConfig(
     val embedColor: Int = 0x03FCC2, //HEX VALUE
     val adminId: Long,
     val serverEntries: MutableMap<Long, ServerEntry> = mutableMapOf<Long, ServerEntry>().synchronized(),
+    val vikAuthPort: Int = 12345,
+    val vikAuthFernet: String,
 ) {
 
 
     @Transient
     private val json = Json { prettyPrint = true }
-    private companion object Lock
+    companion object Lock
 
     @OptIn(ExperimentalSerializationApi::class, InternalCoroutinesApi::class)
     fun save() = synchronized(Lock) {
