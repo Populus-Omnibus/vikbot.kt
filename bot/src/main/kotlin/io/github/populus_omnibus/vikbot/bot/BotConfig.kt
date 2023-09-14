@@ -41,6 +41,8 @@ data class BotConfig(
         }
         return serverEntries.getOrPut(serverId, ::ServerEntry)
     }
+
+    fun getRoleGroup(guildId: Long, groupName: String) = serverEntries[guildId]?.roleGroups?.get(groupName)
 }
 
 @Serializable
@@ -48,21 +50,30 @@ data class ServerEntry(
     var newsChannel: ULong? = null,
     var reportChannel: ULong? = null,
     var deletedMessagesChannel: ULong? = null,
-    val roleGroups: MutableMap<String, MutableList<RoleEntry>> = mutableMapOf<String, MutableList<RoleEntry>>().synchronized(), //second is the group in which the role is
-)
+    val roleGroups: MutableMap<String, RoleGroup> = mutableMapOf<String, RoleGroup>().synchronized(), //second is the group in which the role is
+){
+    //operator fun get(groupName: String) = roleGroups[groupName]
+}
 
 @Serializable
-data class RoleEntry(
-    val roleId: Long,
-    val descriptor: RoleDescriptor
-){
+data class RoleGroup(
+    val roles: MutableList<RoleEntry>,
+    val maxRolesAllowed: Int? = null,
+)
     @Serializable
-    data class RoleDescriptor(
-        val emoteName: String, //the full name of the emote that will be displayed in the role selector
-        val apiName: String,
-        val fullName: String, //custom name for the role, can be different from the role's actual name
-        val description: String, //the description that will be displayed in the role selector
-    )
+    data class RoleEntry(
+        val roleId: Long,
+        val descriptor: RoleDescriptor
+    ) {
+        @Serializable
+        data class RoleDescriptor(
+            val emoteName: String, //the full name of the emote that will be displayed in the role selector
+            val apiName: String,
+            val fullName: String, //custom name for the role, can be different from the role's actual name
+            val description: String, //the description that will be displayed in the role selector
+        )
 }
+
+
 
 

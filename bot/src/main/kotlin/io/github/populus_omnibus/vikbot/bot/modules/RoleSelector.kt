@@ -13,6 +13,7 @@ import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.bot.RoleEntry
 import io.github.populus_omnibus.vikbot.bot.RoleEntry.RoleDescriptor
+import io.github.populus_omnibus.vikbot.bot.RoleGroup
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
@@ -47,7 +48,7 @@ object RoleSelector {
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     val entry = config.getOrAddEntry(event.guild?.idLong)
-                    entry?.roleGroups?.getOrPut(groupName) { mutableListOf() }
+                    entry?.roleGroups?.getOrPut(groupName) { RoleGroup(mutableListOf()) }
                     config.save()
 
                     event.reply("$groupName group created!").complete()
@@ -82,7 +83,7 @@ object RoleSelector {
                     }
                     //first sorted map call sorts out the order
                     val paired = groups.toSortedMap().map { group ->
-                        group.key!! to group.value.mapNotNull { entry ->
+                        group.key!! to group.value.roles.mapNotNull { entry ->
                             guildRoles.find { it.idLong == entry.roleId }?.let {
                                 validateFromApiRole(it, entry)
                             }
@@ -150,21 +151,21 @@ object RoleSelector {
                         return
                     }
                     val menu = StringSelectMenu.create("publishedrolemenu:${event.guild?.idLong}:$groupName").
-                        addOptions(group.sortedBy { it.descriptor.fullName } .map {
+                        addOptions(group.roles.sortedBy { it.descriptor.fullName } .map {
                             val optionBuild = SelectOption.of(it.descriptor.fullName, it.roleId.toString())
                                 .withDescription(it.descriptor.description)
                             try {
                                 optionBuild.withEmoji(Emoji.fromFormatted(it.descriptor.emoteName))
                             }
                             catch (e: Exception) { optionBuild }
-                        }).build()
+                        }).setMaxValues(group.maxRolesAllowed ?: 25).build()
 
 
                     (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
                         it.sendMessage("").addActionRow(menu).complete()
                         event.reply("$groupName published!").setEphemeral(true).complete()
                     } ?: run { logger.error("publish command used outside of a text channel (HOW??)\n" +
-                            "location:${event.hook.interaction.channel?.name}") }
+                            "location: ${event.hook.interaction.channel?.name}") }
                 }
             }
 
@@ -183,21 +184,21 @@ object RoleSelector {
                 event.reply("error processing command!").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
-            val serverGroups = config.serverEntries[event.guild?.idLong]?.roleGroups
-            val group = serverGroups?.get(groupName) ?: run {
+            val serverEntry = config.serverEntries[event.guild?.idLong]
+            val group = serverEntry?.roleGroups?.get(groupName) ?: run {
                 event.reply("group not found").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
             val selected = event.interaction.values.filterIsInstance<Role>()
                 .toMutableList() //can only receive roles, but check just in case
 
-            serverGroups[groupName] = updateRolesFromReality(selected, group).toMutableList()
+            serverEntry.roleGroups[groupName] = updateRolesFromReality(selected, group)
             config.save()
             event.hook.sendMessage("edited group").complete()
         }
 
         bot.stringSelectEvents += IdentifiableInteractionHandler("publishedrolemenu") { event ->
-            val guildId = event.componentId.split(":").elementAtOrNull(1)
+            val guildId = event.componentId.split(":").elementAtOrNull(1)?.toLongOrNull()
             val groupName = event.componentId.split(":").elementAtOrNull(2)
             if(guildId == null || groupName == null){
                 event.reply("action failed!").setEphemeral(true).complete()
@@ -205,16 +206,16 @@ object RoleSelector {
             }
             event.deferReply().setEphemeral(true).complete()
 
-            val allRoles = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName)?.mapNotNull {
+            val allRoles = config.getRoleGroup(guildId, groupName)?.roles?.mapNotNull {
                 event.guild?.roles?.find { role -> role.idLong == it.roleId }
             } ?: listOf()
             val selection = event.values.mapNotNull {
                 event.guild?.roles?.find { role -> it.toLongOrNull() == role.idLong }
             }
 
-            //TODO: sync lists
-            //event.member?.roles?.removeIf { !selection.contains(it) && allRoles.contains(it) }
-
+            event.member?.let { user ->
+                event.guild?.modifyMemberRoles(user, selection, allRoles - selection.toSet())
+            }
             event.hook.sendMessage("update successful!").complete()
         }
 
@@ -225,12 +226,12 @@ object RoleSelector {
         return RoleEntry(apiRole.idLong, storedRole.descriptor.copy(apiName = apiRole.name))
     }
 
-    private fun updateRolesFromReality(from: List<Role>, to: List<RoleEntry>): List<RoleEntry> {
-        return from.asSequence().map { role ->
-            to.find { it.roleId == role.idLong }?.let {
+    private fun updateRolesFromReality(from: List<Role>, to: RoleGroup): RoleGroup {
+        return to.copy(roles = from.asSequence().map { role ->
+            to.roles.find { it.roleId == role.idLong }?.let {
                 validateFromApiRole(role, it)
             } ?: RoleEntry(role.idLong, RoleDescriptor("", role.name, role.name, ""))
-        }.toList()
+        }.toMutableList())
     }
 
     private fun pruneRoles(bot: VikBotHandler) {
@@ -242,7 +243,7 @@ object RoleSelector {
             val guildGroups = entry.value.roleGroups
             guildGroups.forEach {
                 //remove any roles not present in actual server roles
-                it.value.removeIf { role -> guildRoles.any { gr -> gr.idLong == role.roleId } }
+                it.value.roles.removeIf { role -> guildRoles.any { gr -> gr.idLong == role.roleId } }
             }
         }
     }
