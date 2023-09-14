@@ -115,7 +115,7 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
     private fun generateToken(): String {
         while (true) {
             val token = random.ints(0, tokenChars.size).asSequence().take(16).map { tokenChars[it] }.joinToString("")
-            if (VikauthServer.accounts.any { (_, account) -> account.token == token }) return token
+            if (VikauthServer.accounts.none { (_, account) -> account.token == token }) return token
         }
     }
 
