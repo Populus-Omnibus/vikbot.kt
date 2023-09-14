@@ -140,7 +140,7 @@ object RoleSelector {
                 //TODO: implement
             }
 
-            commandGroup += object : SlashCommand("publish", "INACTIVE - publish the selected group") {
+            commandGroup += object : SlashCommand("publish", "publish the selected group") {
                 val groupName by option(
                     "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
                 ).required()
@@ -157,8 +157,8 @@ object RoleSelector {
                             try {
                                 optionBuild.withEmoji(Emoji.fromFormatted(it.descriptor.emoteName))
                             }
-                            catch (e: Exception) { optionBuild }
-                        }).setMaxValues(group.maxRolesAllowed ?: 25).build()
+                            catch (_: Exception) { optionBuild }
+                        }).setMinValues(0).setMaxValues(group.maxRolesAllowed ?: 25).build()
 
 
                     (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
@@ -211,10 +211,10 @@ object RoleSelector {
             } ?: listOf()
             val selection = event.values.mapNotNull {
                 event.guild?.roles?.find { role -> it.toLongOrNull() == role.idLong }
-            }
+            }.filter { !it.isManaged } //don't even attempt to add or remove a managed role, in case someone added it to the group
 
             event.member?.let { user ->
-                event.guild?.modifyMemberRoles(user, selection, allRoles - selection.toSet())
+                event.guild?.modifyMemberRoles(user, selection, allRoles.intersect(user.roles.toSet()) - selection.toSet())?.complete()
             }
             event.hook.sendMessage("update successful!").complete()
         }
