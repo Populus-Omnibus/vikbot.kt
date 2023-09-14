@@ -16,16 +16,22 @@ import io.github.populus_omnibus.vikbot.bot.RoleEntry.RoleDescriptor
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
+import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
+import org.slf4j.kotlin.getLogger
 import kotlin.time.Duration.Companion.minutes
 
 object RoleSelector {
 
     private val expiringReplies = createMemory<Long, Message>()
+    private val logger by getLogger()
 
     @Module
     operator fun invoke(bot: VikBotHandler) {
@@ -126,7 +132,7 @@ object RoleSelector {
             //for changing the emote, use a reaction handler - maintain the message for 15-30 minutes
             //for changing the name and description, a button shows a modal with the input fields
             commandGroup += object :
-                SlashCommand("editlooks", "edit the description and emote linked to roles of a group") {
+                SlashCommand("editlooks", "INACTIVE - edit the description and emote linked to roles of a group") {
                 val groupName by option(
                     "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
                 ).required()
@@ -137,7 +143,29 @@ object RoleSelector {
                 val groupName by option(
                     "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
                 ).required()
-                //TODO: implement
+
+                override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                    val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName) ?: run {
+                        event.reply("server entry or group missing").complete()
+                        return
+                    }
+                    val menu = StringSelectMenu.create("publishedrolemenu:${event.guild?.idLong}:$groupName").
+                        addOptions(group.sortedBy { it.descriptor.fullName } .map {
+                            val optionBuild = SelectOption.of(it.descriptor.fullName, it.roleId.toString())
+                                .withDescription(it.descriptor.description)
+                            try {
+                                optionBuild.withEmoji(Emoji.fromFormatted(it.descriptor.emoteName))
+                            }
+                            catch (e: Exception) { optionBuild }
+                        }).build()
+
+
+                    (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
+                        it.sendMessage("").addActionRow(menu).complete()
+                        event.reply("$groupName published!").setEphemeral(true).complete()
+                    } ?: run { logger.error("publish command used outside of a text channel (HOW??)\n" +
+                            "location:${event.hook.interaction.channel?.name}") }
+                }
             }
 
             commandGroup += object : SlashCommand("prune", "remove invalid roles from groups") {
@@ -166,6 +194,28 @@ object RoleSelector {
             serverGroups[groupName] = updateRolesFromReality(selected, group).toMutableList()
             config.save()
             event.hook.sendMessage("edited group").complete()
+        }
+
+        bot.stringSelectEvents += IdentifiableInteractionHandler("publishedrolemenu") { event ->
+            val guildId = event.componentId.split(":").elementAtOrNull(1)
+            val groupName = event.componentId.split(":").elementAtOrNull(2)
+            if(guildId == null || groupName == null){
+                event.reply("action failed!").setEphemeral(true).complete()
+                return@IdentifiableInteractionHandler
+            }
+            event.deferReply().setEphemeral(true).complete()
+
+            val allRoles = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName)?.mapNotNull {
+                event.guild?.roles?.find { role -> role.idLong == it.roleId }
+            } ?: listOf()
+            val selection = event.values.mapNotNull {
+                event.guild?.roles?.find { role -> it.toLongOrNull() == role.idLong }
+            }
+
+            //TODO: sync lists
+            //event.member?.roles?.removeIf { !selection.contains(it) && allRoles.contains(it) }
+
+            event.hook.sendMessage("update successful!").complete()
         }
 
 
