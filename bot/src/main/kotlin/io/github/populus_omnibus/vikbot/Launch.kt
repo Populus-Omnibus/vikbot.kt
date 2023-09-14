@@ -8,12 +8,17 @@ import kotlinx.cli.default
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import org.slf4j.kotlin.getLogger
+import org.slf4j.kotlin.info
 import java.io.File
 
 /**
  * program entry point, initialize bot, modules
  */
 object Launch {
+
+    val logger by getLogger()
+
     @OptIn(ExperimentalSerializationApi::class)
     @JvmStatic
     fun main(args: Array<String>) {
@@ -29,8 +34,10 @@ object Launch {
         }
 
         // dynamic module loading
+        logger.info { "Start loading modules" }
         ModuleLoader(VikBotHandler)
 
+        logger.info { "Starting VikBot" }
         VikBotHandler.start()
     }
 }
