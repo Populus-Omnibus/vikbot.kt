@@ -50,6 +50,7 @@ data class ServerEntry(
     var newsChannel: ULong? = null,
     var reportChannel: ULong? = null,
     var deletedMessagesChannel: ULong? = null,
+    var rssFeeds: MutableList<String> = mutableListOf(),
     val roleGroups: MutableMap<String, MutableList<RoleEntry>> = mutableMapOf<String, MutableList<RoleEntry>>().synchronized(), //second is the group in which the role is
 )
 
