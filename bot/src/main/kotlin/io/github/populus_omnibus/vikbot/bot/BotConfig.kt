@@ -16,8 +16,8 @@ data class BotConfig(
     val token: String,
     val botName: String = "VIKBOT",
     val initActivity: String = "with the old bot",
-    val ownerServers: Set<ULong>,
-    //var mailChannel: ULong,
+    val ownerServers: Set<Long>,
+    //var mailChannel: Long,
     val embedColor: Int = 0x03FCC2, //HEX VALUE
     val adminId: Long,
     val serverEntries: MutableMap<Long, ServerEntry> = mutableMapOf<Long, ServerEntry>().synchronized(),
@@ -47,9 +47,9 @@ data class BotConfig(
 
 @Serializable
 data class ServerEntry(
-    var newsChannel: ULong? = null,
-    var reportChannel: ULong? = null,
-    var deletedMessagesChannel: ULong? = null,
+    var newsChannel: Long? = null,
+    var reportChannel: Long? = null,
+    var deletedMessagesChannel: Long? = null,
     var rssFeeds: MutableList<String> = mutableListOf(),
     val roleGroups: MutableMap<String, MutableList<RoleEntry>> = mutableMapOf<String, MutableList<RoleEntry>>().synchronized(), //second is the group in which the role is
 )
