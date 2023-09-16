@@ -16,8 +16,8 @@ data class BotConfig(
     val token: String,
     val botName: String = "VIKBOT",
     val initActivity: String = "with the old bot",
-    val ownerServers: Set<ULong>,
-    //var mailChannel: ULong,
+    val ownerServers: Set<Long>,
+    //var mailChannel: Long,
     val embedColor: Int = 0x03FCC2, //HEX VALUE
     val adminId: Long,
     val serverEntries: MutableMap<Long, ServerEntry> = mutableMapOf<Long, ServerEntry>().synchronized(),
@@ -44,13 +44,11 @@ data class BotConfig(
 
 @Serializable
 data class ServerEntry(
-    var newsChannel: ULong? = null,
-    var reportChannel: ULong? = null,
-    var deletedMessagesChannel: ULong? = null,
+    var newsChannel: Long? = null,
+    var reportChannel: Long? = null,
+    var deletedMessagesChannel: Long? = null,
     val roleGroups: MutableMap<String, RoleGroup> = mutableMapOf<String, RoleGroup>().synchronized(), //second is the group in which the role is
-){
-    //operator fun get(groupName: String) = roleGroups[groupName]
-}
+)
 
 @Serializable
 data class RoleGroup(
@@ -70,7 +68,3 @@ data class RoleGroup(
             val description: String, //the description that will be displayed in the role selector
         )
 }
-
-
-
-
