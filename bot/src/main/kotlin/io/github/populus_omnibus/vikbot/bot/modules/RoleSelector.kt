@@ -2,6 +2,7 @@ package io.github.populus_omnibus.vikbot.bot.modules
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.VikBotHandler.config
+import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
@@ -15,19 +16,24 @@ import io.github.populus_omnibus.vikbot.bot.RoleEntry
 import io.github.populus_omnibus.vikbot.bot.RoleEntry.RoleDescriptor
 import io.github.populus_omnibus.vikbot.bot.RoleGroup
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
+import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.slf4j.kotlin.getLogger
 import kotlin.time.Duration.Companion.minutes
+
 
 object RoleSelector {
 
@@ -47,11 +53,8 @@ object RoleSelector {
                 val groupName by option("name", "name of the group", SlashOptionType.STRING).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    val guildId = event.guild?.idLong ?: run {
-                        event.reply("event error").complete()
-                        return
-                    }
-                    val entry = config.getOrAddEntry(guildId)
+                    val guildId = event.guild!!.idLong
+                    val entry = config.servers[guildId]
                     entry.roleGroups.getOrPut(groupName) { RoleGroup(mutableListOf()) }
                     config.save()
 
@@ -62,11 +65,11 @@ object RoleSelector {
 
             commandGroup += object : SlashCommand("delete", "remove a role selector group") {
                 val groupName by option(
-                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
                 ).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    val removed = config.serverEntries[event.guild?.idLong]?.roleGroups?.remove(groupName)
+                    val removed = config.servers[event.guild!!.idLong].roleGroups.remove(groupName)
                     config.save()
                     val reply =
                         event.reply("$groupName ${if (removed == null) "does not exist" else "has been removed"}")
@@ -77,14 +80,8 @@ object RoleSelector {
 
             commandGroup += object : SlashCommand("list", "list all role selector groups for this server") {
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    val groups = config.serverEntries[event.guild?.idLong]?.roleGroups ?: run {
-                        event.reply("server has no groups").setEphemeral(true).complete()
-                        return
-                    }
-                    val guildRoles = event.guild?.roles ?: run {
-                        event.reply("failed retrieval of roles").setEphemeral(true).complete()
-                        return
-                    }
+                    val groups = config.servers[event.guild!!.idLong].roleGroups
+                    val guildRoles = event.guild!!.roles
                     //first sorted map call sorts out the order
                     val paired = groups.toSortedMap().map { group ->
                         group.key!! to group.value.roles.mapNotNull { entry ->
@@ -112,19 +109,12 @@ object RoleSelector {
 
             commandGroup += object : SlashCommand("editchoices", "select roles to include in group") {
                 val groupName by option(
-                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
                 ).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    //if such a role group does not exist, fail
-                    val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName)
-                    if(group == null){
-                        event.reply("group not found or empty").setEphemeral(true).complete()
-                        return
-                    }
-
                     val selectMenu =
-                        EntitySelectMenu.create("rolegroupedit:${groupName}", EntitySelectMenu.SelectTarget.ROLE)
+                        EntitySelectMenu.create("rolegroupeditchoices:${groupName}", EntitySelectMenu.SelectTarget.ROLE)
                             .setRequiredRange(0, 25).build()
                     expiringReplies += event.reply("This message is deleted after 14 minutes as the interaction expires.\nEditing: $groupName")
                         .addActionRow(selectMenu).complete()
@@ -139,22 +129,33 @@ object RoleSelector {
             commandGroup += object :
                 SlashCommand("editlooks", "INACTIVE - edit the description and emote linked to roles of a group") {
                 val groupName by option(
-                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
                 ).required()
-                //TODO: implement
+
+                override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                    val botUser = event.jda.selfUser
+                    val group = config.getRoleGroup(event.guild!!.idLong, groupName)
+                    event.reply(MessageCreateBuilder()
+                        .addActionRow(
+                        Button.primary("rolegroupeditlooks-left", Emoji.fromUnicode(":arrow_backward:")),
+                        Button.primary("rolegroupeditlooks-right", Emoji.fromUnicode(":arrow_forward:")))
+                        .addEmbeds(
+                            EmbedBuilder()
+                                .setAuthor(botUser.effectiveName, null, botUser.effectiveAvatarUrl)
+                                .setColor(config.embedColor)
+                                .build())
+                        .build()).complete()
+                }
             }
 
             commandGroup += object : SlashCommand("publish", "publish the selected group") {
                 val groupName by option(
-                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.serverEntries)
+                    "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
                 ).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    val group = config.serverEntries[event.guild?.idLong]?.roleGroups?.get(groupName) ?: run {
-                        event.reply("server entry or group missing").complete()
-                        return
-                    }
-                    val menu = StringSelectMenu.create("publishedrolemenu:${event.guild?.idLong}:$groupName").
+                    val group = config.servers[event.guild!!.idLong].roleGroups[groupName]
+                    val menu = StringSelectMenu.create("publishedrolemenu:${event.guild!!.idLong}:$groupName").
                         addOptions(group.roles.sortedBy { it.descriptor.fullName } .map {
                             val optionBuild = SelectOption.of(it.descriptor.fullName, it.roleId.toString())
                                 .withDescription(it.descriptor.description)
@@ -181,18 +182,15 @@ object RoleSelector {
             }
         }
 
-        bot.entitySelectEvents += IdentifiableInteractionHandler("rolegroupedit") { event ->
+        bot.entitySelectEvents += IdentifiableInteractionHandler("rolegroupeditchoices") { event ->
             //get all roles belonging to the group referenced by the component's id
             event.deferReply().setEphemeral(true).complete()
             val groupName = event.componentId.split(":").elementAtOrNull(1) ?: run {
                 event.reply("error processing command!").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
-            val serverEntry = config.serverEntries[event.guild?.idLong]
-            val group = serverEntry?.roleGroups?.get(groupName) ?: run {
-                event.reply("group not found").setEphemeral(true).complete()
-                return@IdentifiableInteractionHandler
-            }
+            val serverEntry = config.servers[event.guild!!.idLong]
+            val group = serverEntry.roleGroups[groupName]
             val selected = event.interaction.values.filterIsInstance<Role>()
                 .toMutableList() //can only receive roles, but check just in case
 
@@ -210,20 +208,39 @@ object RoleSelector {
             }
             event.deferReply().setEphemeral(true).complete()
 
-            val allRoles = config.getRoleGroup(guildId, groupName)?.roles?.mapNotNull {
-                event.guild?.roles?.find { role -> role.idLong == it.roleId }
-            } ?: listOf()
+            val allRoles = config.getRoleGroup(guildId, groupName).roles.mapNotNull {
+                event.guild!!.roles.find { role -> role.idLong == it.roleId }
+            }
             val selection = event.values.mapNotNull {
-                event.guild?.roles?.find { role -> it.toLongOrNull() == role.idLong }
+                event.guild!!.roles.find { role -> it.toLongOrNull() == role.idLong }
             }.filter { !it.isManaged } //don't even attempt to add or remove a managed role, in case someone added it to the group
 
             event.member?.let { user ->
-                event.guild?.modifyMemberRoles(user, selection, allRoles.intersect(user.roles.toSet()) - selection.toSet())?.complete()
+                event.guild!!.modifyMemberRoles(user, selection, allRoles.intersect(user.roles.toSet()) - selection.toSet())
+                    .complete()
             }
             event.hook.sendMessage("update successful!").complete()
         }
 
 
+        //TODO: more intuitive handling
+        //handle paginated role group looks edit
+        bot.reactionEvent[64] = lambda@ { event ->
+            if(expiringReplies.containsKey(event.messageIdLong) && event is MessageReactionAddEvent){
+                val message = event.retrieveMessage().complete()
+                if(false) EventResult.PASS //TODO: if message doesn't have the identifying buttons
+
+                //TODO: get role group name from embed
+                val group = config.getRoleGroup(event.guild.idLong, "test")
+                val index = 0
+                group.roles[index].let { role ->
+                    group.roles[index] = RoleEntry(role.roleId, role.descriptor.copy(emoteName = event.reaction.emoji.asReactionCode))
+                }
+
+                config.save()
+            }
+            EventResult.PASS
+        }
     }
 
     private fun validateFromApiRole(apiRole: Role, storedRole: RoleEntry): RoleEntry {
@@ -242,7 +259,7 @@ object RoleSelector {
         val allRoles = bot.jda.guilds.map {
             it to it.roles
         }
-        config.serverEntries.entries.forEach { entry ->
+        config.servers.entries.forEach { entry ->
             val guildRoles = allRoles.firstOrNull { it.first.idLong == entry.key }?.second ?: return@forEach
             val guildGroups = entry.value.roleGroups
             guildGroups.forEach {
@@ -253,6 +270,7 @@ object RoleSelector {
     }
 }
 
+/** This class should **never** be constructed in a direct message context, only in guilds. **/
 class RoleSelectorGroupAutocompleteString(
     private val entries: Map<Long, ServerEntry>
 ) : SlashOptionType<String> {
@@ -261,7 +279,7 @@ class RoleSelectorGroupAutocompleteString(
     override val isAutoComplete = true
 
     override suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
-        val groups = entries[event.guild?.idLong ?: 0]?.roleGroups?.keys ?: run {
+        val groups = entries[event.guild!!.idLong]?.roleGroups?.keys ?: run {
             event.replyChoiceStrings().complete()
             return
         }

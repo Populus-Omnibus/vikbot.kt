@@ -20,11 +20,12 @@ data class BotConfig(
     //var mailChannel: Long,
     val embedColor: Int = 0x03FCC2, //HEX VALUE
     val adminId: Long,
-    val serverEntries: MutableMap<Long, ServerEntry> = mutableMapOf<Long, ServerEntry>().synchronized(),
+    private val seMap: MutableMap<Long, ServerEntry> = mutableMapOf<Long,ServerEntry>().synchronized(),
     val vikAuthPort: Int = 12345,
     val vikAuthFernet: String,
 ) {
-
+    val servers: DefaultMap<Long, ServerEntry>
+        get() = DefaultMap(seMap) { ServerEntry() }
 
     @Transient
     private val json = Json { prettyPrint = true }
@@ -37,11 +38,9 @@ data class BotConfig(
         }
     }
 
-    fun getOrAddEntry(serverId: Long) : ServerEntry {
-        return serverEntries.getOrPut(serverId, ::ServerEntry)
+    fun getRoleGroup(guildId: Long, groupName: String) : RoleGroup {
+        return servers[guildId].roleGroups[groupName]
     }
-
-    fun getRoleGroup(guildId: Long, groupName: String) = serverEntries[guildId]?.roleGroups?.get(groupName)
 }
 
 @Serializable
@@ -49,12 +48,15 @@ data class ServerEntry(
     var newsChannel: Long? = null,
     var reportChannel: Long? = null,
     var deletedMessagesChannel: Long? = null,
-    val roleGroups: MutableMap<String, RoleGroup> = mutableMapOf<String, RoleGroup>().synchronized(), //second is the group in which the role is
-)
+    private val rgMap: MutableMap<String, RoleGroup> = mutableMapOf<String, RoleGroup>().synchronized(), //second is the group in which the role is
+){
+    val roleGroups: DefaultMap<String, RoleGroup>
+        get() = DefaultMap(rgMap) { RoleGroup() }
+}
 
 @Serializable
 data class RoleGroup(
-    val roles: MutableList<RoleEntry>,
+    val roles: MutableList<RoleEntry> = mutableListOf(),
     val maxRolesAllowed: Int? = null,
 )
     @Serializable
