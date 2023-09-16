@@ -27,7 +27,10 @@ data class BotConfig(
 
 
     @Transient
-    private val json = Json { prettyPrint = true }
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+    }
     companion object Lock
 
     @OptIn(ExperimentalSerializationApi::class, InternalCoroutinesApi::class)
