@@ -17,6 +17,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.okio) // explicitly implement okio
     implementation(libs.crypto.fernet)
 
     // Logger stuff
