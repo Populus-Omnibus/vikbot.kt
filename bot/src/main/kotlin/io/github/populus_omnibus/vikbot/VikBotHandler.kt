@@ -44,7 +44,8 @@ object VikBotHandler : EventListener {
     val messageUpdateEvent = Event.simple<MessageUpdateEvent>()
     val reactionEvent = Event.simple<GenericMessageReactionEvent>()
 
-    val initEvent = mutableListOf<(ReadyEvent) -> Unit>().apply { add(::registerCommands) }
+    val initEvent = mutableListOf<(JDA) -> Unit>().apply { add(::registerCommands) }
+    val readyEvent = mutableListOf<(ReadyEvent) -> Unit>()
     val guildInitEvent = mutableListOf<(GuildReadyEvent) -> Unit>().apply{ add(::registerOwnerCommands) }
 
     val maintainEvent = mutableListOf<() -> Unit>()
@@ -97,8 +98,10 @@ object VikBotHandler : EventListener {
             enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
             addEventListeners(this@VikBotHandler)
 
-        }.build().apply { awaitReady() }
+        }.build()
         _jda = client
+        jda.awaitReady()
+        initEvent.forEach { it(jda) }
 
         logger.info("Bot is ready")
 
@@ -124,7 +127,7 @@ object VikBotHandler : EventListener {
                 when (event) {
                     is MessageReceivedEvent -> messageReceivedEvent(event)
                     is MessageUpdateEvent -> messageUpdateEvent(event)
-                    is ReadyEvent -> initEvent.forEach { subscriber -> subscriber(event) }
+                    is ReadyEvent -> readyEvent.forEach { subscriber -> subscriber(event) }
                     is GuildReadyEvent -> guildInitEvent.forEach { subscriber -> subscriber(event) }
                     is SlashCommandInteractionEvent -> {
                         commandMap[event.name]?.bindAndInvoke(event)
@@ -144,8 +147,8 @@ object VikBotHandler : EventListener {
         }
     }
 
-    private fun registerCommands(event: ReadyEvent) {
-        event.jda.updateCommands().addCommands(
+    private fun registerCommands(jda: JDA) {
+        jda.updateCommands().addCommands(
             commands.map {
                 Commands.slash(it.name, it.description).apply {
                     it.configure(this)
