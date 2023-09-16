@@ -35,10 +35,7 @@ data class BotConfig(
         }
     }
 
-    fun getOrAddEntry(serverId: Long?) : ServerEntry? {
-        if(serverId == null || serverId == 0L){
-            return null
-        }
+    fun getOrAddEntry(serverId: Long) : ServerEntry {
         return serverEntries.getOrPut(serverId, ::ServerEntry)
     }
 

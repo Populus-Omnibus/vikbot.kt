@@ -47,8 +47,12 @@ object RoleSelector {
                 val groupName by option("name", "name of the group", SlashOptionType.STRING).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    val entry = config.getOrAddEntry(event.guild?.idLong)
-                    entry?.roleGroups?.getOrPut(groupName) { RoleGroup(mutableListOf()) }
+                    val guildId = event.guild?.idLong ?: run {
+                        event.reply("event error").complete()
+                        return
+                    }
+                    val entry = config.getOrAddEntry(guildId)
+                    entry.roleGroups.getOrPut(groupName) { RoleGroup(mutableListOf()) }
                     config.save()
 
                     event.reply("$groupName group created!").complete()
