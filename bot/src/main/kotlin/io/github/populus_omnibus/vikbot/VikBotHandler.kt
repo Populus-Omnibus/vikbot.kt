@@ -158,7 +158,7 @@ object VikBotHandler : EventListener {
     }
 
     private fun registerOwnerCommands(event: GuildReadyEvent) {
-        if (event.guild.idLong.toULong() in config.ownerServers) {
+        if (event.guild.idLong in config.ownerServers) {
             logger.info { "Registering owner server commands on ${event.guild}" }
             event.guild.updateCommands().addCommands(
                 ownerServerCommands.map {
