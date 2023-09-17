@@ -1,6 +1,7 @@
 package io.github.populus_omnibus.vikbot.bot.modules
 
 import io.github.populus_omnibus.vikbot.api.annotations.Command
+import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import kotlinx.coroutines.coroutineScope
@@ -8,7 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 
-@Command(global = false)
+@Command(type = CommandType.SERVER)
 object DemoCommand: SlashCommand(
     "helloWorld".lowercase(),
     "Hello world demo command",
