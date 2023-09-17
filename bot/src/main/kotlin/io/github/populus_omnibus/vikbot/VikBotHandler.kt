@@ -100,7 +100,7 @@ object VikBotHandler : EventListener {
             // configure here
             setActivity(Activity.playing(config.initActivity))
             disableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGE_TYPING)
-            enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+            enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGE_REACTIONS)
             addEventListeners(this@VikBotHandler)
 
             setEnableShutdownHook(false)
@@ -135,6 +135,7 @@ object VikBotHandler : EventListener {
                     is MessageUpdateEvent -> messageUpdateEvent(event)
                     is ReadyEvent -> readyEvent.forEach { subscriber -> subscriber(event) }
                     is GuildReadyEvent -> guildInitEvent.forEach { subscriber -> subscriber(event) }
+                    is GenericMessageReactionEvent -> reactionEvent(event)
                     is SlashCommandInteractionEvent -> {
                         commandMap[event.name]?.bindAndInvoke(event)
                             ?: logger.error { "executed command was not found: ${event.name}" }

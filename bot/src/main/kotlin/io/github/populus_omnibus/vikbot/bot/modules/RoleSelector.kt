@@ -20,7 +20,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.emoji.Emoji
-import net.dv8tion.jda.api.entities.emoji.EmojiUnion
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
@@ -244,10 +243,11 @@ object RoleSelector {
                 val index = data.currentPage
                 group.roles[index].let { role ->
                     group.roles[index] =
-                        RoleEntry(role.roleId, role.descriptor.copy(emoteName = event.reaction.emoji.asReactionCode))
+                        RoleEntry(role.roleId, role.descriptor.copy(emoteName = event.reaction.emoji.formatted))
                 }
 
                 config.save()
+                event.retrieveMessage().complete().clearReactions().complete()
                 data.edit(group, index)
             }
             EventResult.PASS
@@ -328,13 +328,8 @@ object RoleSelector {
                     Button.secondary("rolegroupeditlooks-modify", "Modify")
                 )
                 val msg = group.roles.getOrNull(0)?.descriptor?.let { data ->
-                    val emote = try {
-                        Emoji.fromFormatted(data.emoteName)
-                    } catch (_: IllegalArgumentException) {
-                        null
-                    }
                     val send = MessageCreateBuilder().addActionRow(buttons)
-                        .addEmbeds(this.getEmbed(data, emote))
+                        .addEmbeds(this.getEmbed(data))
                         .setContent(interactionDeletionWarning)
                         .build()
                     interaction.reply(send).complete().retrieveOriginal().complete()
@@ -342,25 +337,20 @@ object RoleSelector {
                 return msg?.let { RoleGroupLooksEditorData(it, groupName, buttons)  }
             }
 
-            fun getEmbed(data: RoleDescriptor, emote: EmojiUnion?): MessageEmbed {
+            fun getEmbed(data: RoleDescriptor): MessageEmbed {
                 val botUser = jda.selfUser
                 return EmbedBuilder()
                     .setAuthor(botUser.effectiveName, null, botUser.effectiveAvatarUrl)
                     .setColor(config.embedColor)
-                    .addField("Name: ${data.fullName}\t${emote ?: ""}", "Desc: ${data.description}", false)
+                    .addField("Name: ${data.fullName}  ${data.emoteName}", "Desc: ${data.description}", false)
                     .build()
             }
         }
 
         fun edit(group: RoleGroup, num: Int) {
             group.roles.getOrNull(num)?.descriptor?.let { data ->
-                val emote = try {
-                    Emoji.fromFormatted(data.emoteName)
-                } catch (_: IllegalArgumentException) {
-                    null
-                }
                 this.msg.editMessage(
-                    MessageEditBuilder().setEmbeds(getEmbed(data, emote))
+                    MessageEditBuilder().setEmbeds(getEmbed(data))
                         .setContent(interactionDeletionWarning).build()).complete()
             }
         }
