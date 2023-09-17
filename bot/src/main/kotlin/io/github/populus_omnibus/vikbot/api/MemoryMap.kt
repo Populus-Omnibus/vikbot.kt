@@ -51,3 +51,6 @@ operator fun MutableMap<Long, Pair<Instant, Message>>.plusAssign(interaction: In
     this[msg.idLong] = Clock.System.now() to msg
 }
 
+operator fun <T : CustomMessageData> MutableMap<Long, Pair<Instant, T>>.plusAssign(value: T) {
+    this[value.msg.idLong] = Clock.System.now() to value
+}

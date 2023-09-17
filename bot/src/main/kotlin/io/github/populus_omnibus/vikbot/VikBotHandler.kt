@@ -46,12 +46,17 @@ object VikBotHandler : EventListener {
 
     val initEvent = mutableListOf<(JDA) -> Unit>().apply { add(::registerCommands) }
     val readyEvent = mutableListOf<(ReadyEvent) -> Unit>()
-    val guildInitEvent = mutableListOf<(GuildReadyEvent) -> Unit>().apply{ add(::registerOwnerCommands) }
+    val guildInitEvent = mutableListOf<(GuildReadyEvent) -> Unit>().apply{ add(::registerNonGlobalCommands) }
 
     val maintainEvent = mutableListOf<() -> Unit>()
     val shutdownEvent = mutableListOf<() -> Unit>()
 
-    val commands = mutableListOf<SlashCommand>()
+    @Deprecated("replaced by globalCommands", ReplaceWith("this.globalCommands"))
+    val commands : MutableList<SlashCommand>
+        get() = globalCommands
+
+    val globalCommands = mutableListOf<SlashCommand>()
+    val serverCommands = mutableListOf<SlashCommand>()
     val ownerServerCommands = mutableListOf<SlashCommand>()
 
     val buttonEvents = IdentifiableList<IdentifiableInteractionHandler<ButtonInteractionEvent>>()
@@ -67,7 +72,7 @@ object VikBotHandler : EventListener {
     private val timer = Timer()
 
     private val commandMap: Map<String, SlashCommand> by lazy {
-        (commands + ownerServerCommands).associateBy { it.name }
+        (globalCommands + serverCommands + ownerServerCommands).associateBy { it.name }
     }
 
     init {
@@ -83,7 +88,7 @@ object VikBotHandler : EventListener {
             }
         }
 
-        commands += SlashCommand("ping", "quick self test") {
+        globalCommands += SlashCommand("ping", "quick self test") {
             it.reply("pong\nclient latency: ${it.jda.gatewayPing}").queue()
         }
 
@@ -150,7 +155,7 @@ object VikBotHandler : EventListener {
 
     private fun registerCommands(jda: JDA) {
         jda.updateCommands().addCommands(
-            commands.map {
+            globalCommands.map {
                 Commands.slash(it.name, it.description).apply {
                     it.configure(this)
                 }
@@ -158,16 +163,29 @@ object VikBotHandler : EventListener {
         ).queue()
     }
 
-    private fun registerOwnerCommands(event: GuildReadyEvent) {
-        if (event.guild.idLong.toULong() in config.ownerServers) {
+    private fun registerNonGlobalCommands(event: GuildReadyEvent) {
+        val request = event.guild.updateCommands()
+        if (event.guild.idLong in config.ownerServers) {
             logger.info { "Registering owner server commands on ${event.guild}" }
-            event.guild.updateCommands().addCommands(
+            request.addCommands(
                 ownerServerCommands.map {
                     Commands.slash(it.name, it.description).apply {
                         it.configure(this)
                     }
                 }
-            ).queue()
+            )
         }
+
+        logger.info { "Registering server commands on ${event.guild}" }
+        request.addCommands(
+            serverCommands.map {
+                Commands.slash(it.name, it.description).apply {
+                    it.configure(this)
+                }
+            }
+        )
+        request.complete()
     }
+
+
 }
