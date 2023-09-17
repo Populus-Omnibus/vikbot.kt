@@ -2,6 +2,7 @@ package io.github.populus_omnibus.vikbot.bot
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Command
+import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import org.slf4j.kotlin.error
@@ -41,10 +42,10 @@ object ModuleLoader {
 
                     if(instance is SlashCommand) {
                         logger.info { "loading command ${instance::class.simpleName}" }
-                        if (cmd.global) {
-                            handler.commands += instance as SlashCommand
-                        } else {
-                            handler.ownerServerCommands += instance as SlashCommand
+                        when (cmd.type) {
+                            CommandType.GLOBAL -> handler.globalCommands += instance as SlashCommand
+                            CommandType.SERVER -> handler.serverCommands += instance as SlashCommand
+                            CommandType.OWNER -> handler.ownerServerCommands += instance as SlashCommand
                         }
                     } else {
                         error("Module ${instance::class.simpleName} should be SlashCommand")
