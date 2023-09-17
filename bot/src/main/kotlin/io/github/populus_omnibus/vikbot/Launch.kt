@@ -19,6 +19,8 @@ object Launch {
 
     val logger by getLogger()
 
+    private val json = Json { ignoreUnknownKeys = true }
+
     @OptIn(ExperimentalSerializationApi::class)
     @JvmStatic
     fun main(args: Array<String>) {
@@ -30,7 +32,7 @@ object Launch {
         parser.parse(args)
 
         VikBotHandler.config = File(configFile).inputStream().use { input ->
-            Json.decodeFromStream<BotConfig>(input)
+            json.decodeFromStream<BotConfig>(input)
         }
 
         // dynamic module loading

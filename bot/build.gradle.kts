@@ -25,4 +25,10 @@ dependencies {
     implementation(libs.slf4k)
     implementation(libs.logback)
 
+    testImplementation(libs.junit.api)
+    testRuntimeOnly(libs.junit.engine)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

@@ -30,7 +30,10 @@ data class BotConfig(
         get() = DefaultMap(seMap) { ServerEntry() }
 
     @Transient
-    private val json = Json { prettyPrint = true }
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+    }
     companion object Lock
 
     @OptIn(ExperimentalSerializationApi::class, InternalCoroutinesApi::class)
