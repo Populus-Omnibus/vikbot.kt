@@ -12,6 +12,7 @@ import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
+import io.github.populus_omnibus.vikbot.bot.CustomMessageData
 import io.github.populus_omnibus.vikbot.bot.RoleEntry
 import io.github.populus_omnibus.vikbot.bot.RoleEntry.RoleDescriptor
 import io.github.populus_omnibus.vikbot.bot.RoleGroup
@@ -37,16 +38,18 @@ import kotlin.time.Duration.Companion.minutes
 
 object RoleSelector {
 
-    private val expiringReplies = createMemory<Long, Message>()
+    private val expiringReplies = createMemory<Long, CustomMessageData>()
     private val logger by getLogger()
+    private val maintainDuration = 14.minutes
+    private val interactionDeletionWarning = "This message is deleted after ${maintainDuration.inWholeMinutes} as the interaction expires."
 
     @Module
     operator fun invoke(bot: VikBotHandler) {
-        bot += expiringReplies.maintainEvent(14.minutes) { _, msg ->
-            msg.delete().queue()
+        bot += expiringReplies.maintainEvent(maintainDuration) { _, data ->
+            data.msg.delete().queue()
         }
 
-        bot.commands += CommandGroup(
+        bot.serverCommands += CommandGroup(
             "roleselector", "Admin-only commands for adding and editing role selectors"
         ) { this.adminOnly() }.also { commandGroup ->
             commandGroup += object : SlashCommand("add", "add a new role selector group") {
@@ -96,12 +99,16 @@ object RoleSelector {
                         val groupOutput = rolePairs.joinToString("\n\t") { formattedOutput(it) }
                         "**__${groupId}__**\n\t$groupOutput"
                     }
-                    event.reply(outputStringData.joinToString("\n")).complete()
+                    event.reply(outputStringData.let {
+                        if(it.isEmpty()) "server has no groups"
+                        else it.joinToString("\n")
+                    }).complete()
                 }
 
                 fun formattedOutput(source: RoleEntry): String {
                     source.descriptor.let {
-                        return "**${it.apiName}** ${it.emoteName}\n\t\t(${it.fullName} \\|\\| ${it.description})"
+                        return "**${it.apiName}** ${it.emoteName}\n\t\t" +
+                                "(${it.fullName.ifEmpty { "<no full name>" }} \\|\\| ${it.description.ifEmpty { "<no desc>" }})"
                     }
                 }
 
@@ -114,10 +121,10 @@ object RoleSelector {
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     val selectMenu =
-                        EntitySelectMenu.create("rolegroupeditchoices:${groupName}", EntitySelectMenu.SelectTarget.ROLE)
+                        EntitySelectMenu.create("rolegroupeditchoices", EntitySelectMenu.SelectTarget.ROLE)
                             .setRequiredRange(0, 25).build()
-                    expiringReplies += event.reply("This message is deleted after 14 minutes as the interaction expires.\nEditing: $groupName")
-                        .addActionRow(selectMenu).complete()
+                    expiringReplies += RoleGroupEditorData(event.reply("$interactionDeletionWarning\nEditing: $groupName")
+                        .addActionRow(selectMenu).complete().retrieveOriginal().complete(), groupName)
                 }
             }
 
@@ -134,17 +141,24 @@ object RoleSelector {
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     val botUser = event.jda.selfUser
-                    val group = config.getRoleGroup(event.guild!!.idLong, groupName)
-                    event.reply(MessageCreateBuilder()
-                        .addActionRow(
-                        Button.primary("rolegroupeditlooks-left", Emoji.fromUnicode(":arrow_backward:")),
-                        Button.primary("rolegroupeditlooks-right", Emoji.fromUnicode(":arrow_forward:")))
+                    val group = config.servers[event.guild!!.idLong].roleGroups[groupName]
+                    val buttons = mutableListOf(
+                        Button.primary("rolegroupeditlooks-left", Emoji.fromFormatted("◀")).asDisabled(),
+                        Button.primary("rolegroupeditlooks-right", Emoji.fromFormatted("▶")).apply {
+                            if(group.roles.count() < 2) this.asDisabled()
+                        })
+
+                    val data = MessageCreateBuilder()
+                        .addActionRow(buttons)
                         .addEmbeds(
                             EmbedBuilder()
                                 .setAuthor(botUser.effectiveName, null, botUser.effectiveAvatarUrl)
                                 .setColor(config.embedColor)
                                 .build())
-                        .build()).complete()
+                        .setContent(interactionDeletionWarning)
+                        .build()
+                    expiringReplies += RoleGroupLooksEditorData(event.reply(data).complete().retrieveOriginal().complete(),
+                        groupName, buttons)
                 }
             }
 
@@ -155,7 +169,7 @@ object RoleSelector {
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     val group = config.servers[event.guild!!.idLong].roleGroups[groupName]
-                    val menu = StringSelectMenu.create("publishedrolemenu:${event.guild!!.idLong}:$groupName").
+                    val menu = StringSelectMenu.create("publishedrolemenu:$groupName").
                         addOptions(group.roles.sortedBy { it.descriptor.fullName } .map {
                             val optionBuild = SelectOption.of(it.descriptor.fullName, it.roleId.toString())
                                 .withDescription(it.descriptor.description)
@@ -185,24 +199,25 @@ object RoleSelector {
         bot.entitySelectEvents += IdentifiableInteractionHandler("rolegroupeditchoices") { event ->
             //get all roles belonging to the group referenced by the component's id
             event.deferReply().setEphemeral(true).complete()
-            val groupName = event.componentId.split(":").elementAtOrNull(1) ?: run {
-                event.reply("error processing command!").setEphemeral(true).complete()
+            //TODO: refactor
+            val data = expiringReplies[event.messageIdLong]?.second as? RoleGroupEditorData ?: run{
+                event.hook.sendMessage("failed").complete()
                 return@IdentifiableInteractionHandler
             }
             val serverEntry = config.servers[event.guild!!.idLong]
-            val group = serverEntry.roleGroups[groupName]
+            val group = serverEntry.roleGroups[data.groupName]
             val selected = event.interaction.values.filterIsInstance<Role>()
                 .toMutableList() //can only receive roles, but check just in case
 
-            serverEntry.roleGroups[groupName] = updateRolesFromReality(selected, group)
+            serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
             config.save()
             event.hook.sendMessage("edited group").complete()
         }
 
         bot.stringSelectEvents += IdentifiableInteractionHandler("publishedrolemenu") { event ->
-            val guildId = event.componentId.split(":").elementAtOrNull(1)?.toLongOrNull()
-            val groupName = event.componentId.split(":").elementAtOrNull(2)
-            if(guildId == null || groupName == null){
+            val guildId = event.guild?.idLong
+            val groupName = event.componentId.split(":").elementAtOrNull(1)
+            if(guildId == null || groupName == null) {
                 event.reply("action failed!").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
@@ -291,3 +306,13 @@ class RoleSelectorGroupAutocompleteString(
         event.replyChoiceStrings(selected).complete()
     }
 }
+
+open class RoleGroupEditorData (
+    msg: Message, val groupName: String,
+) : CustomMessageData(msg)
+
+class RoleGroupLooksEditorData (
+    msg: Message, groupName: String,
+    val buttons: List<Button>,
+    val currentPage: UInt = 0u
+) : RoleGroupEditorData(msg, groupName)

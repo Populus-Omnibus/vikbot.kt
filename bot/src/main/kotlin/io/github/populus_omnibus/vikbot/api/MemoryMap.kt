@@ -1,6 +1,7 @@
 package io.github.populus_omnibus.vikbot.api
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
+import io.github.populus_omnibus.vikbot.bot.CustomMessageData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import net.dv8tion.jda.api.entities.Message
@@ -51,3 +52,6 @@ operator fun MutableMap<Long, Pair<Instant, Message>>.plusAssign(interaction: In
     this[msg.idLong] = Clock.System.now() to msg
 }
 
+operator fun <T : CustomMessageData> MutableMap<Long, Pair<Instant, T>>.plusAssign(value: T) {
+    this[value.msg.idLong] = Clock.System.now() to value
+}
