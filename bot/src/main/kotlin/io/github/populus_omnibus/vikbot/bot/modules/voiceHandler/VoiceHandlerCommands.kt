@@ -23,6 +23,7 @@ object VoiceHandlerCommands : CommandGroup("voice", "manage voice channel manage
                         event.reply("Channel is already managed")
                     } else {
                         VikBotHandler.config.servers[event.guild!!.idLong].handledVoiceChannels += voiceChannel
+                        VikBotHandler.config.save()
                         event.reply("Channel added to managed channels")
                     }
                 } catch (e: IllegalStateException) {
@@ -37,6 +38,7 @@ object VoiceHandlerCommands : CommandGroup("voice", "manage voice channel manage
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
                 if (channel.idLong in VikBotHandler.config.servers[event.guild!!.idLong].handledVoiceChannels) {
                     VikBotHandler.config.servers[event.guild!!.idLong].handledVoiceChannels -= channel.idLong
+                    VikBotHandler.config.save()
                     event.reply("Channel is no longer managed")
                 } else {
                     event.reply("Channel was not managed voice channel")
