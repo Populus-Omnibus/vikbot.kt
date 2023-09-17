@@ -1,5 +1,6 @@
 package io.github.populus_omnibus.vikbot.bot
 
+import io.github.populus_omnibus.vikbot.api.DefaultMap
 import io.github.populus_omnibus.vikbot.api.synchronized
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
