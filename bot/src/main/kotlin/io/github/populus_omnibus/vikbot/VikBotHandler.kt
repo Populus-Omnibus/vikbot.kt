@@ -72,7 +72,7 @@ object VikBotHandler : EventListener {
     private val timer = Timer()
 
     private val commandMap: Map<String, SlashCommand> by lazy {
-        (globalCommands + ownerServerCommands).associateBy { it.name }
+        (commands + globalCommands + serverCommands + ownerServerCommands).associateBy { it.name }
     }
 
     init {
