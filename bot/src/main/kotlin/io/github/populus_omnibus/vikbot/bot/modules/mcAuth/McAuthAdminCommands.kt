@@ -1,6 +1,7 @@
 package io.github.populus_omnibus.vikbot.bot.modules.mcAuth
 
 import io.github.populus_omnibus.vikbot.api.annotations.Command
+import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.*
 import io.github.populus_omnibus.vikbot.bot.vikauth.VikauthServer
 import kotlinx.coroutines.coroutineScope
@@ -8,7 +9,7 @@ import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 
 
-@Command
+@Command(type = CommandType.OWNER)
 object McAuthAdminCommands : CommandGroup("vikauthAdmin".lowercase(), "Offline minecraft account tool",
     {
         adminOnly()

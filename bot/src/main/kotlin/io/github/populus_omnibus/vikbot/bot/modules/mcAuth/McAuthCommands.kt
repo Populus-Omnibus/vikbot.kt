@@ -1,6 +1,7 @@
 package io.github.populus_omnibus.vikbot.bot.modules.mcAuth
 
 import io.github.populus_omnibus.vikbot.api.annotations.Command
+import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.*
 import io.github.populus_omnibus.vikbot.bot.vikauth.MCAccount
 import io.github.populus_omnibus.vikbot.bot.vikauth.VikauthServer
@@ -18,7 +19,7 @@ import java.security.SecureRandom
 import java.util.*
 import kotlin.streams.asSequence
 
-@Command
+@Command(type = CommandType.OWNER)
 object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for BME VIK server") {
     private val logger by getLogger()
     private val random: SecureRandom = SecureRandom.getInstanceStrong()
