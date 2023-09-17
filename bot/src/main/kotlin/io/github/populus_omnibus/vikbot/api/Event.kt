@@ -1,17 +1,19 @@
 package io.github.populus_omnibus.vikbot.api
 
+import io.github.populus_omnibus.vikbot.api.interactions.sortedListWith
+
 
 class Event<T>: Iterable<T> {
     companion object {
         fun <T> simple() = Event<suspend (T) -> EventResult>()
     }
 
-    private val subscribersMap = mutableMapOf<Int, T>()
-    private var orderedList: List<T>? = null
+    private val subscribersMap = sortedListWith<Pair<Int, T>> ({ a, b ->
+        a.first.compareTo(b.first)
+    })
 
     operator fun set(priority: Int, function: T) = run {
-        subscribersMap[priority] = function
-        orderedList = null
+        subscribersMap += priority to function
     }
 
     fun registerSubscribers(priority: Int, vararg functions: T) {
@@ -20,27 +22,28 @@ class Event<T>: Iterable<T> {
         }
     }
 
-    operator fun get(i: Int) = subscribersMap[i]
+    @Deprecated("Getting a single item from event is not supported")
+    operator fun get(i: Int) = subscribersMap.find { it.first == i }
 
-    val indices: List<Int>
-        get() = subscribersMap.map { (i, _) -> i }
 
+    /**
+     * Probably shouldn't be used
+     */
+    @Deprecated("subscribers list shouldn't be used")
     val subscribers: List<T>
         get() {
-            return orderedList ?: run {
-                orderedList =
-                    subscribersMap.map { (i, t) -> i to t }.sortedBy { (i, _) -> i }.map { (_, t) -> t }.toList()
-                orderedList!!
+            return subscribersMap.asSequence().map { it.second }.toList()
             }
-        }
 
-    override fun iterator(): Iterator<T> = toList().iterator()
-
+    override fun iterator(): Iterator<T> {
+        return subscribersMap.asSequence().map { it.second }.iterator()
+    }
 }
+
 
 @JvmName("typedInvoke")
 suspend operator fun <X, P> Event<out suspend (X) -> TypedEventResult<P>>.invoke(x: X): TypedEventResult<P> {
-    for (subscriber in subscribers) {
+    for (subscriber in this) {
         val result = subscriber(x)
         if (result.consume) {
             return result
@@ -50,7 +53,7 @@ suspend operator fun <X, P> Event<out suspend (X) -> TypedEventResult<P>>.invoke
 }
 
 suspend operator fun <X> Event<out suspend (X) -> EventResult>.invoke(x: X): EventResult {
-    for (subscriber in subscribers) {
+    for (subscriber in this) {
         val result = subscriber(x)
         if (result.consume) {
             return result

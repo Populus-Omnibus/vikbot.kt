@@ -53,7 +53,7 @@ object RssModule {
     internal fun updateFeedChannels() {
         logger.info { "Updating RSS listener" }
 
-        val feeds = VikBotHandler.config.serverEntries.asSequence().flatMap { (_, server) -> server.rssFeeds }
+        val feeds = VikBotHandler.config.servers.asSequence().flatMap { (_, server) -> server.rssFeeds }
             .distinct().map {
                 it to (rssFeeds[it] ?: RssFeedObject(Clock.System.now()))
             }
@@ -80,7 +80,7 @@ object RssModule {
     }
 
     private suspend fun postArticles(feed: String, articles: List<RssItem>) = coroutineScope {
-        val servers = VikBotHandler.config.serverEntries.asSequence()
+        val servers = VikBotHandler.config.servers.asSequence()
             .map { it.value }
             .filter { feed in it.rssFeeds && it.newsChannel != null }
             .toList()

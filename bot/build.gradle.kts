@@ -17,6 +17,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.okio) // explicitly implement okio
     implementation(libs.crypto.fernet)
     implementation(libs.rssParser)
 
@@ -25,4 +26,10 @@ dependencies {
     implementation(libs.slf4k)
     implementation(libs.logback)
 
+    testImplementation(libs.junit.api)
+    testRuntimeOnly(libs.junit.engine)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
