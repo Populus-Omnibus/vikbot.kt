@@ -98,6 +98,7 @@ object VikBotHandler : EventListener {
             enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
             addEventListeners(this@VikBotHandler)
 
+            setEnableShutdownHook(false)
         }.build()
         _jda = client
         jda.awaitReady()
