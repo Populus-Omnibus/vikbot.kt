@@ -60,6 +60,7 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
                 event.reply("$groupName group created!").complete()
             }
         }
+
         this += object : SlashCommand("delete", "remove a role selector group") {
             val groupName by option(
                 "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
@@ -189,7 +190,7 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
             val serverEntry = config.servers[event.guild!!.idLong]
             val group = serverEntry.roleGroups[data.groupName]
             val selected = event.interaction.values.filterIsInstance<Role>()
-                .toMutableList() //can only receive roles, but check just in case
+                .toMutableList().sortedBy{it.name} //can only receive roles, but check just in case
 
             serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
             config.save()
@@ -220,6 +221,21 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
             event.hook.sendMessage("update successful!").complete()
         }
 
+        bot.buttonEvents += IdentifiableInteractionHandler("rolegroupeditlooks"){
+            val dir = (it.componentId.split(":").getOrNull(1))
+            val data = expiringReplies[it.messageIdLong]?.second as? RoleGroupLooksEditorData
+            val group = config.servers[it.guild?.idLong]?.roleGroups?.get(data?.groupName)
+            if(dir == null || data == null || group == null){
+                it.reply("failed").complete()
+                return@IdentifiableInteractionHandler
+            }
+            if(dir == "right"){
+                data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.count()-1)
+            }
+            else data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
+            data.edit(group)
+        }
+
         //handle paginated role group looks edit
         bot.reactionEvent[64] = lambda@{ event ->
             if (event is MessageReactionAddEvent) {
@@ -236,7 +252,7 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
 
                 config.save()
                 event.retrieveMessage().complete().clearReactions().complete()
-                data.edit(group, index)
+                data.edit(group)
             }
             EventResult.PASS
         }
@@ -295,17 +311,17 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
 
     class RoleGroupLooksEditorData
     private constructor(
-        msg: Message, groupName: String, val buttons: List<Button>, val currentPage: Int = 0
+        msg: Message, groupName: String, val buttons: List<Button>, var currentPage: Int = 0
     ) : RoleGroupEditorData(msg, groupName) {
         companion object {
             fun create(groupName: String, interaction: SlashCommandInteractionEvent): RoleGroupLooksEditorData? {
                 val channel = interaction.channel as? GuildMessageChannel ?: run { return null }
                 val group = config.servers[channel.guild.idLong].roleGroups[groupName]
-                val buttons = mutableListOf(Button.primary("rolegroupeditlooks-left", Emoji.fromFormatted("◀")).apply {
+                val buttons = mutableListOf(Button.primary("rolegroupeditlooks:left", Emoji.fromFormatted("◀")).apply {
                     this.asDisabled()
-                }, Button.primary("rolegroupeditlooks-right", Emoji.fromFormatted("▶")).apply {
+                }, Button.primary("rolegroupeditlooks:right", Emoji.fromFormatted("▶")).apply {
                     if (group.roles.size < 2) this.asDisabled()
-                }, Button.secondary("rolegroupeditlooks-modify", "Modify")
+                }, Button.secondary("rolegroupeditlooks:modify", "Modify")
                 )
                 val msg = group.roles.getOrNull(0)?.descriptor?.let { data ->
                     val send = MessageCreateBuilder().addActionRow(buttons).addEmbeds(this.getEmbed(data))
@@ -323,11 +339,11 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
             }
         }
 
-        fun edit(group: RoleGroup, num: Int) {
-            group.roles.getOrNull(num)?.descriptor?.let { data ->
+        fun edit(group: RoleGroup) {
+            group.roles.getOrNull(currentPage)?.descriptor?.let { data ->
                 this.msg.editMessage(
                     MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning).build()
-                ).complete()
+                ).complete() //TODO: modify buttons
             }
         }
     }
