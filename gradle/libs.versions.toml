@@ -43,7 +43,7 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
-crypto-fernet = { group = "com.macasaet.fernet", name = "fernet-java8", version = "1.4.2" }
+crypto-fernet = { group = "com.macasaet.fernet", name = "fernet-java8", version = "1.5.0" }
 
 rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.3" }
 
