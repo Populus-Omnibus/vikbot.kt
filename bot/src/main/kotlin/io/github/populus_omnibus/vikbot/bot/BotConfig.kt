@@ -65,11 +65,11 @@ data class ServerEntry(
 data class RoleGroup(
     val roles: MutableList<RoleEntry> = mutableListOf(),
     val maxRolesAllowed: Int? = null,
-)
+) {
     @Serializable
     data class RoleEntry(
         val roleId: Long,
-        val descriptor: RoleDescriptor
+        var descriptor: RoleDescriptor
     ) {
         @Serializable
         data class RoleDescriptor(
@@ -78,4 +78,5 @@ data class RoleGroup(
             val fullName: String, //custom name for the role, can be different from the role's actual name
             val description: String, //the description that will be displayed in the role selector
         )
+    }
 }
