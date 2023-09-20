@@ -35,7 +35,7 @@ object RoleSelectorModule {
     @Module
     operator fun invoke(bot: VikBotHandler) {
         bot += expiringReplies.maintainEvent(maintainDuration) { _, data ->
-            data.msg.delete().queue()
+            data.msg.delete().complete()
         }
     }
 }
