@@ -168,6 +168,21 @@ object RoleSelectorCommands :
                 event.reply("groups pruned!").setEphemeral(true).complete()
             }
         }
+
+        this += object : SlashCommand("maxroles", "changes the maximum roles to be picked from this group"){
+            val groupName by option(
+                "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
+            ).required()
+            val limit by option("maximum", "the maximum - 0 disables it", SlashOptionType.INTEGER).required()
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                config.servers[event.guild?.idLong]?.roleGroups?.get(groupName)?.let { group ->
+                    group.maxRolesAllowed = limit.coerceIn(0..25).takeIf { it != 0 }
+                    event.reply("done").setEphemeral(true).complete()
+                    config.save()
+                } ?: run { event.reply("couldn't find group").setEphemeral(true).complete() }
+            }
+        }
     }
 
 
