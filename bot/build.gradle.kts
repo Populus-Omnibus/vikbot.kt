@@ -19,6 +19,7 @@ dependencies {
 
     implementation(libs.okio) // explicitly implement okio
     implementation(libs.crypto.fernet)
+    implementation(libs.rssParser)
 
     // Logger stuff
     implementation(libs.slf4j)
