@@ -12,9 +12,9 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.commands.adminOnly
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
-import io.github.populus_omnibus.vikbot.bot.RoleEntry
-import io.github.populus_omnibus.vikbot.bot.RoleEntry.RoleDescriptor
 import io.github.populus_omnibus.vikbot.bot.RoleGroup
+import io.github.populus_omnibus.vikbot.bot.RoleGroup.RoleEntry
+import io.github.populus_omnibus.vikbot.bot.RoleGroup.RoleEntry.RoleDescriptor
 import io.github.populus_omnibus.vikbot.bot.ServerEntry
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
@@ -27,10 +27,14 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
+import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
+import net.dv8tion.jda.api.interactions.components.text.TextInput
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
+import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import org.slf4j.kotlin.getLogger
@@ -224,20 +228,44 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
         bot.buttonEvents += IdentifiableInteractionHandler("rolegroupeditlooks"){
             val dir = (it.componentId.split(":").getOrNull(1))
             val data = expiringReplies[it.messageIdLong]?.second as? RoleGroupLooksEditorData
-            val group = config.servers[it.guild?.idLong]?.roleGroups?.get(data?.groupName)
+            val group = data?.group
             if(dir == null || data == null || group == null){
                 it.reply("failed").complete()
                 return@IdentifiableInteractionHandler
             }
-            if(dir == "right"){
-                data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.count()-1)
+            when(dir){
+                "modify" -> {
+                    val ti1 = TextInput.create("name", "Full name (default if empty)", TextInputStyle.SHORT).build()
+                    val ti2 = TextInput.create("description", "Description", TextInputStyle.SHORT).build()
+                    it.replyModal(Modal.create("rolegroupeditlooks", "Edit role")
+                        .addComponents(ActionRow.of(ti1))
+                        .addComponents(ActionRow.of(ti2))
+                        .build()).complete()
+                    return@IdentifiableInteractionHandler
+                }
+                "right" -> {
+                    data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.count()-1)
+                    it.deferEdit().complete()
+                }
+                "left" -> {
+                    data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
+                    it.deferEdit().complete()
+                }
             }
-            else data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
-
             config.save()
             data.edit(group)
-            it.deferEdit().complete()
         }
+        bot.modalEvents += IdentifiableInteractionHandler("rolegroupeditlooks:modify"){ interact ->
+            val name = interact.getValue("name")?.asString
+            val desc = interact.getValue("description")?.asString
+            (expiringReplies[interact.message?.idLong]?.second as? RoleGroupLooksEditorData)?.let{
+                val current = it.group.roles[it.currentPage]
+                current.descriptor = current.descriptor.copy(
+                    fullName = if (name.isNullOrEmpty()) current.descriptor.apiName else name,
+                    description = desc ?: "")
+            }
+        }
+
 
         //handle paginated role group looks edit
         bot.reactionEvent[64] = lambda@{ event ->
@@ -246,11 +274,10 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
                     return@lambda EventResult.PASS
                 }
 
-                val group = config.getRoleGroup(event.guild.idLong, data.groupName)
+                val group = data.group
                 val index = data.currentPage
                 group.roles[index].let { role ->
-                    group.roles[index] =
-                        RoleEntry(role.roleId, role.descriptor.copy(emoteName = event.reaction.emoji.formatted))
+                    role.descriptor = role.descriptor.copy(emoteName = event.reaction.emoji.formatted)
                 }
 
                 config.save()
@@ -314,8 +341,11 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
 
     class RoleGroupLooksEditorData
     private constructor(
-        msg: Message, groupName: String, val buttons: List<Button>, var currentPage: Int = 0
+        msg: Message, groupName: String, var currentPage: Int = 0
     ) : RoleGroupEditorData(msg, groupName) {
+        val group: RoleGroup
+            get() = config.servers[msg.guild.idLong].roleGroups[this.groupName]
+
         companion object {
             fun create(groupName: String, interaction: SlashCommandInteractionEvent): RoleGroupLooksEditorData? {
                 val channel = interaction.channel as? GuildMessageChannel ?: run { return null }
@@ -331,7 +361,7 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
                         .setContent(interactionDeletionWarning).build()
                     interaction.reply(send).complete().retrieveOriginal().complete()
                 }
-                return msg?.let { RoleGroupLooksEditorData(it, groupName, buttons) }
+                return msg?.let { RoleGroupLooksEditorData(it, groupName) }
             }
 
             fun getEmbed(data: RoleDescriptor): MessageEmbed {
