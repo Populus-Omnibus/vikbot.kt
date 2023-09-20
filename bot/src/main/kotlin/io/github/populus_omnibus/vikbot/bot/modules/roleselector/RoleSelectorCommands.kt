@@ -17,7 +17,6 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
@@ -201,15 +200,18 @@ object RoleSelectorCommands :
                 "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
             ).required()
 
+            val role by option(
+                "role", "the chosen role, not setting one will remove the generic", SlashOptionType.ROLE
+            )
+
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                val selectMenu = EntitySelectMenu.create("rolegroupeditchoices:generic", EntitySelectMenu.SelectTarget.ROLE)
-                    .setRequiredRange(0, 1).build()
-                expiringReplies += RoleGroupEditorData(
-                    event.reply("$interactionDeletionWarning\nEditing generic for: $groupName")
-                        .addActionRow(selectMenu)
-                        .addActionRow(Button.secondary("rolegroupeditgeneric_reset", "Reset")).complete()
-                        .retrieveOriginal().complete(), groupName
-                )
+                config.servers[event.guild?.idLong]?.roleGroups?.get(groupName)?.let {
+                    it.genericRoleId = role?.idLong
+                    event.reply("done").setEphemeral(true).complete()
+                    config.save()
+                    return
+                }
+                event.reply("failed").setEphemeral(true).complete()
             }
         }
 

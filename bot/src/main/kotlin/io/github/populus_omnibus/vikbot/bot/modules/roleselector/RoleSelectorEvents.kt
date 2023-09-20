@@ -33,14 +33,8 @@ object RoleSelectorEvents {
             val group = serverEntry.roleGroups[data.groupName]
             val selected = event.interaction.values.filterIsInstance<Role>().toMutableList()
                 .sortedBy { it.name } //can only receive roles, but check just in case
-
-            if(type == "generic") {
-                serverEntry.roleGroups[data.groupName].genericRoleId = selected.getOrNull(0)?.idLong
-            }
-            else {
-                serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
-                refreshGroupEmbeds(data.groupName)
-            }
+            serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
+            refreshGroupEmbeds(data.groupName)
 
             config.save()
             event.hook.sendMessage("edited group").complete()
@@ -108,15 +102,6 @@ object RoleSelectorEvents {
             it.deferEdit().complete()
             data.reload()
             config.save()
-        }
-
-        bot.buttonEvents += IdentifiableInteractionHandler("rolegroupeditgeneric_reset") { interact ->
-            interact.deferEdit().complete()
-
-            (expiringReplies[interact.messageIdLong]?.second as? RoleGroupEditorData)?.let {
-                config.servers[interact.guild?.idLong]?.roleGroups?.get(it.groupName)?.genericRoleId = null
-                config.save()
-            }
         }
 
         bot.modalEvents += IdentifiableInteractionHandler("rolegroupeditlooks") { interact ->
