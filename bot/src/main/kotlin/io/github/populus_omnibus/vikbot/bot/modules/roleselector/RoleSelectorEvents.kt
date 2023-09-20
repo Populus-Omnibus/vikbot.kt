@@ -1,6 +1,7 @@
 package io.github.populus_omnibus.vikbot.bot.modules.roleselector
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
+import io.github.populus_omnibus.vikbot.VikBotHandler.config
 import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
@@ -19,6 +20,8 @@ object RoleSelectorEvents {
     @Module
     operator fun invoke(bot: VikBotHandler) {
         bot.entitySelectEvents += IdentifiableInteractionHandler("rolegroupeditchoices") { event ->
+            val type = event.componentId.split(":").getOrNull(1)
+
             //get all roles belonging to the group referenced by the component's id
             event.deferReply().setEphemeral(true).complete()
 
@@ -26,15 +29,20 @@ object RoleSelectorEvents {
                 event.hook.sendMessage("failed").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
-            val serverEntry = VikBotHandler.config.servers[event.guild!!.idLong]
+            val serverEntry = config.servers[event.guild!!.idLong]
             val group = serverEntry.roleGroups[data.groupName]
             val selected = event.interaction.values.filterIsInstance<Role>().toMutableList()
                 .sortedBy { it.name } //can only receive roles, but check just in case
 
-            serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
-            refreshGroupEmbeds(data.groupName)
+            if(type == "generic") {
+                serverEntry.roleGroups[data.groupName].genericRoleId = selected.getOrNull(0)?.idLong
+            }
+            else {
+                serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
+                refreshGroupEmbeds(data.groupName)
+            }
 
-            VikBotHandler.config.save()
+            config.save()
             event.hook.sendMessage("edited group").complete()
         }
 
@@ -47,7 +55,7 @@ object RoleSelectorEvents {
             }
             event.deferReply().setEphemeral(true).complete()
 
-            val allRoles = VikBotHandler.config.getRoleGroup(guildId, groupName).roles.mapNotNull {
+            val allRoles = config.getRoleGroup(guildId, groupName).roles.mapNotNull {
                 event.guild!!.roles.find { role -> role.idLong == it.roleId }
             }
             val selection = event.values.mapNotNull {
@@ -77,7 +85,6 @@ object RoleSelectorEvents {
 
                 "left" -> {
                     data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
-
                 }
 
                 "modify" -> {
@@ -91,7 +98,6 @@ object RoleSelectorEvents {
                     ).complete()
                     return@IdentifiableInteractionHandler
                 }
-
                 else -> {
                     data.group.roles[data.currentPage].apply {
                         descriptor = descriptor.copy(emoteName = "")
@@ -101,8 +107,18 @@ object RoleSelectorEvents {
             }
             it.deferEdit().complete()
             data.reload()
-            VikBotHandler.config.save()
+            config.save()
         }
+
+        bot.buttonEvents += IdentifiableInteractionHandler("rolegroupeditgeneric_reset") { interact ->
+            interact.deferEdit().complete()
+
+            (expiringReplies[interact.messageIdLong]?.second as? RoleGroupEditorData)?.let {
+                config.servers[interact.guild?.idLong]?.roleGroups?.get(it.groupName)?.genericRoleId = null
+                config.save()
+            }
+        }
+
         bot.modalEvents += IdentifiableInteractionHandler("rolegroupeditlooks") { interact ->
             val name = interact.getValue("name")?.asString
             val desc = interact.getValue("description")?.asString
@@ -114,7 +130,7 @@ object RoleSelectorEvents {
                 it.reload()
             }
             interact.deferEdit().complete()
-            VikBotHandler.config.save()
+            config.save()
         }
 
 
@@ -131,7 +147,7 @@ object RoleSelectorEvents {
                     role.descriptor = role.descriptor.copy(emoteName = event.reaction.emoji.formatted)
                 }
 
-                VikBotHandler.config.save()
+                config.save()
                 event.retrieveMessage().complete().clearReactions().complete()
                 data.reload()
             }

@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
@@ -94,7 +95,7 @@ object RoleSelectorCommands :
             ).required()
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                val selectMenu = EntitySelectMenu.create("rolegroupeditchoices", EntitySelectMenu.SelectTarget.ROLE)
+                val selectMenu = EntitySelectMenu.create("rolegroupeditchoices:specifics", EntitySelectMenu.SelectTarget.ROLE)
                     .setRequiredRange(0, 25).build()
                 expiringReplies += RoleGroupEditorData(
                     event.reply("$interactionDeletionWarning\nEditing: $groupName").addActionRow(selectMenu).complete()
@@ -183,6 +184,25 @@ object RoleSelectorCommands :
                 } ?: run { event.reply("couldn't find group").setEphemeral(true).complete() }
             }
         }
+
+        this += object : SlashCommand("setgeneric", "changes the generic role attached to this group"){
+            val groupName by option(
+                "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
+            ).required()
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                val selectMenu = EntitySelectMenu.create("rolegroupeditchoices:generic", EntitySelectMenu.SelectTarget.ROLE)
+                    .setRequiredRange(0, 1).build()
+                expiringReplies += RoleGroupEditorData(
+                    event.reply("$interactionDeletionWarning\nEditing generic for: $groupName")
+                        .addActionRow(selectMenu)
+                        .addActionRow(Button.secondary("rolegroupeditgeneric_reset", "Reset")).complete()
+                        .retrieveOriginal().complete(), groupName
+                )
+            }
+        }
+
+
     }
 
 
