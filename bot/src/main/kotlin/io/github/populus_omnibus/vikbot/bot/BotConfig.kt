@@ -44,10 +44,6 @@ data class BotConfig(
             json.encodeToStream(this, output)
         }
     }
-
-    fun getRoleGroup(guildId: Long, groupName: String) : RoleGroup {
-        return servers[guildId].roleGroups[groupName]
-    }
 }
 
 @Serializable

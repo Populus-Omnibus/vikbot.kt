@@ -49,7 +49,7 @@ object RoleSelectorEvents {
             }
             event.deferReply().setEphemeral(true).complete()
 
-            val allRoles = config.getRoleGroup(guildId, groupName).roles.mapNotNull {
+            val allRoles = config.servers[guildId].roleGroups[groupName].roles.mapNotNull {
                 event.guild!!.roles.find { role -> role.idLong == it.roleId }
             }
             val selection = event.values.mapNotNull {
