@@ -67,7 +67,8 @@ data class ServerEntry(
 data class RoleGroup(
     val roles: MutableList<RoleEntry> = mutableListOf(),
     var maxRolesAllowed: Int? = null,
-    var lastPublished: PublishData? = null
+    var lastPublished: PublishData? = null,
+    var genericRoleId: Long? = null
 ) {
     @Serializable
     data class PublishData(val channelId: Long, val messageId: Long)
