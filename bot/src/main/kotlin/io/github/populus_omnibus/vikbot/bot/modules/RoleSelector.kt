@@ -233,7 +233,10 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
                 data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.count()-1)
             }
             else data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
+
+            config.save()
             data.edit(group)
+            it.deferEdit().complete()
         }
 
         //handle paginated role group looks edit
