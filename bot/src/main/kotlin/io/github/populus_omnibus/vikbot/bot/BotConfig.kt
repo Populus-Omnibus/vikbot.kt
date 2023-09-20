@@ -26,6 +26,7 @@ data class BotConfig(
     private val seMap: MutableMap<Long, ServerEntry> = mutableMapOf<Long,ServerEntry>().synchronized(),
     val vikAuthPort: Int = 12345,
     val vikAuthFernet: String,
+    val useRoleTags: Boolean = true
 ) {
     val servers: DefaultMap<Long, ServerEntry>
         get() = DefaultMap(seMap) { ServerEntry() }
