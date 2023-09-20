@@ -37,6 +37,7 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
 import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
+import org.slf4j.kotlin.error
 import org.slf4j.kotlin.getLogger
 import kotlin.collections.*
 import kotlin.time.Duration.Companion.minutes
@@ -145,7 +146,16 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
             ).required()
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                val group = config.servers[event.guild!!.idLong].roleGroups[groupName]
+                val group = event.guild?.let {
+                    config.servers[it.idLong].roleGroups[groupName]
+                } ?: run {
+                    event.reply("failed").setEphemeral(true).complete()
+                    return
+                }
+                val previous = group.lastPublished?.let {
+                    event.guild!!.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()}
+
+
                 val menu = StringSelectMenu.create("publishedrolemenu:$groupName")
                     .addOptions(group.roles.sortedBy { it.descriptor.fullName }.map {
                         val optionBuild = SelectOption.of(it.descriptor.fullName, it.roleId.toString())
@@ -159,13 +169,18 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
 
 
                 (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
-                    it.sendMessage("").addActionRow(menu).complete()
+                    group.lastPublished = RoleGroup.PublishData(it.idLong,
+                        it.sendMessage("").addActionRow(menu).complete().idLong)
                     event.reply("$groupName published!").setEphemeral(true).complete()
-                } ?: run {
-                    logger.error(
-                        "publish command used outside of a text channel (HOW??)\n" + "location: ${event.hook.interaction.channel?.name}"
-                    )
+                    config.save()
+
+                    //if the new message went through successfully
+                    previous?.delete()?.complete()
+                    return
                 }
+                logger.error(
+                    "publish command used outside of a text channel (HOW??)\n" + "location: ${event.hook.interaction.channel?.name}"
+                )
             }
         }
 
@@ -188,7 +203,7 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
             event.deferReply().setEphemeral(true).complete()
             //TODO: refactor
             val data = expiringReplies[event.messageIdLong]?.second as? RoleGroupEditorData ?: run {
-                event.hook.sendMessage("failed").complete()
+                event.hook.sendMessage("failed").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
             val serverEntry = config.servers[event.guild!!.idLong]
@@ -197,6 +212,8 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
                 .toMutableList().sortedBy{it.name} //can only receive roles, but check just in case
 
             serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
+            refreshGroupEmbeds(data.groupName)
+
             config.save()
             event.hook.sendMessage("edited group").complete()
         }
@@ -230,32 +247,38 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
             val data = expiringReplies[it.messageIdLong]?.second as? RoleGroupLooksEditorData
             val group = data?.group
             if(dir == null || data == null || group == null){
-                it.reply("failed").complete()
+                it.reply("failed").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
             when(dir){
+                "right" -> {
+                    data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.count()-1)
+                }
+                "left" -> {
+                    data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
+
+                }
                 "modify" -> {
-                    val ti1 = TextInput.create("name", "Full name (default if empty)", TextInputStyle.SHORT).build()
-                    val ti2 = TextInput.create("description", "Description", TextInputStyle.SHORT).build()
+                    val ti1 = TextInput.create("name", "Full name (default if empty)", TextInputStyle.SHORT).setRequired(false).build()
+                    val ti2 = TextInput.create("description", "Description", TextInputStyle.SHORT).setRequired(false).build()
                     it.replyModal(Modal.create("rolegroupeditlooks", "Edit role")
                         .addComponents(ActionRow.of(ti1))
                         .addComponents(ActionRow.of(ti2))
                         .build()).complete()
                     return@IdentifiableInteractionHandler
                 }
-                "right" -> {
-                    data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.count()-1)
-                    it.deferEdit().complete()
+                else -> {
+                    data.group.roles[data.currentPage].apply {
+                        descriptor = descriptor.copy(emoteName = "")
+                    }
                 }
-                "left" -> {
-                    data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
-                    it.deferEdit().complete()
-                }
+
             }
+            it.deferEdit().complete()
+            data.reload()
             config.save()
-            data.edit(group)
         }
-        bot.modalEvents += IdentifiableInteractionHandler("rolegroupeditlooks:modify"){ interact ->
+        bot.modalEvents += IdentifiableInteractionHandler("rolegroupeditlooks"){ interact ->
             val name = interact.getValue("name")?.asString
             val desc = interact.getValue("description")?.asString
             (expiringReplies[interact.message?.idLong]?.second as? RoleGroupLooksEditorData)?.let{
@@ -263,7 +286,10 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
                 current.descriptor = current.descriptor.copy(
                     fullName = if (name.isNullOrEmpty()) current.descriptor.apiName else name,
                     description = desc ?: "")
+                it.reload()
             }
+            interact.deferEdit().complete()
+            config.save()
         }
 
 
@@ -282,10 +308,16 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
 
                 config.save()
                 event.retrieveMessage().complete().clearReactions().complete()
-                data.edit(group)
+                data.reload()
             }
             EventResult.PASS
         }
+    }
+
+    private fun refreshGroupEmbeds(groupName: String) {
+        expiringReplies.mapNotNull { (it.value.second as? RoleGroupLooksEditorData) }
+            .filter { it.groupName == groupName }
+            .forEach { it.reload() }
     }
 
     private fun validateFromApiRole(apiRole: Role, storedRole: RoleEntry): RoleEntry {
@@ -350,12 +382,13 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
             fun create(groupName: String, interaction: SlashCommandInteractionEvent): RoleGroupLooksEditorData? {
                 val channel = interaction.channel as? GuildMessageChannel ?: run { return null }
                 val group = config.servers[channel.guild.idLong].roleGroups[groupName]
-                val buttons = mutableListOf(Button.primary("rolegroupeditlooks:left", Emoji.fromFormatted("◀")).apply {
-                    this.asDisabled()
-                }, Button.primary("rolegroupeditlooks:right", Emoji.fromFormatted("▶")).apply {
-                    if (group.roles.size < 2) this.asDisabled()
-                }, Button.secondary("rolegroupeditlooks:modify", "Modify")
-                )
+                val buttons = mutableListOf(Button.primary("rolegroupeditlooks:left", Emoji.fromFormatted("◀")).asDisabled(),
+                Button.primary("rolegroupeditlooks:right", Emoji.fromFormatted("▶")).apply {
+                    if (group.roles.size < 2) this.asDisabled()},
+                Button.secondary("rolegroupeditlooks:modify", "Modify"),
+                Button.secondary("rolegroupeditlooks:removeemote", "Remove emote"))
+
+
                 val msg = group.roles.getOrNull(0)?.descriptor?.let { data ->
                     val send = MessageCreateBuilder().addActionRow(buttons).addEmbeds(this.getEmbed(data))
                         .setContent(interactionDeletionWarning).build()
@@ -368,15 +401,23 @@ object RoleSelector : CommandGroup("roleselector", "Admin-only commands for addi
                 val botUser = jda.selfUser
                 return EmbedBuilder().setAuthor(botUser.effectiveName, null, botUser.effectiveAvatarUrl)
                     .setColor(config.embedColor)
-                    .addField("Name: ${data.fullName}  ${data.emoteName}", "Desc: ${data.description}", false).build()
+                    .addField(data.apiName, "Chosen name: ${data.fullName}  ${data.emoteName}\nDesc: ${data.description}", false).build()
             }
         }
 
-        fun edit(group: RoleGroup) {
+        fun reload() {
+            //page number validation
+            currentPage = currentPage.coerceIn(0 ..< group.roles.size)
             group.roles.getOrNull(currentPage)?.descriptor?.let { data ->
-                this.msg.editMessage(
-                    MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning).build()
-                ).complete() //TODO: modify buttons
+                val builder = MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning)
+                val buttons = this.msg.actionRows[0]?.actionComponents ?: run {
+                    logger.error { "Buttons not found in a paginated message!" }
+                    return
+                }
+                this.msg.editMessage(builder.setActionRow(buttons.apply {
+                    this[0] = buttons[0]?.withDisabled(currentPage == 0)
+                    this[1] = buttons[1]?.withDisabled(currentPage >= group.roles.size-1)
+                }).build()).complete()
             }
         }
     }
