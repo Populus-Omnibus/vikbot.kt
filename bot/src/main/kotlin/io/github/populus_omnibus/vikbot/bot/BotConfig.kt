@@ -54,6 +54,7 @@ data class ServerEntry(
     var newsChannel: Long? = null,
     var reportChannel: Long? = null,
     var deletedMessagesChannel: Long? = null,
+    val handledVoiceChannels: MutableList<Long> = mutableListOf(),
     var rssFeeds: MutableList<String> = mutableListOf(),
     @SerialName("roleGroups")
     private val rgMap: MutableMap<String, RoleGroup> = mutableMapOf<String, RoleGroup>().synchronized(), //second is the group in which the role is

@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -43,6 +44,7 @@ object VikBotHandler : EventListener {
     val messageReceivedEvent = Event.simple<MessageReceivedEvent>()
     val messageUpdateEvent = Event.simple<MessageUpdateEvent>()
     val reactionEvent = Event.simple<GenericMessageReactionEvent>()
+    val guildVoiceUpdateEvent = Event.simple<GuildVoiceUpdateEvent>()
 
     val initEvent = mutableListOf<(JDA) -> Unit>().apply { add(::registerCommands) }
     val readyEvent = mutableListOf<(ReadyEvent) -> Unit>()
@@ -100,7 +102,7 @@ object VikBotHandler : EventListener {
             // configure here
             setActivity(Activity.playing(config.initActivity))
             disableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGE_TYPING)
-            enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+            enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_VOICE_STATES)
             addEventListeners(this@VikBotHandler)
 
             setEnableShutdownHook(false)
@@ -133,6 +135,7 @@ object VikBotHandler : EventListener {
                 when (event) {
                     is MessageReceivedEvent -> messageReceivedEvent(event)
                     is MessageUpdateEvent -> messageUpdateEvent(event)
+                    is GuildVoiceUpdateEvent -> guildVoiceUpdateEvent(event)
                     is ReadyEvent -> readyEvent.forEach { subscriber -> subscriber(event) }
                     is GuildReadyEvent -> guildInitEvent.forEach { subscriber -> subscriber(event) }
                     is SlashCommandInteractionEvent -> {
