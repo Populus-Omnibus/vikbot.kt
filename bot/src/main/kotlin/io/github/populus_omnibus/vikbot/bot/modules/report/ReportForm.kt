@@ -3,7 +3,11 @@ package io.github.populus_omnibus.vikbot.bot.modules.report
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
+import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
+import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
+import io.github.populus_omnibus.vikbot.api.commands.adminOnly
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.build.Commands
@@ -17,6 +21,16 @@ object ReportForm : ListenerAdapter() {
     @Module
     fun init(bot: VikBotHandler){
         val reportFormCommand = Commands.context(Command.Type.MESSAGE, APP_NAME)
+
+        bot.serverCommands += object : SlashCommand("setreportchannel","sets the channel to use in this guild for receiving reports", {adminOnly()}){
+            val channel by option("channel", "target channel, not supplying this option will cause a reset", SlashOptionType.CHANNEL)
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                bot.config.servers[event.guild?.idLong]?.reportChannel = channel?.idLong
+                bot.config.save()
+                event.reply("done!").setEphemeral(true).complete()
+            }
+        }
 
 
         bot.guildInitEvent += {
@@ -32,6 +46,7 @@ object ReportForm : ListenerAdapter() {
         }
         bot.modalEvents += IdentifiableInteractionHandler("reportform"){ event ->
             val channel = bot.config.servers[event.guild?.idLong]?.reportChannel?.let { id -> bot.jda.getTextChannelById(id) }
+            //TODO: format as embed
             channel?.sendMessage("${event.member?.effectiveName} reported ${event.message?.author?.effectiveName} for ${event.message?.jumpUrl}")
                 ?.complete()
             //if for some reason the required member and message data is missing, let it pass anyway, can help figure out the cause
