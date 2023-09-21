@@ -29,12 +29,12 @@ object RoleReset :
         this += object : SlashCommand("publish", "create a role reset message") {
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
                 event.replyModal(Modal.create("roleresetpublish", "Publishing role resetter")
-                    .addActionRow(TextInput.create("data",
-                        "Data (role group name \\n user-facing string)",
-                        TextInputStyle.PARAGRAPH).build())
-                    .build()).complete()
+                        .addActionRow(TextInput.create("data", "Data (role group name \\n user-facing string)", TextInputStyle.PARAGRAPH).build())
+                        .build()
+                ).complete()
             }
         }
+
         bot.modalEvents += IdentifiableInteractionHandler("roleresetpublish") { event ->
             val buttonData = event.getValue("data")?.asString?.split("\n")?.windowed(2, 2)?.map { Pair(it[0], it[1]) }
                 ?: run {
@@ -46,18 +46,20 @@ object RoleReset :
             }
 
             buttonData.filterNot { serverEntry.roleGroups.containsKey(it.first) }.let { pairs ->
-                if(pairs.isNotEmpty()){
+                if (pairs.isNotEmpty()) {
                     event.reply("Following groups not found: ${pairs.joinToString(", ") { it.first }}")
                         .setEphemeral(true).complete()
                     return@IdentifiableInteractionHandler
                 }
             }
 
-            val buttons = buttonData.map { listOf(
-                Button.danger("rolereset:${it.first}", it.second),
-                Button.secondary("separator", "|").asDisabled())
+            val buttons = buttonData.map {
+                listOf(
+                    Button.danger("rolereset:${it.first}", it.second),
+                    Button.secondary("separator", "|").asDisabled()
+                )
             }.flatten()
-            if(buttons.size < 2) return@IdentifiableInteractionHandler
+            if (buttons.size < 2) return@IdentifiableInteractionHandler
 
             //delete previous resetter
             serverEntry.lastRoleResetMessage?.let {
@@ -68,16 +70,22 @@ object RoleReset :
 
 
             //remove last placeholder before sending
-            val msg = event.channel.sendMessage(MessageCreateBuilder().addActionRow(buttons.subList(0, buttons.size-1)).build()).complete()
+            val msg = event.channel.sendMessage(
+                MessageCreateBuilder().addActionRow(buttons.subList(0, buttons.size - 1)).build()
+            ).complete()
             serverEntry.lastRoleResetMessage = msg?.let { PublishData(it.channel.idLong, it.idLong) }
         }
-        bot.buttonEvents += IdentifiableInteractionHandler("rolereset"){event->
+
+        bot.buttonEvents += IdentifiableInteractionHandler("rolereset") { event ->
             val groupName = event.interaction.componentId.split(":").getOrNull(1)
             //take roles from role group, find actual existing roles to match, and remove those from the user
-            groupName?.let {name -> bot.config.servers[event.guild?.idLong]?.roleGroups?.get(name)?.roles
-                    ?.mapNotNull {bot.jda.getRoleById(it.roleId)}?.let {roleList ->
-                        event.member?.let {member -> event.guild?.modifyMemberRoles(member, null, roleList)?.complete() }
-                }
+            groupName?.let { name ->
+                bot.config.servers[event.guild?.idLong]?.roleGroups?.get(name)?.roles
+                    ?.mapNotNull { bot.jda.getRoleById(it.roleId) }?.let { roleList ->
+                        event.member?.let { member ->
+                            event.guild?.modifyMemberRoles(member, null, roleList)?.complete()
+                        }
+                    }
             }
             event.reply("done").setEphemeral(true).complete()
         }
