@@ -71,5 +71,15 @@ object RoleReset :
             val msg = event.channel.sendMessage(MessageCreateBuilder().addActionRow(buttons.subList(0, buttons.size-1)).build()).complete()
             serverEntry.lastRoleResetMessage = msg?.let { PublishData(it.channel.idLong, it.idLong) }
         }
+        bot.buttonEvents += IdentifiableInteractionHandler("rolereset"){event->
+            val groupName = event.interaction.componentId.split(":").getOrNull(1)
+            //take roles from role group, find actual existing roles to match, and remove those from the user
+            groupName?.let {name -> bot.config.servers[event.guild?.idLong]?.roleGroups?.get(name)?.roles
+                    ?.mapNotNull {bot.jda.getRoleById(it.roleId)}?.let {roleList ->
+                        event.member?.let {member -> event.guild?.modifyMemberRoles(member, null, roleList)?.complete() }
+                }
+            }
+            event.reply("done").setEphemeral(true).complete()
+        }
     }
 }
