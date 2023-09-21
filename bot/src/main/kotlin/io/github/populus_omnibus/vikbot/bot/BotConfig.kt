@@ -2,6 +2,7 @@ package io.github.populus_omnibus.vikbot.bot
 
 import io.github.populus_omnibus.vikbot.api.DefaultMap
 import io.github.populus_omnibus.vikbot.api.synchronized
+import io.github.populus_omnibus.vikbot.bot.RoleGroup.PublishData
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -51,6 +52,7 @@ data class ServerEntry(
     var newsChannel: Long? = null,
     var reportChannel: Long? = null,
     var deletedMessagesChannel: Long? = null,
+    var lastRoleResetMessage: PublishData? = null,
     val handledVoiceChannels: MutableList<Long> = mutableListOf(),
     var rssFeeds: MutableList<String> = mutableListOf(),
     @SerialName("roleGroups")
