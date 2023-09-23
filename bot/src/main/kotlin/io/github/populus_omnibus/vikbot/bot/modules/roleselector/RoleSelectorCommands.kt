@@ -1,6 +1,7 @@
 package io.github.populus_omnibus.vikbot.bot.modules.roleselector
 
 import io.github.populus_omnibus.vikbot.VikBotHandler.config
+import io.github.populus_omnibus.vikbot.VikBotHandler.jda
 import io.github.populus_omnibus.vikbot.api.annotations.Command
 import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
@@ -64,15 +65,23 @@ object RoleSelectorCommands :
                 val paired = groups.toSortedMap().map { group ->
                     group.key!! to group.value.roles.mapNotNull { entry ->
                         guildRoles.find { it.idLong == entry.roleId }?.let {
-                            validateFromApiRole(it, entry)
+                            Pair(it, validateFromApiRole(it, entry))
                         }
                     }
                 }
+                //store only once to avoid calling it per group
+                val allRoles = jda.roles
 
                 val outputStringData = paired.map { (groupId, rolePairs) ->
                     //this is the string that will be output for each group
                     val groupOutput = rolePairs.joinToString("\n\t") { formattedOutput(it) }
-                    "**__${groupId}__**\n\t$groupOutput"
+
+                    val generic = allRoles.find { it.idLong == groups[groupId].genericRoleId}
+
+                    "**__${groupId}__** / generic: " + (run {
+                        if(config.useRoleTags) generic?.let { "<@&${it.idLong}>" }
+                        else generic?.name
+                    } ?: "<none>") + "\n\t$groupOutput"
                 }
                 event.reply(outputStringData.let {
                     if (it.isEmpty()) "server has no groups"
@@ -80,9 +89,11 @@ object RoleSelectorCommands :
                 }).complete()
             }
 
-            fun formattedOutput(source: RoleEntry): String {
-                source.descriptor.let {
-                    return "**${it.apiName}** ${it.emoteName}\n\t\t" + "(${it.fullName.ifEmpty { "<no full name>" }} \\|\\| ${it.description.ifEmpty { "<no desc>" }})"
+            fun formattedOutput(source: Pair<Role, RoleEntry>): String {
+                source.second.descriptor.let {
+                    return "**${if(config.useRoleTags) "<@&${source.first.idLong}> " else it.apiName}**" +
+                            "${it.emoteName}\n\t\t" + "(${it.fullName.ifEmpty { "<no full name>" }} \\|\\| " +
+                            "${it.description.ifEmpty { "<no desc>" }})"
                 }
             }
 
@@ -94,7 +105,7 @@ object RoleSelectorCommands :
             ).required()
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                val selectMenu = EntitySelectMenu.create("rolegroupeditchoices", EntitySelectMenu.SelectTarget.ROLE)
+                val selectMenu = EntitySelectMenu.create("rolegroupeditchoices:specifics", EntitySelectMenu.SelectTarget.ROLE)
                     .setRequiredRange(0, 25).build()
                 expiringReplies += RoleGroupEditorData(
                     event.reply("$interactionDeletionWarning\nEditing: $groupName").addActionRow(selectMenu).complete()
@@ -183,6 +194,28 @@ object RoleSelectorCommands :
                 } ?: run { event.reply("couldn't find group").setEphemeral(true).complete() }
             }
         }
+
+        this += object : SlashCommand("setgeneric", "changes the generic role attached to this group"){
+            val groupName by option(
+                "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
+            ).required()
+
+            val role by option(
+                "role", "the chosen role, not setting one will remove the generic", SlashOptionType.ROLE
+            )
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                config.servers[event.guild?.idLong]?.roleGroups?.get(groupName)?.let {
+                    it.genericRoleId = role?.idLong
+                    event.reply("done").setEphemeral(true).complete()
+                    config.save()
+                    return
+                }
+                event.reply("failed").setEphemeral(true).complete()
+            }
+        }
+
+
     }
 
 
