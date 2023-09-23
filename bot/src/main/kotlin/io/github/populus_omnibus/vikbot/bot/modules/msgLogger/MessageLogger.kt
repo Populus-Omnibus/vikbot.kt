@@ -15,6 +15,9 @@ object MessageLogger {
 
     private val messageMemory = createMemory<Long, UserMessage>()
 
+    internal val currentTrackedMessageCount: Int
+        get() = messageMemory.size
+
     @Module
     fun init(bot: VikBotHandler) {
 
@@ -37,7 +40,7 @@ object MessageLogger {
                 val message = messageMemory[event.messageIdLong]
 
                 if (message != null) {
-                    channel.sendMessageEmbeds(message.second.toEmbed(event.jda, "message deleted").build()).complete()
+                    channel.sendMessageEmbeds(message.second.toEmbed(event.jda, "deleted a message").build()).complete()
                 }
             }
             EventResult.PASS
@@ -54,10 +57,8 @@ object MessageLogger {
 
                     val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
 
-                    val message = messageMemory[event.messageIdLong]
-
-                    if (message != null) {
-                        channel.sendMessageEmbeds(message.second.toEmbed(event.jda, "message edited").build()).complete()
+                    if (oldMsg != null) {
+                        channel.sendMessageEmbeds(oldMsg.second.toEmbed(event.jda, "edited message", "https://discordapp.com/channels/${event.guild.idLong}/${event.channel.idLong}/${event.message.idLong}").build()).complete()
                     }
                 }
             }
@@ -73,7 +74,7 @@ object MessageLogger {
         val channel: Long,
         val embedLinks: List<String>
     ) {
-        suspend fun toEmbed(jda: JDA, title: String) = coroutineScope {
+        suspend fun toEmbed(jda: JDA, title: String, extra: String? = null) = coroutineScope {
             var iconUrl: String? = null
             var userName: String = author.toString()
 
@@ -82,11 +83,15 @@ object MessageLogger {
                 userName = it.effectiveName
             }
             EmbedBuilder().apply {
-                setAuthor(userName)
-                setThumbnail(iconUrl)
+                setAuthor(userName, null, iconUrl)
                 setFooter(Clock.System.now().toString())
-                setTitle(title)
-                addField("<@$author> $title", content, false)
+                setDescription("""
+                    **<@$author> $title**
+                    $content
+                """.trimIndent())
+                extra?.let {
+                    addField("---------", extra, false)
+                }
             }
         }
     }
