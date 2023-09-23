@@ -53,7 +53,11 @@ open class SlashCommand(name: String, val description: String, configure: SlashC
 
     open suspend fun bindAndInvoke(event: SlashCommandInteractionEvent) = coroutineScope {
         withContext(eventThreadLocal.asContextElement(event)) {
-            invoke(event)
+            try {
+                invoke(event)
+            } catch (e: Throwable) {
+                event.reply("Error, ${e.message}").setEphemeral(true).complete()
+            }
         }
         logger.info{ "finished running command" }
     }

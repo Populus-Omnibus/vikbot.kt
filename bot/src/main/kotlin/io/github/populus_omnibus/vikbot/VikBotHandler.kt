@@ -26,6 +26,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
@@ -46,6 +47,7 @@ object VikBotHandler : EventListener {
 
     val messageReceivedEvent = Event.simple<MessageReceivedEvent>()
     val messageUpdateEvent = Event.simple<MessageUpdateEvent>()
+    val messageDeleteEvent = Event.simple<MessageDeleteEvent>()
     val reactionEvent = Event.simple<GenericMessageReactionEvent>()
     val guildVoiceUpdateEvent = Event.simple<GuildVoiceUpdateEvent>()
     val guildMemberRoleAddEvent = Event.simple<GuildMemberRoleAddEvent>()
@@ -141,6 +143,7 @@ object VikBotHandler : EventListener {
                 when (event) {
                     is MessageReceivedEvent -> messageReceivedEvent(event)
                     is MessageUpdateEvent -> messageUpdateEvent(event)
+                    is MessageDeleteEvent -> messageDeleteEvent(event)
                     is GuildVoiceUpdateEvent -> guildVoiceUpdateEvent(event)
                     is ReadyEvent -> readyEvent.forEach { subscriber -> subscriber(event) }
                     is GuildReadyEvent -> guildInitEvent.forEach { subscriber -> subscriber(event) }

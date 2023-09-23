@@ -53,6 +53,7 @@ data class ServerEntry(
     var reportChannel: Long? = null,
     var deletedMessagesChannel: Long? = null,
     var lastRoleResetMessage: PublishData? = null,
+    var messageLoggingLevel: MessageLoggingLevel = MessageLoggingLevel.NONE,
     val handledVoiceChannels: MutableList<Long> = mutableListOf(),
     var rssFeeds: MutableList<String> = mutableListOf(),
     @SerialName("roleGroups")
@@ -85,4 +86,9 @@ data class RoleGroup(
             val description: String, //the description that will be displayed in the role selector
         )
     }
+}
+
+@Serializable
+enum class MessageLoggingLevel {
+    NONE, DELETED, ANY
 }
