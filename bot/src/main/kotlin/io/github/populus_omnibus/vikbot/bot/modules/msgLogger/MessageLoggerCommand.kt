@@ -18,7 +18,7 @@ object MessageLoggerCommand : CommandGroup("logger", "Message logger", {adminOnl
                 server.deletedMessagesChannel = channel.idLong
 
                 VikBotHandler.config.save()
-                event.reply("Deleted message logging channel is set to <#${channel.idLong}.").setEphemeral(true).complete()
+                event.reply("Deleted message logging channel is set to <#${channel.idLong}>.").setEphemeral(true).complete()
             }
         }
 
