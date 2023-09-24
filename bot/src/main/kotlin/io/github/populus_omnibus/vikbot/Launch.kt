@@ -2,6 +2,7 @@ package io.github.populus_omnibus.vikbot
 
 import io.github.populus_omnibus.vikbot.bot.ModuleLoader
 import io.github.populus_omnibus.vikbot.bot.BotConfig
+import io.github.populus_omnibus.vikbot.db.DatabaseHandler
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
@@ -34,6 +35,8 @@ object Launch {
         VikBotHandler.config = File(configFile).inputStream().use { input ->
             json.decodeFromStream<BotConfig>(input)
         }
+
+        DatabaseHandler.loadDatabase(VikBotHandler.config.database)
 
         // dynamic module loading
         logger.info { "Start loading modules" }
