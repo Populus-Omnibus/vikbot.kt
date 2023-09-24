@@ -96,8 +96,3 @@ data class RoleGroup(
         )
     }
 }
-
-@Serializable
-enum class MessageLoggingLevel {
-    NONE, DELETED, ANY
-}

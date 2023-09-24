@@ -1,12 +1,9 @@
 package io.github.populus_omnibus.vikbot.db
 
-import io.github.populus_omnibus.vikbot.bot.MessageLoggingLevel
 import kotlinx.datetime.Clock
-import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.LongIdTable
-import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
 object DiscordGuilds : LongIdTable(columnName = "guild") {
