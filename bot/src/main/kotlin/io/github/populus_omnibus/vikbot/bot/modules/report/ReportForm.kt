@@ -75,21 +75,26 @@ object ReportForm : ListenerAdapter() {
                     val reportedUser = message.author
                     val reporter = event.user
                     val reason = event.getValue("reportReason")?.asString?.takeIf { it.isNotEmpty() } ?: "<no reason>"
-                    channel?.sendMessageEmbeds(EmbedBuilder()
-                        .setAuthor(reportedUser.effectiveName, null, reportedUser.avatarUrl)
-                        .setDescription("**${reportedUser.idLong.toUserTag()} had their [message](${message.jumpUrl}) reported**")
-                        .addField("Content", message.contentRaw, false)
-                        .addField("Reason", reason, false)
-                        .addField("Sent at", message.timeCreated.toLocalDateTime().prettyPrint(true), false)
-                        .addField("Reported by", reporter.idLong.toUserTag(), false)
-                        .setFooter(Clock.System.now().prettyPrint())
-                        .build())?.complete()
+
+                    channel?.sendMessageEmbeds(EmbedBuilder().apply {
+                        setColor(bot.config.embedColor)
+                        setAuthor(reportedUser.effectiveName, null, reportedUser.avatarUrl)
+                        setDescription("**${reportedUser.idLong.toUserTag()} had their [message](${message.jumpUrl}) reported**")
+                        addField("Content", message.contentRaw, false)
+                        addField("Reason", reason, false)
+                        addField("Sent at", message.timeCreated.prettyPrint(true), false)
+                        addField("Reported by", reporter.idLong.toUserTag(), false)
+                        setFooter(Clock.System.now().prettyPrint())
+                        reportedMessage.attachments.filter { it.isImage }.getOrNull(0)?.let {
+                            setImage(it.url) //if the message contained an image, store that
+                        }
+                    }.build())?.complete()
+
                     event.hook.editOriginal("done!").complete()
                 }
             } ?: run {
                 event.hook.editOriginal("failed, contact admins if your request should've gone through").complete()
             }
-            //if for some reason the required member and message data is missing, let it pass anyway, can help figure out the cause
             //if no channel is set in the config file, the report will fall on deaf ears
         }
     }
