@@ -40,7 +40,7 @@ object MessageLogger {
                 val message = messageMemory[event.messageIdLong]
 
                 if (message != null) {
-                    channel.sendMessageEmbeds(message.second.toEmbed(event.jda, "deleted a message").build()).complete()
+                    channel.sendMessageEmbeds(message.second.toEmbed(event.jda, "deleted a").build()).complete()
                 }
             }
             EventResult.PASS
@@ -58,7 +58,7 @@ object MessageLogger {
                     val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
 
                     if (oldMsg != null) {
-                        channel.sendMessageEmbeds(oldMsg.second.toEmbed(event.jda, "edited message", event.jumpUrl).build()).complete()
+                        channel.sendMessageEmbeds(oldMsg.second.toEmbed(event.jda, "edited", event.jumpUrl).build()).complete()
                     }
                 }
             }
@@ -74,7 +74,7 @@ object MessageLogger {
         val channel: Long,
         val embedLinks: List<String>
     ) {
-        suspend fun toEmbed(jda: JDA, title: String, extra: String? = null) = coroutineScope {
+        suspend fun toEmbed(jda: JDA, title: String, link: String? = null) = coroutineScope {
             var iconUrl: String? = null
             var userName: String = author.toString()
 
@@ -86,12 +86,9 @@ object MessageLogger {
                 setAuthor(userName, null, iconUrl)
                 setFooter(Clock.System.now().toString())
                 setDescription("""
-                    **<@$author> $title**
+                    **<@$author> $title ${link?.let { "[message]($it)" } ?: "message"}**
                     $content
                 """.trimIndent())
-                extra?.let {
-                    addField("---------", extra, false)
-                }
             }
         }
     }
