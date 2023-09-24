@@ -46,9 +46,12 @@ operator fun <K, T> MutableMap<K, Pair<Instant, T>>.set(key: K, value: T) {
     this[key] = Clock.System.now() to value
 }
 
+operator fun MutableMap<Long, Pair<Instant, Message>>.plusAssign(message: Message) {
+    this[message.idLong] = Clock.System.now() to message
+}
+
 operator fun MutableMap<Long, Pair<Instant, Message>>.plusAssign(interaction: InteractionHook) {
-    val msg = interaction.retrieveOriginal().complete()
-    this[msg.idLong] = Clock.System.now() to msg
+    this += interaction.retrieveOriginal().complete()
 }
 
 operator fun <T : CustomMessageData> MutableMap<Long, Pair<Instant, T>>.plusAssign(value: T) {
