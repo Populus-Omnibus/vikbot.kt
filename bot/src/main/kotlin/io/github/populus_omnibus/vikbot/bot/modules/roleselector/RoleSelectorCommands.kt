@@ -153,7 +153,7 @@ object RoleSelectorCommands :
                         } catch (_: Exception) {
                             optionBuild
                         }
-                    }).setMinValues(0).setMaxValues(group.maxRolesAllowed ?: 25).build()
+                    }).setMinValues(0).setMaxValues(group.maxRolesAllowed).build()
 
 
                 (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
@@ -184,11 +184,11 @@ object RoleSelectorCommands :
             val groupName by option(
                 "name", "name of the group", RoleSelectorGroupAutocompleteString(config.servers)
             ).required()
-            val limit by option("maximum", "the maximum - 0 disables it", SlashOptionType.INTEGER).required()
+            val limit by option("maximum", "the maximum - not setting this value disables it", SlashOptionType.INTEGER)
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
                 config.servers[event.guild?.idLong]?.roleGroups?.get(groupName)?.let { group ->
-                    group.maxRolesAllowed = limit.coerceIn(0..25).takeIf { it != 0 }
+                    group.maxRolesAllowed = limit?.coerceIn(1..25) ?: 25
                     event.reply("done").setEphemeral(true).complete()
                     config.save()
                 } ?: run { event.reply("couldn't find group").setEphemeral(true).complete() }
