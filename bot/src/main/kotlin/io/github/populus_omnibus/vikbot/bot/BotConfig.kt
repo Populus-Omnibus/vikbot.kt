@@ -27,7 +27,8 @@ data class BotConfig(
     private val seMap: MutableMap<Long, ServerEntry> = mutableMapOf<Long,ServerEntry>().synchronized(),
     val vikAuthPort: Int = 12345,
     val vikAuthFernet: String,
-    val useRoleTags: Boolean = true
+    val useRoleTags: Boolean = true,
+    val database: DatabaseAccess = DatabaseAccess(),
 ) {
     val servers: DefaultMap<Long, ServerEntry>
         get() = DefaultMap(seMap) { ServerEntry() }
@@ -46,6 +47,14 @@ data class BotConfig(
         }
     }
 }
+
+@Serializable
+data class DatabaseAccess(
+    val address: String = "jdbc:sqlite:data.db",
+    val driver: String = "org.sqlite.JDBC",
+    val username: String = "",
+    val password: String = "",
+)
 
 @Serializable
 data class ServerEntry(
