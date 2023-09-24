@@ -17,6 +17,8 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
@@ -25,6 +27,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
@@ -33,6 +36,7 @@ import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.utils.MemberCachePolicy
 import org.slf4j.kotlin.error
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
@@ -45,8 +49,12 @@ object VikBotHandler : EventListener {
     val messageReceivedEvent = Event.simple<MessageReceivedEvent>()
     val messageUpdateEvent = Event.simple<MessageUpdateEvent>()
     val messageContextInteractionEvent = Event.simple<MessageContextInteractionEvent>()
+    val messageDeleteEvent = Event.simple<MessageDeleteEvent>()
+    
     val reactionEvent = Event.simple<GenericMessageReactionEvent>()
     val guildVoiceUpdateEvent = Event.simple<GuildVoiceUpdateEvent>()
+    val guildMemberRoleAddEvent = Event.simple<GuildMemberRoleAddEvent>()
+    val guildMemberRoleRemoveEvent = Event.simple<GuildMemberRoleRemoveEvent>()
 
     val initEvent = mutableListOf<(JDA) -> Unit>().apply { add(::registerCommands) }
     val readyEvent = mutableListOf<(ReadyEvent) -> Unit>()
@@ -104,9 +112,10 @@ object VikBotHandler : EventListener {
             // configure here
             setActivity(Activity.playing(config.initActivity))
             disableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGE_TYPING)
-            enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_VOICE_STATES)
+            enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT,
+                GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_MEMBERS)
             addEventListeners(this@VikBotHandler)
-
+            setMemberCachePolicy(MemberCachePolicy.ALL)
             setEnableShutdownHook(false)
         }.build()
         _jda = client
@@ -138,6 +147,8 @@ object VikBotHandler : EventListener {
                     is MessageReceivedEvent -> messageReceivedEvent(event)
                     is MessageUpdateEvent -> messageUpdateEvent(event)
                     is MessageContextInteractionEvent -> messageContextInteractionEvent(event)
+                    is MessageDeleteEvent -> messageDeleteEvent(event)
+                    
                     is GuildVoiceUpdateEvent -> guildVoiceUpdateEvent(event)
                     is ReadyEvent -> readyEvent.forEach { subscriber -> subscriber(event) }
                     is GuildReadyEvent -> guildInitEvent.forEach { subscriber -> subscriber(event) }
@@ -146,6 +157,8 @@ object VikBotHandler : EventListener {
                         commandMap[event.name]?.bindAndInvoke(event)
                             ?: logger.error { "executed command was not found: ${event.name}" }
                     }
+                    is GuildMemberRoleAddEvent -> guildMemberRoleAddEvent(event)
+                    is GuildMemberRoleRemoveEvent -> guildMemberRoleRemoveEvent(event)
 
                     is ButtonInteractionEvent -> buttonEvents(event.button.id, event, "button")
                     is ModalInteractionEvent -> modalEvents(event.modalId, event, "modal")

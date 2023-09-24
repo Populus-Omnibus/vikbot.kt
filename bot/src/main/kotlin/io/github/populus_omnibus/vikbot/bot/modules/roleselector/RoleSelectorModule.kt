@@ -79,9 +79,9 @@ private constructor(
             val group = VikBotHandler.config.servers[channel.guild.idLong].roleGroups[groupName]
             val buttons = mutableListOf(
                 Button.primary("rolegroupeditlooks:left", Emoji.fromFormatted("◀"))
-                    .asDisabled(), Button.primary("rolegroupeditlooks:right", Emoji.fromFormatted("▶")).apply {
-                    if (group.roles.size < 2) this.asDisabled()
-                }, Button.secondary("rolegroupeditlooks:modify", "Modify"), Button.secondary("rolegroupeditlooks:removeemote", "Remove emote")
+                    .asDisabled(), Button.primary("rolegroupeditlooks:right", Emoji.fromFormatted("▶"))
+                        .withDisabled(group.roles.size < 2),
+                Button.secondary("rolegroupeditlooks:modify", "Modify"), Button.secondary("rolegroupeditlooks:removeemote", "Remove emote")
             )
 
 
