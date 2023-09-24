@@ -26,12 +26,15 @@ object RssFeeds : IntIdTable() {
     val feed = text("feed")
 }
 
-object RoleGroups : IdTable<String>() {
-    override val id = varchar("id", 255).entityId()
-    override val primaryKey = PrimaryKey(id)
+object RoleGroups : IntIdTable() {
+    val name = varchar("id", 255)
+    val guild = reference("guild", DiscordGuilds)
 
     val maxRolesAllowed = integer("maxRoles").default(25)
     val genericRoleId = long("genericRole").nullable()
+    init {
+        uniqueIndex(name, guild)
+    }
 }
 
 object PublishData : IntIdTable() {
@@ -46,9 +49,9 @@ object PublishData : IntIdTable() {
 }
 
 object RoleEntries : LongIdTable(columnName = "role") {
-    val guild = reference("guild", DiscordGuilds)
+    val group = reference("group", RoleGroups)
     val roleId = id // just to make sure
-    val description = text("description")
+    val description = text("description", eagerLoading = true)
 
     val emoteName = varchar("emote", 1024)
     val apiName = varchar("apiName", 1024)
@@ -60,7 +63,7 @@ object UserMessages : LongIdTable() {
     val channelId = long("channel")
     val messageId = id
     val timestamp = timestamp("timestamp").clientDefault { Clock.System.now() }
-    val content = text("text")
+    val content = text("text", eagerLoading = true)
 }
 
 
