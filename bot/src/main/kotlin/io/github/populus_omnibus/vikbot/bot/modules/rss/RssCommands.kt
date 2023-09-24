@@ -1,17 +1,22 @@
 package io.github.populus_omnibus.vikbot.bot.modules.rss
 
-import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Command
 import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.db.RssFeed
+import io.github.populus_omnibus.vikbot.db.RssFeeds
+import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.coroutines.coroutineScope
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.transactions.transaction
 
 @Command(type = CommandType.SERVER)
 object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
@@ -26,10 +31,10 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
                         .setEphemeral(true)
                         .complete()
                 } else {
-                    val serverEntry = VikBotHandler.config.servers[event.guild!!.idLong]
-                    serverEntry.newsChannel = channel.idLong
-                    VikBotHandler.config.save()
-
+                    transaction {
+                        val serverEntry = Servers[event.guild!!.idLong]
+                        serverEntry.newsChannel = channel.idLong
+                    }
                     event.reply("Saved news channel")
                         .setEphemeral(true)
                         .complete()
@@ -38,7 +43,7 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
         }
 
         this += object : SlashCommand("addFeed".lowercase(), "Add RSS feed") {
-            val feed by option("feed", "RSS feed", SlashOptionType.STRING).required()
+            val feedStr by option("feed", "RSS feed", SlashOptionType.STRING).required()
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
                 if (event.guild == null) {
@@ -46,14 +51,18 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
                         .setEphemeral(true)
                         .complete()
                 } else {
-                    val serverEntry = VikBotHandler.config.servers[event.guild!!.idLong]
-                    if (feed in serverEntry.rssFeeds) {
-                        event.reply("Feed is already added")
-                    } else {
-                        serverEntry.rssFeeds += feed
-                        VikBotHandler.config.save()
-                        RssModule.updateFeedChannels()
-                        event.reply("Feed added to guild")
+                    transaction {
+                        val hasRss = RssFeed.count((RssFeeds.guild eq event.guild!!.idLong) and (RssFeeds.feed eq feedStr)) > 0
+                        if (hasRss) {
+                            event.reply("Feed is already added")
+                        } else {
+                            RssFeed.new {
+                                this.feed = feedStr
+                                this.guild = Servers[event.guild!!.idLong].guild
+                            }
+                            RssModule.updateFeedChannels()
+                            event.reply("Feed added to guild")
+                        }
                     }.setEphemeral(true)
                         .complete()
                 }
@@ -69,14 +78,16 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
                         .setEphemeral(true)
                         .complete()
                 } else {
-                    val serverEntry = VikBotHandler.config.servers[event.guild!!.idLong]
-                    if (feed !in serverEntry.rssFeeds) {
-                        event.reply("Feed is already added")
-                    } else {
-                        serverEntry.rssFeeds -= feed
-                        VikBotHandler.config.save()
-                        RssModule.updateFeedChannels()
-                        event.reply("Feed removed from guild")
+                    transaction {
+                        val feed = RssFeed.find { RssFeeds.feed eq feed and (RssFeeds.guild eq event.guild!!.idLong) }
+                            .firstOrNull()
+                        if (feed == null) {
+                            event.reply("Feed is not added to server")
+                        } else {
+                            feed.delete()
+                            RssModule.updateFeedChannels()
+                            event.reply("Feed removed from guild")
+                        }
                     }.setEphemeral(true)
                         .complete()
                 }
@@ -86,13 +97,17 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
         this += object : SlashCommand("listFeeds".lowercase(), "List subscriptions") {
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                val server = event.guild!!.let { VikBotHandler.config.servers[it.idLong] }
-                if (server.rssFeeds.isEmpty()) {
-                    event.reply("There are no feeds")
-                        .setEphemeral(true)
-                } else {
-                    event.reply("Server feeds:\n"
-                    + server.rssFeeds.joinToString(separator = "\n- ", prefix = "- "))
+                transaction {
+                    val server = event.guild!!.let { Servers[it.idLong] }
+                    if (server.rssFeeds.empty()) {
+                        event.reply("There are no feeds")
+                            .setEphemeral(true)
+                    } else {
+                        event.reply(
+                            "Server feeds:\n"
+                                    + server.rssFeeds.joinToString(separator = "\n- ", prefix = "- ")
+                        )
+                    }
                 }.complete()
             }
         }
@@ -111,8 +126,8 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
 
         override suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent): Unit = coroutineScope {
             val userString = event.focusedOption.value
-            val server = event.guild!!.let { VikBotHandler.config.servers[it.idLong] }
-            val choices = server.rssFeeds.asSequence()
+            val server = transaction { event.guild!!.let { Servers[it.idLong] } }
+            val choices = server.rssFeeds.asSequence().map { it.feed }
                 .filter { userString.isEmpty() || it.startsWith(userString) }.take(25)
             event.replyChoiceStrings(choices.toList()).complete()
         }

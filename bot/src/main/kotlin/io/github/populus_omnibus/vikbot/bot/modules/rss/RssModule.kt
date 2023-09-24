@@ -4,6 +4,9 @@ import com.prof18.rssparser.RssParser
 import com.prof18.rssparser.model.RssItem
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
+import io.github.populus_omnibus.vikbot.db.DiscordGuild
+import io.github.populus_omnibus.vikbot.db.DiscordGuilds
+import io.github.populus_omnibus.vikbot.db.RssFeeds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -14,6 +17,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
 import java.time.format.TextStyle
@@ -52,12 +58,13 @@ object RssModule {
 
     internal fun updateFeedChannels() {
         logger.info { "Updating RSS listener" }
+        val feeds = transaction {
 
-        val feeds = VikBotHandler.config.servers.asSequence().flatMap { (_, server) -> server.rssFeeds }
-            .distinct().map {
-                it to (rssFeeds[it] ?: RssFeedObject(Clock.System.now()))
+            RssFeeds.slice(RssFeeds.feed).selectAll().withDistinct().map {
+                val feed = it[RssFeeds.feed]
+                feed to (rssFeeds[feed] ?: RssFeedObject(Clock.System.now()))
             }
-
+        }
         rssFeeds = feeds.toMap()
     }
 
@@ -80,10 +87,10 @@ object RssModule {
     }
 
     private suspend fun postArticles(feed: String, articles: List<RssItem>) = coroutineScope {
-        val servers = VikBotHandler.config.servers.asSequence()
-            .map { it.value }
-            .filter { feed in it.rssFeeds && it.newsChannel != null }
-            .toList()
+        val servers = transaction {
+            RssFeeds.innerJoin(DiscordGuilds).slice(DiscordGuilds.columns).select { RssFeeds.feed eq feed }.let { DiscordGuild.wrapRows(it).toList() }
+        }
+
         for(article in articles) {
             val embedBuilder = EmbedBuilder().apply {
                 setTitle(article.title, article.link)
@@ -100,7 +107,7 @@ object RssModule {
         }
     }
 
-    val Instant.localString
+    private val Instant.localString
         get() = this.toLocalDateTime(TimeZone.of("CET")).run { "${dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)}, $dayOfMonth ${month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} $year $hour:$minute" }
 }
 
