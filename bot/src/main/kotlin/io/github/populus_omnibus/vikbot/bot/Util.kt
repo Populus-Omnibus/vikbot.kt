@@ -3,6 +3,8 @@ package io.github.populus_omnibus.vikbot.bot
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import kotlinx.datetime.*
 import net.dv8tion.jda.api.entities.Member
+import java.time.OffsetDateTime
+import java.time.ZoneId
 
 val Member?.isAdmin: Boolean
     get() = this?.roles?.any { it.idLong == VikBotHandler.config.adminId } ?: false
@@ -25,3 +27,5 @@ fun LocalDateTime.prettyPrint(escaped: Boolean = false): String {
 fun java.time.LocalDateTime.prettyPrint(escaped: Boolean = false) = this.toKotlinLocalDateTime().prettyPrint(escaped)
 
 fun Instant.prettyPrint(escaped: Boolean = false) = this.toLocalDateTime(TimeZone.currentSystemDefault()).prettyPrint(escaped)
+
+fun OffsetDateTime.prettyPrint(escaped: Boolean = false) = this.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime().prettyPrint(escaped)
