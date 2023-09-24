@@ -14,6 +14,8 @@ discord-jda = "5.0.0-beta.13"
 
 junit = "5.10.0"
 
+kotlinx-exposed = "0.43.0"
+
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
@@ -40,6 +42,15 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.4.1" }
+
+# Exposed
+exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version.ref = "kotlinx-exposed" }
+exposed-crypt = { group = "org.jetbrains.exposed", name = "exposed-crypt", version.ref = "kotlinx-exposed" }
+exposed-dao = { group = "org.jetbrains.exposed", name = "exposed-dao", version.ref = "kotlinx-exposed" }
+exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version.ref = "kotlinx-exposed" }
+
+exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kotlin-datetime", version.ref = "kotlinx-exposed" }
+exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version.ref = "kotlinx-exposed" }
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
@@ -70,4 +81,12 @@ logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.4.1
 kotlinx-serialization = [
     "kotlinx-serialization-core",
     "kotlinx-serialization-json",
+]
+
+exposed = [
+    "exposed-core",
+    "exposed-dao",
+    "exposed-jdbc",
+    "exposed-kotlin-datetime",
+    "exposed-json"
 ]

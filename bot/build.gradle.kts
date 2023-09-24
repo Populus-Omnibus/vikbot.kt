@@ -17,6 +17,8 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.bundles.exposed)
+
     implementation(libs.okio) // explicitly implement okio
     implementation(libs.crypto.fernet)
     implementation(libs.rssParser)
