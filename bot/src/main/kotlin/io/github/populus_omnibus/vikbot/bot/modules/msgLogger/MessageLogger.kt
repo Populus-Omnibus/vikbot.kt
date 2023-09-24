@@ -58,7 +58,7 @@ object MessageLogger {
                     val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
 
                     if (oldMsg != null) {
-                        channel.sendMessageEmbeds(oldMsg.second.toEmbed(event.jda, "edited message", "https://discordapp.com/channels/${event.guild.idLong}/${event.channel.idLong}/${event.message.idLong}").build()).complete()
+                        channel.sendMessageEmbeds(oldMsg.second.toEmbed(event.jda, "edited message", event.jumpUrl).build()).complete()
                     }
                 }
             }
