@@ -54,7 +54,7 @@ exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version
 #drivers
 exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.2.27" }
 exposed-mariadb = { group = "mysql", name = "mysql-connector-java", version = "8.0.33" } # Hikari pooling available if needed
-exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.43.0" }
+exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.43.0.0" }
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
