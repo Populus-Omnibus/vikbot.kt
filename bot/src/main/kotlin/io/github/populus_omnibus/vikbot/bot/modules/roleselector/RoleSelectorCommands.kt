@@ -154,7 +154,7 @@ object RoleSelectorCommands :
                     return
                 }
 
-                val previous = group.lastPublished.let {
+                val previous = transaction { group.lastPublished }?.let {
                     event.guild!!.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()
                 }
 
@@ -172,8 +172,7 @@ object RoleSelectorCommands :
 
 
                 (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
-                    //TODO: needs accessor
-                    transaction { group.lastPublished = PublishEntry(
+                    transaction { group.updateLastPublished(
                         it.idLong, it.sendMessage("").addActionRow(menu).complete().idLong)
                     }
 
@@ -240,9 +239,22 @@ object RoleSelectorCommands :
     }
 
 
-    //TODO: fully broken
     fun validateFromApiRole(apiRole: Role, storedRole: RoleEntry): RoleEntry {
-        return RoleEntry(apiRole.idLong, storedRole.descriptor.copy(apiName = apiRole.name))
+        return if (storedRole.role.value == apiRole.idLong) {
+            // Currently only this branch is used, simply update the role
+            storedRole.apiName = apiRole.name
+            storedRole
+        } else {
+            RoleEntry.new(apiRole.idLong) {
+                roleGroup = storedRole.roleGroup
+                description = storedRole.description
+                emoteName = storedRole.emoteName
+                apiName = apiRole.name
+                fullName = storedRole.fullName
+            }.also {
+                storedRole.delete()
+            }
+        }
     }
 
     private fun pruneRoles(jdaRoles: List<Role>) {

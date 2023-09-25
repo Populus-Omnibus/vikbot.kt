@@ -62,15 +62,23 @@ class RoleGroup(group: EntityID<Int>) : IntEntity(group) {
     var name by RoleGroups.name
     var guild by DiscordGuild referencedOn RoleGroups.guild
     var maxRolesAllowed by RoleGroups.maxRolesAllowed
-    val lastPublished by PublishEntry backReferencedOn PublishData.roleGroup
+    val lastPublished by PublishEntry optionalBackReferencedOn  PublishData.roleGroup
     var genericRoleId by RoleGroups.genericRoleId
     val roles by RoleEntry referrersOn RoleEntries.group
+
+    fun updateLastPublished(channel: Long, message: Long) {
+        (lastPublished ?: PublishEntry.new { this.guild = guild; roleGroup = this@RoleGroup.id })
+            .apply {
+                this.channelId = channel
+                this.messageId = message
+            }
+    }
 }
 
 class RoleEntry(role: EntityID<Long>) : LongEntity(role) {
     companion object : LongEntityClass<RoleEntry>(RoleEntries)
 
-    val roleGroup by RoleGroup referencedOn RoleEntries.group
+    var roleGroup by RoleGroup referencedOn RoleEntries.group
     val role by RoleEntries.roleId
     var description by RoleEntries.description
     var emoteName by RoleEntries.emoteName
@@ -82,7 +90,7 @@ class PublishEntry(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<PublishEntry>(PublishData)
 
     var roleGroup by PublishData.roleGroup
-    val guild by PublishData.guildId
+    var guild by PublishData.guildId
     var channelId by PublishData.channelId
     var messageId by PublishData.messageId
 }
