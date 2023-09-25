@@ -3,12 +3,14 @@ package io.github.populus_omnibus.vikbot.bot.modules.msgLogger
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.*
 import io.github.populus_omnibus.vikbot.api.annotations.Module
-import io.github.populus_omnibus.vikbot.bot.MessageLoggingLevel
+import io.github.populus_omnibus.vikbot.db.DiscordGuild
+import io.github.populus_omnibus.vikbot.db.MessageLoggingLevel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.internal.entities.ReceivedMessage
+import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.Duration.Companion.days
 
 object MessageLogger {
@@ -22,11 +24,13 @@ object MessageLogger {
     fun init(bot: VikBotHandler) {
 
         bot.messageReceivedEvent[64] = { event ->
-            val server = bot.config.servers[event.guild.idLong]
-            if (event.author.isNotMe && server.messageLoggingLevel >= MessageLoggingLevel.DELETED && server.deletedMessagesChannel != null) {
-                val msg = event.message
-                if (msg is ReceivedMessage) {
-                    messageMemory[event.messageIdLong] = msg.toUserMessage()
+            transaction {
+                val server = DiscordGuild.getOrCreate(event.guild.idLong)
+                if (event.author.isNotMe && server.messageLoggingLevel >= MessageLoggingLevel.DELETED && server.deletedMessagesChannel != null) {
+                    val msg = event.message
+                    if (msg is ReceivedMessage) {
+                        messageMemory[event.messageIdLong] = msg.toUserMessage()
+                    }
                 }
             }
             EventResult.PASS

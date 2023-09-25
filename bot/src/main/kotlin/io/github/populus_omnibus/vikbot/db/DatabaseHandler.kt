@@ -2,7 +2,9 @@ package io.github.populus_omnibus.vikbot.db
 
 import io.github.populus_omnibus.vikbot.bot.DatabaseAccess
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.TransactionManager
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.warn
 
@@ -15,8 +17,22 @@ object DatabaseHandler {
             logger.warn { "SQLite database backend is not recommended in production, consider using a proper database like MariaDB" }
         }
 
-        TransactionManager.defaultDatabase = Database.connect(config.address, config.driver, config.password, config.password)
+        TransactionManager.defaultDatabase =
+            Database.connect(config.address, config.driver, config.password, config.password).also {
+                transaction(it) {
 
+                    // Auto-create/update the actual database
+                    SchemaUtils.createMissingTablesAndColumns(
+                        DiscordGuilds,
+                        HandledVoiceChannels,
+                        RssFeeds,
+                        RoleGroups,
+                        PublishData,
+                        RoleEntries,
+                        UserMessages
+                    )
+                }
+            }
 
     }
 }
