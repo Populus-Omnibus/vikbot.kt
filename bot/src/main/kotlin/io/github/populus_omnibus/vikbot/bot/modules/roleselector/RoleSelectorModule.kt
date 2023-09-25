@@ -76,7 +76,9 @@ private constructor(
         fun create(groupName: String, interaction: SlashCommandInteractionEvent): RoleGroupLooksEditorData? {
             val channel = interaction.channel as? GuildMessageChannel ?: run { return null }
             val msg = transaction {
-                val group = Servers[channel.guild.idLong].roleGroups[groupName]
+                val group = Servers[channel.guild.idLong].RoleGroupAccessor().let {
+                    it[groupName] ?: it.newRoleGroup(groupName)
+                }
                 val buttons = mutableListOf(
                     Button.primary("rolegroupeditlooks:left", Emoji.fromFormatted("◀"))
                         .asDisabled(),
@@ -87,7 +89,7 @@ private constructor(
                 )
 
 
-                val msg = group.roles.minByOrNull { it.id }?.let { data ->
+                val msg = group.roles.minByOrNull { it.apiName }?.let { data ->
                     val send = MessageCreateBuilder().addActionRow(buttons).addEmbeds(getEmbed(data))
                         .setContent(interactionDeletionWarning).build()
                     interaction.reply(send).complete().retrieveOriginal().complete()
@@ -109,7 +111,7 @@ private constructor(
     fun reload() {
         //page number validation
         currentPage = currentPage.coerceIn(0..<group.roles.size)
-        group.roles.sortedBy { it.id }.getOrNull(currentPage)?.let { data ->
+        group.roles.sortedBy { it.apiName }.getOrNull(currentPage)?.let { data ->
             val builder = MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning)
             val buttons = this.msg.actionRows[0]?.actionComponents ?: run {
                 RoleSelectorCommands.logger.error { "Buttons not found in a paginated message!" }
