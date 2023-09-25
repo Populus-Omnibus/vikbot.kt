@@ -1,7 +1,9 @@
 package io.github.populus_omnibus.vikbot.db
 
-import net.dv8tion.jda.api.requests.restaction.GuildAction.RoleData
-import org.jetbrains.exposed.dao.*
+import org.jetbrains.exposed.dao.IntEntity
+import org.jetbrains.exposed.dao.IntEntityClass
+import org.jetbrains.exposed.dao.LongEntity
+import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.and
@@ -30,7 +32,12 @@ class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
         get() = RoleGroupAccessor()
 
     inner class RoleGroupAccessor : SizedIterable<RoleGroup> by referrerRoleGroups {
-        operator fun get(name: String) = RoleGroup.find { (RoleGroups.guild eq this@DiscordGuild.guild) and (RoleGroups.name eq name) }.first()
+        operator fun get(name: String) = RoleGroup.find { (RoleGroups.guild eq this@DiscordGuild.guild) and (RoleGroups.name eq name) }.firstOrNull()
+        fun newRoleGroup(name: String, lambda: RoleGroup.() -> Unit = {}) = RoleGroup.new {
+            this.name = name
+            this.guild = this@DiscordGuild
+            lambda()
+        }
     }
 }
 
@@ -52,8 +59,8 @@ class RssFeed(id: EntityID<Int>) : IntEntity(id) {
 class RoleGroup(group: EntityID<Int>) : IntEntity(group) {
     companion object : IntEntityClass<RoleGroup>(RoleGroups)
 
-    val name by RoleGroups.name
-    val guild by DiscordGuild referencedOn RoleGroups.guild
+    var name by RoleGroups.name
+    var guild by DiscordGuild referencedOn RoleGroups.guild
     var maxRolesAllowed by RoleGroups.maxRolesAllowed
     val lastPublished by PublishEntry backReferencedOn PublishData.roleGroup
     var genericRoleId by RoleGroups.genericRoleId
