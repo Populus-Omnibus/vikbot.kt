@@ -46,7 +46,7 @@ object MessageLoggerCommand : CommandGroup("logger", "Message logger", {adminOnl
                         """
                     Logger on this server is set to ${currentServer.messageLoggingLevel}
                     Target channel is <#${currentServer.deletedMessagesChannel}>
-                    Currently there are ${UserMessage.count()} cached messages from the last 2 weeks
+                    Currently there are ${UserMessage.count()} cached messages
                 """.trimIndent()
                     )
                 }.complete()
