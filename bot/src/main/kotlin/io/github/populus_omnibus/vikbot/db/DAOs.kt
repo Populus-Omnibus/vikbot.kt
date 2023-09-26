@@ -112,7 +112,13 @@ class RoleEntry(role: EntityID<Long>) : LongEntity(role) {
     var description by RoleEntries.description
     var emoteName by RoleEntries.emoteName
     var apiName by RoleEntries.apiName
-    var fullName by RoleEntries.fullName
+
+    private var _fullName by RoleEntries.fullName
+    var fullName: String
+        get() = _fullName ?: apiName
+        set(value) {
+            _fullName = value
+        }
 
     val roleId by role
 }

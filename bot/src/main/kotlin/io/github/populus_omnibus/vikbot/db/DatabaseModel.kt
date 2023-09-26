@@ -28,7 +28,7 @@ object RssFeeds : IntIdTable() {
 }
 
 object RoleGroups : IntIdTable() {
-    val name = varchar("id", 255)
+    val name = varchar("name", 255)
     val guild = reference("guild", DiscordGuilds)
 
     val maxRolesAllowed = integer("maxRoles").default(25)
@@ -56,7 +56,7 @@ object RoleEntries : LongIdTable(columnName = "role") {
 
     val emoteName = varchar("emote", 1024).default("")
     val apiName = varchar("apiName", 1024)
-    val fullName = varchar("fullName", 1024).defaultExpression(apiName)
+    val fullName = varchar("fullName", 1024).nullable().default(null)
 }
 
 object UserMessages : LongIdTable() {
