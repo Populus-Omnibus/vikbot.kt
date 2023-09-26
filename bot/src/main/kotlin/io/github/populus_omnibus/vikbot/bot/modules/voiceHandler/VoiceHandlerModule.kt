@@ -5,6 +5,7 @@ import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.db.HandledVoiceChannel
 import io.github.populus_omnibus.vikbot.db.HandledVoiceChannels
+import io.github.populus_omnibus.vikbot.db.Servers
 import io.github.populus_omnibus.vikbot.db.VoiceChannelType
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -35,6 +36,7 @@ object VoiceHandlerModule {
                                 }.complete()
 
                             HandledVoiceChannel.new(newChannel.idLong) {
+                                guild = Servers[newChannel.guild.idLong]
                                 type = VoiceChannelType.Temp
                             }
                             event.guild.moveVoiceMember(event.member, newChannel).complete()
