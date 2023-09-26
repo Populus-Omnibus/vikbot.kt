@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.getLogger
 
@@ -38,7 +39,7 @@ object RoleSelectorCommands :
 
                 transaction {
                     val entry = Servers[guildId]
-                    if (entry.roleGroups[groupName] == null) {
+                    if (RoleGroup.find { RoleGroups.name eq groupName and (RoleGroups.guild eq guildId) }.empty()) {
                         entry.roleGroups.newRoleGroup(groupName)
                         event.reply("$groupName group created!").queue()
                     }

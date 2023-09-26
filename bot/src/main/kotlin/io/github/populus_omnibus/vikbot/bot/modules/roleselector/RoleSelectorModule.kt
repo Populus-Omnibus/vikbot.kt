@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.error
 import kotlin.time.Duration.Companion.minutes
@@ -111,16 +112,25 @@ private constructor(
     fun reload() {
         //page number validation
         currentPage = currentPage.coerceIn(0..<group.roles.size)
-        group.roles.sortedBy { it.apiName }.getOrNull(currentPage)?.let { data ->
-            val builder = MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning)
-            val buttons = this.msg.actionRows[0]?.actionComponents ?: run {
-                RoleSelectorCommands.logger.error { "Buttons not found in a paginated message!" }
-                return
+
+        val act = action@{
+            group.roles.sortedBy { it.apiName }.getOrNull(currentPage)?.let { data ->
+                val builder = MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning)
+                val buttons = this.msg.actionRows[0]?.actionComponents ?: run {
+                    RoleSelectorCommands.logger.error { "Buttons not found in a paginated message!" }
+                    return@action
+                }
+                this.msg.editMessage(builder.setActionRow(buttons.apply {
+                    this[0] = buttons[0]?.withDisabled(currentPage == 0)
+                    this[1] = buttons[1]?.withDisabled(currentPage >= group.roles.size - 1)
+                }).build()).queue()
             }
-            this.msg.editMessage(builder.setActionRow(buttons.apply {
-                this[0] = buttons[0]?.withDisabled(currentPage == 0)
-                this[1] = buttons[1]?.withDisabled(currentPage >= group.roles.size - 1)
-            }).build()).complete()
+        }
+
+        if (TransactionManager.currentOrNull() != null) {
+            act()
+        } else {
+            transaction { act() }
         }
     }
 }
