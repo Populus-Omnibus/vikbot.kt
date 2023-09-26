@@ -1,9 +1,10 @@
 package io.github.populus_omnibus.vikbot.db
 
 import kotlinx.datetime.Clock
-import org.jetbrains.exposed.dao.id.IdTable
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.LongIdTable
+import org.jetbrains.exposed.sql.json.json
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
 object DiscordGuilds : LongIdTable(columnName = "guild") {
@@ -63,7 +64,11 @@ object UserMessages : LongIdTable() {
     val channelId = long("channel")
     val messageId = id
     val timestamp = timestamp("timestamp").clientDefault { Clock.System.now() }
-    val content = text("text", eagerLoading = true)
+    val content = text("text")
+    val author = long("author")
+
+    // It won't be searchable (not very efficiently at least) but who cares? - kosmx
+    val embedLinks = json<List<String>>("embeds", Json).default(listOf())
 }
 
 

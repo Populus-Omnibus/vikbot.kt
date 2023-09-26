@@ -132,6 +132,10 @@ class UserMessage(id: EntityID<Long>) : LongEntity(id) {
     var guildId by UserMessages.guildId
     var channelId by UserMessages.channelId
     val messageId by UserMessages.messageId
+    val idLong by messageId
     var timestamp by UserMessages.timestamp
     var contentRaw by UserMessages.content
+    var author by UserMessages.author
+
+    var embedLinks by UserMessages.embedLinks
 }
