@@ -7,7 +7,7 @@ import kotlin.reflect.KProperty
 private val logger by org.slf4j.kotlin.toplevel.getLogger()
 open class IdentifiableHandler(val id: String)
 
-open class IdentifiableInteractionHandler<T: Event>(id: String, val function: IdentifiableInteractionHandler<T>.(T) -> Unit = {}): IdentifiableHandler(id), suspend (T) -> Unit {
+open class IdentifiableInteractionHandler<T: Event>(id: String, val function: suspend IdentifiableInteractionHandler<T>.(T) -> Unit = {}): IdentifiableHandler(id), suspend (T) -> Unit {
     override suspend fun invoke(event: T) {
         function(event)
     }
