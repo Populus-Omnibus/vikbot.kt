@@ -120,7 +120,8 @@ class RoleEntry(role: EntityID<Long>) : LongEntity(role) {
             _fullName = value
         }
 
-    val roleId by role
+    val roleId: Long
+        get() = role.value
 }
 
 class PublishEntry(id: EntityID<Int>) : IntEntity(id) {
@@ -138,7 +139,9 @@ class UserMessage(id: EntityID<Long>) : LongEntity(id) {
     var guildId by UserMessages.guildId
     var channelId by UserMessages.channelId
     val messageId by UserMessages.messageId
-    val idLong by messageId
+    val idLong: Long
+        get() = messageId.value
+
     var timestamp by UserMessages.timestamp
     var contentRaw by UserMessages.content
     var author by UserMessages.author
