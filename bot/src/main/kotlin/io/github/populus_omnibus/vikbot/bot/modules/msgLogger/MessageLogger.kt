@@ -9,8 +9,8 @@ import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.internal.entities.ReceivedMessage
-import org.jetbrains.exposed.sql.replace
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.upsert
 
 object MessageLogger {
 
@@ -20,7 +20,7 @@ object MessageLogger {
         bot.messageReceivedEvent[64] = { event ->
             transaction {
                 val server = DiscordGuild.getOrCreate(event.guild.idLong)
-                if (event.author.isNotMe && server.messageLoggingLevel >= MessageLoggingLevel.RECORD && server.deletedMessagesChannel != null) {
+                if (event.author.isNotMe && server.messageLoggingLevel >= MessageLoggingLevel.RECORD) {
                     val msg = event.message
                     if (msg is ReceivedMessage) {
                         msg.toUserMessage()
@@ -94,7 +94,7 @@ object MessageLogger {
     }
 
     private fun ReceivedMessage.toUserMessage() {
-        UserMessages.replace { entry ->
+        UserMessages.upsert { entry ->
             val msg = this@toUserMessage
             entry[id] = msg.idLong
             entry[author] = msg.author.idLong
