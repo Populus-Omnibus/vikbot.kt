@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
+import org.slf4j.kotlin.error
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
 import kotlin.reflect.KProperty
@@ -56,6 +57,7 @@ open class SlashCommand(name: String, val description: String, configure: SlashC
             try {
                 invoke(event)
             } catch (e: Throwable) {
+                logger.error(e) { "Error while processing command: ${event.commandId}" }
                 event.reply("Error, ${e.message}").setEphemeral(true).complete()
             }
         }
