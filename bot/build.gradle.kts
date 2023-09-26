@@ -19,7 +19,6 @@ dependencies {
 
     implementation(libs.bundles.exposed)
 
-    implementation(libs.exposed.mariadb)
     implementation(libs.exposed.sqlite)
     implementation(libs.exposed.postgresql)
 
