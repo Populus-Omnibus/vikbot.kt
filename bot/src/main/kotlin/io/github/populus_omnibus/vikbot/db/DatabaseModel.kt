@@ -51,11 +51,11 @@ object PublishData : IntIdTable() {
 object RoleEntries : LongIdTable(columnName = "role") {
     val group = reference("group", RoleGroups)
     val roleId = id // just to make sure
-    val description = text("description", eagerLoading = true)
+    val description = text("description", eagerLoading = true).default("")
 
-    val emoteName = varchar("emote", 1024)
+    val emoteName = varchar("emote", 1024).default("")
     val apiName = varchar("apiName", 1024)
-    val fullName = varchar("fullName", 1024)
+    val fullName = varchar("fullName", 1024).defaultExpression(apiName)
 }
 
 object UserMessages : LongIdTable() {
