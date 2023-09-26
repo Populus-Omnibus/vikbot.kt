@@ -7,6 +7,11 @@ import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.json.json
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
+/**
+ *  Database model, should be compatible with **PostgreSQL** and SQLite
+ *  DO-NOT ATTEMPT TO USE MYSQL/MARIADB
+ */
+
 object DiscordGuilds : LongIdTable(columnName = "guild") {
     val guild = id
     val newsChannel = long("newsChannel").nullable().default(null)
@@ -39,13 +44,14 @@ object RoleGroups : IntIdTable() {
 }
 
 object PublishData : IntIdTable() {
-    val roleGroup = reference("group", RoleGroups).nullable().uniqueIndex()
+    val roleGroup = reference("group", RoleGroups).nullable()
     val guildId = reference("guild", DiscordGuilds)
     val channelId = long("channel")
     val messageId = long("message")
 
     init {
-        uniqueIndex(roleGroup, guildId)
+        uniqueIndex(roleGroup, guildId) { roleGroup.isNotNull() }
+        uniqueIndex(guildId) { roleGroup.isNull() }
     }
 }
 
