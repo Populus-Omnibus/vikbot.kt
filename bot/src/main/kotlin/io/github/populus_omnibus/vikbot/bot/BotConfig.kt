@@ -15,7 +15,7 @@ import java.io.File
 data class BotConfig(
     val token: String,
     val botName: String = "VIKBOT",
-    val initActivity: String = "with the old bot",
+    val initActivity: String = "following instructions",
     val ownerServers: Set<Long>,
     //var mailChannel: Long,
     val embedColor: Int = 0x03FCC2, //HEX VALUE
