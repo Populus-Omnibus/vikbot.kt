@@ -105,7 +105,7 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
                     } else {
                         event.reply(
                             "Server feeds:\n"
-                                    + server.rssFeeds.joinToString(separator = "\n- ", prefix = "- ")
+                                    + server.rssFeeds.joinToString(separator = "\n- ", prefix = "- ") { it.feed }
                         )
                     }
                 }.complete()
@@ -126,10 +126,12 @@ object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
 
         override suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent): Unit = coroutineScope {
             val userString = event.focusedOption.value
-            val server = transaction { event.guild!!.let { Servers[it.idLong] } }
-            val choices = server.rssFeeds.asSequence().map { it.feed }
-                .filter { userString.isEmpty() || it.startsWith(userString) }.take(25)
-            event.replyChoiceStrings(choices.toList()).complete()
+            transaction {
+                val server = transaction { event.guild!!.let { Servers[it.idLong] } }
+                val choices = server.rssFeeds.asSequence().map { it.feed }
+                    .filter { userString.isEmpty() || it.startsWith(userString) }.take(25)
+                event.replyChoiceStrings(choices.toList()).queue()
+            }
         }
     }
 }
