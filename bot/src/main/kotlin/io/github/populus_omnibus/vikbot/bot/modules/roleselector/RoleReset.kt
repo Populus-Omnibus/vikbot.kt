@@ -82,7 +82,7 @@ object RoleReset :
             //take roles from role group, find actual existing roles to match, and remove those from the user
             transaction {
                 groupName?.let { name ->
-                    Servers[event.guild!!.idLong].roleGroups.getOrNull(name)?.roles?.mapNotNull { bot.jda.getRoleById(it.roleId) }
+                    Servers[event.guild!!.idLong].roleGroups[name]?.roles?.mapNotNull { bot.jda.getRoleById(it.roleId) }
                 }
             }.let { roleList ->
                 event.member?.let { member ->

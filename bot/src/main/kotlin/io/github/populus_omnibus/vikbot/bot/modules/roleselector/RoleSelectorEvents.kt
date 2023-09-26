@@ -39,7 +39,7 @@ object RoleSelectorEvents {
             }
             transaction {
                 val serverEntry = Servers[event.guild!!.idLong]
-                val group = serverEntry.roleGroups[data.groupName]
+                val group = serverEntry.roleGroups.getOrCreate(data.groupName)
                 val selected = event.interaction.values.filterIsInstance<Role>().toMutableList()
                     .sortedBy { it.name } //can only receive roles, but check just in case
                 updateRolesFromReality(selected, group)
@@ -57,7 +57,7 @@ object RoleSelectorEvents {
             }
             event.deferReply().setEphemeral(true).complete()
             transaction {
-                val allRoles = Servers[guildId].roleGroups[groupName].roles.mapNotNull {
+                val allRoles = Servers[guildId].roleGroups.getOrCreate(groupName).roles.mapNotNull {
                     event.guild!!.roles.find { role -> role.idLong == it.roleId }
                 }
                 val selection = event.values.mapNotNull {

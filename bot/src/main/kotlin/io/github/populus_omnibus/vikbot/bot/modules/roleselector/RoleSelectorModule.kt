@@ -71,7 +71,7 @@ private constructor(
     msg: Message, groupName: String, var currentPage: Int = 0
 ) : RoleGroupEditorData(msg, groupName) {
     val group: RoleGroup
-        get() = transaction { RoleGroup.find { RoleGroups.guild eq msg.guild.idLong and (RoleGroups.name eq groupName) } }.first()
+        get() = transaction { RoleGroup.find { RoleGroups.guild eq msg.guild.idLong and (RoleGroups.name eq groupName) }.first() }
 
     companion object {
         fun create(groupName: String, interaction: SlashCommandInteractionEvent): RoleGroupLooksEditorData? {

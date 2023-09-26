@@ -1,10 +1,13 @@
 package io.github.populus_omnibus.vikbot.db
 
-import org.jetbrains.exposed.dao.*
+import org.jetbrains.exposed.dao.IntEntity
+import org.jetbrains.exposed.dao.IntEntityClass
+import org.jetbrains.exposed.dao.LongEntity
+import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.replace
+import org.jetbrains.exposed.sql.insert
 
 class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
     companion object : LongEntityClass<DiscordGuild>(DiscordGuilds) {
@@ -34,19 +37,23 @@ class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
         get() = PublishEntry.find { PublishData.guildId eq guild and (PublishData.roleGroup eq null) }.firstOrNull()
 
     fun setLastRoleResetMessage(channel: Long, message: Long) {
-        PublishData.replace {
+        lastRoleResetMessage?.let {
+            it.channelId = channel
+            it.messageId = message
+        } ?: PublishData.insert {
             it[guildId] = guild
-            it[roleGroup] = null
             it[channelId] = channel
             it[messageId] = message
         }
     }
 
     inner class RoleGroupAccessor : SizedIterable<RoleGroup> by referrerRoleGroups {
-        operator fun get(name: String) =
-            getOrNull(name) ?: RoleGroup.new { this.name = name; this.guild = this@DiscordGuild }
+        fun getOrCreate(name: String): RoleGroup {
+            if (name.isEmpty()) error("can't create role group without name")
+            return get(name) ?: RoleGroup.new { this.name = name; this.guild = this@DiscordGuild }
+        }
 
-        fun getOrNull(name: String) =
+        operator fun get(name: String) =
             RoleGroup.find { (RoleGroups.guild eq this@DiscordGuild.guild) and (RoleGroups.name eq name) }.firstOrNull()
 
         fun newRoleGroup(name: String, lambda: RoleGroup.() -> Unit = {}) = RoleGroup.new {
@@ -56,7 +63,7 @@ class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
         }
 
         operator fun contains(name: String): Boolean {
-            return RoleEntry.find { RoleGroups.name eq name and (RoleGroups.guild eq this@DiscordGuild.guild) }.any()
+            return RoleGroup.find { RoleGroups.name eq name and (RoleGroups.guild eq this@DiscordGuild.guild) }.any()
         }
     }
 }
@@ -96,11 +103,15 @@ class RoleGroup(group: EntityID<Int>) : IntEntity(group) {
     }
 
     fun updateLastPublished(channel: Long, message: Long) {
-        (lastPublished ?: PublishEntry.new { this.guild = guild; roleGroup = this@RoleGroup.id })
-            .apply {
-                this.channelId = channel
-                this.messageId = message
-            }
+        (lastPublished?.apply {
+            channelId = channel
+            messageId = message
+        } ?: PublishEntry.new {
+            this.guild = this@RoleGroup.guild.guild
+            this.roleGroup = this@RoleGroup.id
+            this.channelId = channel
+            this.messageId = message
+        })
     }
 }
 
