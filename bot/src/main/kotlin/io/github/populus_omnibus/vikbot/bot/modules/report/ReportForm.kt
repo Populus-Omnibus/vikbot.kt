@@ -18,7 +18,6 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
-import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.components.text.TextInput
@@ -27,7 +26,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.Duration.Companion.minutes
 
-object ReportForm : ListenerAdapter() {
+object ReportForm {
     private const val APP_NAME = "Report message"
 
     //map to store message data the moment the report form is fired
