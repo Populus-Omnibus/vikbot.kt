@@ -60,11 +60,7 @@ object McAuthAdminCommands : CommandGroup("vikauthAdmin".lowercase(), "Offline m
             ) { it.value.displayName }).required()
 
             override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
-                if (account == null) {
-                    event.reply("Account not found")
-                } else {
-                    event.reply("Account belongs to <@${account!!.key}>")
-                }.setEphemeral(true).complete()
+                event.reply("Account belongs to <@${account.key}>").setEphemeral(true).complete()
             }
         }
 
