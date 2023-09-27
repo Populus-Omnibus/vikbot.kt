@@ -34,7 +34,7 @@ class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
 
 
     val lastRoleResetMessage: PublishEntry?
-        get() = PublishEntry.find { PublishData.guildId eq guild and (PublishData.roleGroup eq null) }.firstOrNull()
+        get() = PublishEntry.find { PublishData.guildId eq guild and (PublishData.roleGroup.isNull()) }.firstOrNull()
 
     fun setLastRoleResetMessage(channel: Long, message: Long) {
         lastRoleResetMessage?.let {

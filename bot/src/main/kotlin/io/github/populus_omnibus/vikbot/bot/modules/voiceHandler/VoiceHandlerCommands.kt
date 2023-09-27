@@ -47,7 +47,7 @@ object VoiceHandlerCommands : CommandGroup("voice", "manage voice channel manage
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
                 transaction {
                     val ch = HandledVoiceChannel.find {
-                        HandledVoiceChannels.channel eq channel.idLong and (HandledVoiceChannels.channelType eq VoiceChannelType.Temp)
+                        HandledVoiceChannels.channel eq channel.idLong and (HandledVoiceChannels.channelType eq VoiceChannelType.Temp) and (HandledVoiceChannels.guild eq channel.guild.idLong)
                     }.firstOrNull()
                     if (ch != null) {
                         ch.delete()
