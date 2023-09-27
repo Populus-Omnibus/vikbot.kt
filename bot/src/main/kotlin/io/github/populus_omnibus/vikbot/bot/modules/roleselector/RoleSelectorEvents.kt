@@ -1,18 +1,26 @@
 package io.github.populus_omnibus.vikbot.bot.modules.roleselector
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
-import io.github.populus_omnibus.vikbot.VikBotHandler.config
 import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
-import io.github.populus_omnibus.vikbot.bot.RoleGroup
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.expiringReplies
+import io.github.populus_omnibus.vikbot.db.RoleEntries
+import io.github.populus_omnibus.vikbot.db.RoleGroup
+import io.github.populus_omnibus.vikbot.db.Servers
+import io.github.populus_omnibus.vikbot.db.size
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
 import net.dv8tion.jda.api.interactions.modals.Modal
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.notInList
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.batchUpsert
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.transactions.transaction
 
 
 object RoleSelectorEvents {
@@ -29,14 +37,14 @@ object RoleSelectorEvents {
                 event.hook.sendMessage("failed").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
-            val serverEntry = config.servers[event.guild!!.idLong]
-            val group = serverEntry.roleGroups[data.groupName]
-            val selected = event.interaction.values.filterIsInstance<Role>().toMutableList()
-                .sortedBy { it.name } //can only receive roles, but check just in case
-            serverEntry.roleGroups[data.groupName] = updateRolesFromReality(selected, group)
-            refreshGroupEmbeds(data.groupName)
-
-            config.save()
+            transaction {
+                val serverEntry = Servers[event.guild!!.idLong]
+                val group = serverEntry.roleGroups.getOrCreate(data.groupName)
+                val selected = event.interaction.values.filterIsInstance<Role>().toMutableList()
+                    .sortedBy { it.name } //can only receive roles, but check just in case
+                updateRolesFromReality(selected, group)
+                refreshGroupEmbeds(data.groupName)
+            }
             event.hook.sendMessage("edited group").complete()
         }
 
@@ -48,18 +56,23 @@ object RoleSelectorEvents {
                 return@IdentifiableInteractionHandler
             }
             event.deferReply().setEphemeral(true).complete()
+            transaction {
+                val allRoles = Servers[guildId].roleGroups.getOrCreate(groupName).roles.mapNotNull {
+                    event.guild!!.roles.find { role -> role.idLong == it.roleId }
+                }
+                val selection = event.values.mapNotNull {
+                    event.guild!!.roles.find { role -> it.toLongOrNull() == role.idLong }
+                }
+                    .filter { !it.isManaged } //don't even attempt to add or remove a managed role, in case someone added it to the group
 
-            val allRoles = config.servers[guildId].roleGroups[groupName].roles.mapNotNull {
-                event.guild!!.roles.find { role -> role.idLong == it.roleId }
-            }
-            val selection = event.values.mapNotNull {
-                event.guild!!.roles.find { role -> it.toLongOrNull() == role.idLong }
-            }
-                .filter { !it.isManaged } //don't even attempt to add or remove a managed role, in case someone added it to the group
-
-            event.member?.let { user ->
-                event.guild!!.modifyMemberRoles(user, selection, allRoles.intersect(user.roles.toSet()) - selection.toSet())
-                    .complete()
+                event.member?.let { user ->
+                    event.guild!!.modifyMemberRoles(
+                        user,
+                        selection,
+                        allRoles.intersect(user.roles.toSet()) - selection.toSet()
+                    )
+                        .complete()
+                }
             }
             event.hook.sendMessage("update successful!").complete()
         }
@@ -72,69 +85,77 @@ object RoleSelectorEvents {
                 it.reply("failed").setEphemeral(true).complete()
                 return@IdentifiableInteractionHandler
             }
-            when (dir) {
-                "right" -> {
-                    data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.count() - 1)
-                }
-
-                "left" -> {
-                    data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
-                }
-
-                "modify" -> {
-                    val ti1 = TextInput.create("name", "Full name (default if empty)", TextInputStyle.SHORT)
-                        .setRequired(false).build()
-                    val ti2 =
-                        TextInput.create("description", "Description", TextInputStyle.SHORT).setRequired(false).build()
-                    it.replyModal(
-                        Modal.create("rolegroupeditlooks", "Edit role").addComponents(ActionRow.of(ti1))
-                            .addComponents(ActionRow.of(ti2)).build()
-                    ).complete()
-                    return@IdentifiableInteractionHandler
-                }
-                else -> {
-                    data.group.roles[data.currentPage].apply {
-                        descriptor = descriptor.copy(emoteName = "")
+            transaction {
+                when (dir) {
+                    "right" -> {
+                        data.currentPage = (data.currentPage + 1).coerceAtMost(group.roles.size - 1)
                     }
-                }
 
+                    "left" -> {
+                        data.currentPage = (data.currentPage - 1).coerceAtLeast(0)
+                    }
+
+                    "modify" -> {
+                        val ti1 = TextInput.create("name", "Full name (default if empty)", TextInputStyle.SHORT)
+                            .setRequired(false).build()
+                        val ti2 =
+                            TextInput.create("description", "Description", TextInputStyle.SHORT).setRequired(false)
+                                .build()
+                        it.replyModal(
+                            Modal.create("rolegroupeditlooks", "Edit role").addComponents(ActionRow.of(ti1))
+                                .addComponents(ActionRow.of(ti2)).build()
+                        ).queue()
+                        return@transaction
+                    }
+
+                    else -> {
+                        data.group.roles[data.currentPage].apply {
+                            this.emoteName = ""
+                        }
+                    }
+
+                }
+                it.deferEdit().queue()
+                data.reload()
             }
-            it.deferEdit().complete()
-            data.reload()
-            config.save()
         }
 
         bot.modalEvents += IdentifiableInteractionHandler("rolegroupeditlooks") { interact ->
             val name = interact.getValue("name")?.asString
             val desc = interact.getValue("description")?.asString
-            (expiringReplies[interact.message?.idLong]?.second as? RoleGroupLooksEditorData)?.let {
-                val current = it.group.roles[it.currentPage]
-                current.descriptor = current.descriptor.copy(
-                    fullName = if (name.isNullOrEmpty()) current.descriptor.apiName else name, description = desc ?: ""
-                )
-                it.reload()
+            transaction {
+                (expiringReplies[interact.message?.idLong]?.second as? RoleGroupLooksEditorData)?.let {
+                    val current = it.group.roles[it.currentPage]
+                    current.apply {
+                        fullName = if (name.isNullOrEmpty()) current.apiName else name
+                        description = desc ?: ""
+                    }
+                    it.reload()
+                }
             }
             interact.deferEdit().complete()
-            config.save()
         }
 
 
         //handle paginated role group looks edit
         bot.reactionEvent[64] = lambda@{ event ->
             if (event is MessageReactionAddEvent) {
-                val data = expiringReplies[event.messageIdLong]?.second as? RoleGroupLooksEditorData ?: run {
-                    return@lambda EventResult.PASS
-                }
+                transaction {
+                    val data = expiringReplies[event.messageIdLong]?.second as? RoleGroupLooksEditorData ?: run {
+                        return@transaction
+                    }
 
-                val group = data.group
-                val index = data.currentPage
-                group.roles[index].let { role ->
-                    role.descriptor = role.descriptor.copy(emoteName = event.reaction.emoji.formatted)
-                }
+                    val group = data.group
+                    val index = data.currentPage
+                    group.roles[index].let { role ->
+                        role.apply {
+                            emoteName = event.reaction.emoji.formatted
+                        }
+                    }
 
-                config.save()
-                event.retrieveMessage().complete().clearReactions().complete()
-                data.reload()
+                    event.retrieveMessage().complete().clearReactions().complete()
+                    data.reload()
+                }
             }
             EventResult.PASS
         }
@@ -145,11 +166,25 @@ object RoleSelectorEvents {
             .filter { it.groupName == groupName }.forEach { it.reload() }
     }
 
-    private fun updateRolesFromReality(from: List<Role>, to: RoleGroup): RoleGroup {
-        return to.copy(roles = from.asSequence().map { role ->
-            to.roles.find { it.roleId == role.idLong }?.let {
-                RoleSelectorCommands.validateFromApiRole(role, it)
-            } ?: RoleGroup.RoleEntry(role.idLong, RoleGroup.RoleEntry.RoleDescriptor("", role.name, role.name, ""))
-        }.toMutableList())
+    /**
+     * Update role group: (create new, if entry exists from `from`, update or else create a new
+     * This is not DB compatible, new logic:
+     * 1. delete every entry from DB related to RoleGroup but not existing in the list
+     * 2. Upsert every other element (update or create)
+     *
+     * returns RoleGroup instance
+     * // sorry, this will be a raw DB transaction for efficiency
+     */
+    private fun updateRolesFromReality(from: List<Role>, to: RoleGroup): RoleGroup = to.also {_ ->
+        transaction {
+            RoleEntries.deleteWhere { (group eq to.id) and (roleId notInList from.map { it.idLong }) }
+
+            RoleEntries.batchUpsert(from) {
+                this[RoleEntries.group] = to.id
+                this[RoleEntries.roleId] = it.idLong
+                this[RoleEntries.apiName] = it.name
+                // batchUpsert will update existing entries instead of creating new ones
+            }
+        }
     }
 }

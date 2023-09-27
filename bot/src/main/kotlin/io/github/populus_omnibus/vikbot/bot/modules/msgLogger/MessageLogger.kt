@@ -1,46 +1,47 @@
 package io.github.populus_omnibus.vikbot.bot.modules.msgLogger
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
-import io.github.populus_omnibus.vikbot.api.*
+import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
-import io.github.populus_omnibus.vikbot.bot.MessageLoggingLevel
-import kotlinx.coroutines.coroutineScope
+import io.github.populus_omnibus.vikbot.api.isNotMe
+import io.github.populus_omnibus.vikbot.db.*
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.internal.entities.ReceivedMessage
-import kotlin.time.Duration.Companion.days
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.upsert
 
 object MessageLogger {
-
-    private val messageMemory = createMemory<Long, UserMessage>()
-
-    internal val currentTrackedMessageCount: Int
-        get() = messageMemory.size
 
     @Module
     fun init(bot: VikBotHandler) {
 
         bot.messageReceivedEvent[64] = { event ->
-            val server = bot.config.servers[event.guild.idLong]
-            if (event.author.isNotMe && server.messageLoggingLevel >= MessageLoggingLevel.DELETED && server.deletedMessagesChannel != null) {
-                val msg = event.message
-                if (msg is ReceivedMessage) {
-                    messageMemory[event.messageIdLong] = msg.toUserMessage()
+            transaction {
+                val server = DiscordGuild.getOrCreate(event.guild.idLong)
+                if (event.author.isNotMe && server.messageLoggingLevel >= MessageLoggingLevel.RECORD) {
+                    val msg = event.message
+                    if (msg is ReceivedMessage) {
+                        msg.toUserMessage()
+                    }
                 }
             }
             EventResult.PASS
         }
 
         bot.messageDeleteEvent[80] = { event ->
-            val guild = bot.config.servers[event.guild.idLong]
-            if (guild.deletedMessagesChannel != null && guild.messageLoggingLevel >= MessageLoggingLevel.DELETED) {
-                val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
+            transaction {
+                val guild = Servers[event.guild.idLong]
+                if (guild.deletedMessagesChannel != null && guild.messageLoggingLevel >= MessageLoggingLevel.DELETED) {
+                    val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
 
-                val message = messageMemory[event.messageIdLong]
+                    val message = UserMessage.findById(event.messageIdLong)
 
-                if (message != null) {
-                    channel.sendMessageEmbeds(message.second.toEmbed(event.jda, "deleted a").build()).complete()
+                    if (message != null) {
+                        channel.sendMessageEmbeds(message.toEmbed(event.jda, "deleted a").build()).queue()
+                        //message.delete()
+                    }
                 }
             }
             EventResult.PASS
@@ -48,55 +49,60 @@ object MessageLogger {
         bot.messageUpdateEvent[80] = { event ->
             val msg = event.message
             if (msg is ReceivedMessage && msg.author.isNotMe) {
-                val guild = bot.config.servers[event.guild.idLong]
+                transaction {
+                    val guild = Servers[event.guild.idLong]
 
-                val oldMsg = messageMemory[msg.idLong]
-                messageMemory[msg.idLong] = msg.toUserMessage()
+                    val oldMsg = UserMessage.findById(msg.idLong)
 
-                if (guild.deletedMessagesChannel != null && guild.messageLoggingLevel >= MessageLoggingLevel.ANY) {
+                    if (guild.deletedMessagesChannel != null && guild.messageLoggingLevel >= MessageLoggingLevel.ANY) {
 
-                    val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
+                        val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
 
-                    if (oldMsg != null) {
-                        channel.sendMessageEmbeds(oldMsg.second.toEmbed(event.jda, "edited", event.jumpUrl).build()).complete()
+                        if (oldMsg != null) {
+                            channel.sendMessageEmbeds(oldMsg.toEmbed(event.jda, "edited", event.jumpUrl).build())
+                                .queue()
+                        }
                     }
+                    msg.toUserMessage()
                 }
             }
             EventResult.PASS
         }
 
-        bot += messageMemory.maintainEvent(delay = 14.days)
-    }
-
-    private data class UserMessage(
-        val author: Long,
-        val content: String,
-        val channel: Long,
-        val embedLinks: List<String>
-    ) {
-        suspend fun toEmbed(jda: JDA, title: String, link: String? = null) = coroutineScope {
-            var iconUrl: String? = null
-            var userName: String = author.toString()
-
-            jda.getUserById(author)?.let {
-                iconUrl = it.avatarUrl
-                userName = it.effectiveName
-            }
-            EmbedBuilder().apply {
-                setAuthor(userName, null, iconUrl)
-                setFooter(Clock.System.now().toString())
-                setDescription("""
-                    **<@$author> $title ${link?.let { "[message]($it)" } ?: "message"}**
-                    $content
-                """.trimIndent())
-            }
+        bot.maintainEvent += {
+            // TODO every one minute
         }
     }
 
-    private fun ReceivedMessage.toUserMessage() = UserMessage(
-        author.idLong,
-        contentRaw,
-        channel.idLong,
-        embeds.mapNotNull { it.url }
-    )
+
+    fun UserMessage.toEmbed(jda: JDA, title: String, link: String? = null): EmbedBuilder {
+        var iconUrl: String? = null
+        var userName: String = author.toString()
+
+        jda.getUserById(author)?.let {
+            iconUrl = it.avatarUrl
+            userName = it.effectiveName
+        }
+        return EmbedBuilder().apply {
+            setAuthor(userName, null, iconUrl)
+            setFooter(Clock.System.now().toString())
+            setDescription("""
+                    **<@$author> $title ${link?.let { "[message]($it)" } ?: "message"}**
+                    $contentRaw
+                """.trimIndent())
+        }
+    }
+
+    private fun ReceivedMessage.toUserMessage() {
+        UserMessages.upsert { entry ->
+            val msg = this@toUserMessage
+            entry[id] = msg.idLong
+            entry[author] = msg.author.idLong
+            entry[content] = msg.contentRaw
+            entry[channelId] = msg.channel.idLong
+            entry[guildId] = msg.guild.idLong
+            entry[embedLinks] = msg.embeds.mapNotNull { it.url }
+        }
+    }
+
 }

@@ -17,6 +17,11 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.bundles.exposed)
+
+    implementation(libs.exposed.sqlite)
+    implementation(libs.exposed.postgresql)
+
     implementation(libs.okio) // explicitly implement okio
     implementation(libs.crypto.fernet)
     implementation(libs.rssParser)
@@ -28,6 +33,7 @@ dependencies {
 
     testImplementation(libs.junit.api)
     testRuntimeOnly(libs.junit.engine)
+    compileOnly(libs.google.findbugs) // Only used in library, use JetBrains nullability instead (in case something has to be written in java)
 }
 
 tasks.test {

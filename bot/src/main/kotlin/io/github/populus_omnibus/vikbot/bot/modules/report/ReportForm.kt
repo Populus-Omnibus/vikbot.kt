@@ -12,20 +12,21 @@ import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.bot.prettyPrint
 import io.github.populus_omnibus.vikbot.bot.toUserTag
+import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
-import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
 import net.dv8tion.jda.api.interactions.modals.Modal
+import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.Duration.Companion.minutes
 
-object ReportForm : ListenerAdapter() {
+object ReportForm {
     private const val APP_NAME = "Report message"
 
     //map to store message data the moment the report form is fired
@@ -42,8 +43,9 @@ object ReportForm : ListenerAdapter() {
             val channel by option("channel", "target channel, not supplying this option will cause a reset", SlashOptionType.CHANNEL)
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                bot.config.servers[event.guild?.idLong]?.reportChannel = channel?.idLong
-                bot.config.save()
+                transaction {
+                    Servers[event.guild!!.idLong].reportChannel = channel?.idLong
+                }
                 event.reply("done!").setEphemeral(true).complete()
             }
         }
@@ -68,7 +70,7 @@ object ReportForm : ListenerAdapter() {
         bot.modalEvents += IdentifiableInteractionHandler("reportform") { event ->
             event.deferReply().setEphemeral(true).complete()
             val channel =
-                bot.config.servers[event.guild?.idLong]?.reportChannel?.let { id -> bot.jda.getTextChannelById(id) }
+                transaction { Servers[event.guild!!.idLong].reportChannel }?.let { id -> bot.jda.getTextChannelById(id) }
             val msgId = event.modalId.split(":").getOrNull(1)?.toLongOrNull()
             msgId?.let { id ->
                 val reportedMessage = try {
