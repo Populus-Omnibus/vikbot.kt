@@ -24,11 +24,6 @@ data class BotConfig(
     val vikAuthFernet: String,
     val useRoleTags: Boolean = true,
     val database: DatabaseAccess = DatabaseAccess(),
-
-    // Deprecation
-    @Transient
-    @Deprecated("Please use database", replaceWith = ReplaceWith("Servers", "io.github.populus_omnibus.vikbot.db.Servers"))
-    val servers: Servers = Servers
 ) {
 
     @Transient
