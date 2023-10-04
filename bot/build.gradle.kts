@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.slf4j)
     implementation(libs.slf4k)
     implementation(libs.logback)
+    implementation(libs.google.guava)
 
     testImplementation(libs.junit.api)
     testRuntimeOnly(libs.junit.engine)

@@ -1,5 +1,6 @@
 package io.github.populus_omnibus.vikbot.bot
 
+import com.google.common.reflect.ClassPath
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Command
 import io.github.populus_omnibus.vikbot.api.annotations.CommandType
@@ -8,8 +9,6 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import org.slf4j.kotlin.error
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
@@ -25,6 +24,7 @@ import java.lang.reflect.Modifier
  * If dynamic loading is necessary, use KSP (annotation processing) to check and cache
  */
 object ModuleLoader {
+
     private val logger by getLogger()
 
     operator fun invoke(handler: VikBotHandler) {
@@ -74,33 +74,15 @@ object ModuleLoader {
 
     private val modulesPackage = "${ModuleLoader::class.java.packageName}.modules"
 
-    // recursive
     private fun listClassesRecursive(`package`: String = modulesPackage): Sequence<Class<*>> {
-        logger.info { "Listing entries in $`package`" }
 
-        val fileStream = ClassLoader.getSystemClassLoader().getResourceAsStream(`package`.replace(".", "/"))!!
-        val reader = BufferedReader(InputStreamReader(fileStream))
+        val classpath: ClassPath = ClassPath.from(Thread.currentThread().getContextClassLoader()) // scans the class path used by classloader
 
-        return reader.lineSequence().flatMap { file ->
-            if (file.endsWith(".class")) {
-                return@flatMap sequenceOf(getClass(file, `package`))
-            } else {
-                return@flatMap listClassesRecursive("$`package`.$file")
+        return classpath.getTopLevelClassesRecursive(`package`).asSequence()
+            .map { classInfo ->
+                classInfo.load()
             }
-        }
     }
-    private fun getClass(className: String, packageName: String): Class<*> {
-        try {
-            return Class.forName(
-                packageName + "."
-                        + className.substring(0, className.lastIndexOf('.'))
-            )
-        } catch (e: ClassNotFoundException) {
-            logger.error { "Class lookup failed for $className in $packageName" }
-        }
-        error("getClass")
-    }
-
 
     private inline fun <reified T: Annotation> Class<*>.hasAnnotation(): Boolean {
         return this.isAnnotationPresent(T::class.java)
