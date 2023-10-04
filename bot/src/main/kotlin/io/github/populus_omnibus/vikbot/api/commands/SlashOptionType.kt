@@ -34,7 +34,11 @@ interface SlashOptionType<T> {
         val BOOLEAN = object : SlashOptionType<Boolean> {
             override val type = OptionType.BOOLEAN
             override val optionMapping = OptionMapping::getAsBoolean
+        }
 
+        val LONG = object : SlashOptionType<Long> {
+            override val type: OptionType = OptionType.INTEGER
+            override val optionMapping = OptionMapping::getAsLong
         }
 
         val USER = object : SlashOptionType<User> {
