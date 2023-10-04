@@ -36,6 +36,16 @@ dependencies {
     compileOnly(libs.google.findbugs) // Only used in library, use JetBrains nullability instead (in case something has to be written in java)
 }
 
-tasks.test {
-    useJUnitPlatform()
+tasks {
+    test {
+        useJUnitPlatform()
+    }
+
+    jar{
+        manifest {
+            attributes (
+                "Main-Class" to "io.github.populus_omnibus.vikbot.Launch"
+            )
+        }
+    }
 }
