@@ -101,7 +101,7 @@ object VikBotHandler : EventListener {
         }
 
         globalCommands += SlashCommand("ping", "quick self test") {
-            it.reply("pong\nclient latency: ${it.jda.gatewayPing}").queue()
+            it.reply("pong\nclient latency: ${it.jda.gatewayPing}").setEphemeral(true).complete()
         }
 
     }
