@@ -1,4 +1,4 @@
-package io.github.populus_omnibus.vikbot.bot.modules
+package io.github.populus_omnibus.vikbot.bot.modules.tags
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
@@ -9,14 +9,13 @@ import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
-import io.github.populus_omnibus.vikbot.api.synchronized
 import io.github.populus_omnibus.vikbot.bot.isAdmin
+import io.github.populus_omnibus.vikbot.db.*
 import kotlinx.datetime.Clock
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.json.encodeToStream
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -29,44 +28,26 @@ import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.util.*
 
 object Tags {
 
-    private var tags: MutableMap<String, Record> = mutableMapOf<String, Record>().synchronized()
-
     private val attachmentMap = createMemory<String, () -> EncodedFileUpload>()
 
-    private fun getTagMessage(tag: String): MessageCreateData? {
-        return tags[tag]?.let { selected ->
-
-            MessageCreateBuilder().apply {
-                setContent(selected.response)
-                selected.file?.let {
-                    setFiles(
-                        FileUpload.fromData(
-                            Base64.getDecoder().decode(it.base64Embed).inputStream(),
-                            it.embedName
-                        )
-                    )
-                }
-            }.build()
-        }
-    }
 
     @Module
-    @OptIn(ExperimentalSerializationApi::class)
     operator fun invoke(bot: VikBotHandler) {
 
-        tags = File("tags.json").takeIf { it.isFile }?.inputStream()?.use { Json.decodeFromStream(it) } ?: tags
-
         bot.globalCommands += object : SlashCommand("tag", "Collection of helpful pre-defined messages") {
-            val tag: String by option("id", "Tag ID", TagAutoCompleteString()).required()
+            val tag: Tag by option("id", "Tag ID", TagSlashOption).required()
+            val ephemeral by option("ephemeral", "make it ephemeral, default true", SlashOptionType.BOOLEAN).default(true)
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                getTagMessage(tag)?.let { event.reply(it).queue() } ?: return event.reply("no tag: $tag")
-                    .setEphemeral(true).queue()
+                tag.asMessage().let {
+                    event.reply(it).setEphemeral(ephemeral).complete()
+                }
 
             }
         }
@@ -242,35 +223,7 @@ object Tags {
         }
     }
 
-    class TagAutoCompleteString : SlashOptionType<String> {
-        override val type = OptionType.STRING
-        override val optionMapping = OptionMapping::getAsString
-
-        override val isAutoComplete = true
-
-        override suspend fun autoCompleteAction(event: CommandAutoCompleteInteractionEvent) {
-            val selected: List<String> = (event.focusedOption.value.takeIf(String::isNotBlank)?.let { string ->
-                tags.filter { it.key.contains(string) }.takeIf { it.isNotEmpty() }
-            } ?: tags).map { (key) -> key }
-
-            event.replyChoiceStrings(selected).queue()
-        }
-    }
 }
 
 @Serializable
 data class EncodedFileUpload(val base64Embed: String, val embedName: String)
-
-@Serializable
-data class Record(val id: String, val response: String, val file: EncodedFileUpload?) {
-
-    companion object {
-        private val json = Json { prettyPrint = true }
-
-        @OptIn(ExperimentalSerializationApi::class)
-        fun save(map: MutableMap<String, Record>) {
-            File("tags.json").outputStream().use { json.encodeToStream(map, it) }
-        }
-    }
-
-}
