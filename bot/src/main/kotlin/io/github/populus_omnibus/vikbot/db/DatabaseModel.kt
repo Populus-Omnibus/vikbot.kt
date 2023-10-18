@@ -2,8 +2,10 @@ package io.github.populus_omnibus.vikbot.db
 
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.LongIdTable
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.json.json
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
@@ -77,4 +79,19 @@ object UserMessages : LongIdTable() {
     val embedLinks = json<List<String>>("embeds", Json).default(listOf())
 }
 
+object Tags : IdTable<String>() {
+    override val id = varchar("id", 64).entityId()
+    override val primaryKey = PrimaryKey(id)
+
+    val author = long("author").nullable()
+    val title = varchar("title", 256)
+    val content = text("content")
+    //val description = varchar("description", 256)
+}
+
+object TagEmbeds : IntIdTable() {
+    val tag = reference("tag", Tags, onDelete = ReferenceOption.CASCADE)
+    val embedName = varchar("name", 256)
+    val embed = blob("data")
+}
 
