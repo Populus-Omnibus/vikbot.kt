@@ -1,6 +1,5 @@
 package io.github.populus_omnibus.vikbot.db
 
-import io.github.populus_omnibus.vikbot.db.Tag.Companion.referrersOn
 import org.jetbrains.exposed.dao.*
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedIterable
@@ -159,11 +158,11 @@ class UserMessage(id: EntityID<Long>) : LongEntity(id) {
 }
 
 class Tag(id: EntityID<String>) : Entity<String>(id) {
-    companion object : EntityClass<String, Tag>(Tags)
+    companion object : EntityClass<String, Tag>(TagTable)
 
-    var author by Tags.author
-    var title by Tags.title
-    var content by Tags.content
+    var author by TagTable.author
+    var title by TagTable.title
+    var content by TagTable.content
 
     val embeds by TagEmbed referrersOn TagEmbeds.tag
 }

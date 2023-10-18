@@ -79,7 +79,7 @@ object UserMessages : LongIdTable() {
     val embedLinks = json<List<String>>("embeds", Json).default(listOf())
 }
 
-object Tags : IdTable<String>() {
+object TagTable : IdTable<String>() {
     override val id = varchar("id", 64).entityId()
     override val primaryKey = PrimaryKey(id)
 
@@ -90,7 +90,7 @@ object Tags : IdTable<String>() {
 }
 
 object TagEmbeds : IntIdTable() {
-    val tag = reference("tag", Tags, onDelete = ReferenceOption.CASCADE)
+    val tag = reference("tag", TagTable, onDelete = ReferenceOption.CASCADE)
     val embedName = varchar("name", 256)
     val embed = blob("data")
 }
