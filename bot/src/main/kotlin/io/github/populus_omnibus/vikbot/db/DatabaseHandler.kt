@@ -31,7 +31,9 @@ object DatabaseHandler {
                         RoleGroups,
                         PublishData,
                         RoleEntries,
-                        UserMessages
+                        UserMessages,
+                        TagTable,
+                        TagAttachments,
                     )
                 }
             }
