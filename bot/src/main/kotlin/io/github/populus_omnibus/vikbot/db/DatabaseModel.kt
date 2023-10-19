@@ -84,7 +84,7 @@ object TagTable : IdTable<String>() {
     override val primaryKey = PrimaryKey(id)
 
     val author = long("author").nullable()
-    val title = varchar("title", 256)
+    //val title = varchar("title", 256).nullable()
     val content = text("content")
     //val description = varchar("description", 256)
 }

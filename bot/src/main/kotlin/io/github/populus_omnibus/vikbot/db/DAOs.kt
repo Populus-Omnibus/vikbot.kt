@@ -161,7 +161,7 @@ class Tag(id: EntityID<String>) : Entity<String>(id) {
     companion object : EntityClass<String, Tag>(TagTable)
 
     var author by TagTable.author
-    var title by TagTable.title
+    //var title by TagTable.title
     var content by TagTable.content
 
     val attachments by TagAttachment referrersOn TagAttachments.tag
