@@ -17,7 +17,7 @@ internal fun Tag.asMessage(): MessageCreateData {
     return transaction {
 
         MessageCreateBuilder().apply {
-            setContent(content)
+            setContent(this@asMessage.content)
             setFiles(
                 this@asMessage.attachments.map {
                     FileUpload.fromData(
