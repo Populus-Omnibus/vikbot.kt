@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.jetbrains.exposed.sql.LikePattern
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 internal fun Tag.asMessage(): MessageCreateData {
@@ -20,7 +19,7 @@ internal fun Tag.asMessage(): MessageCreateData {
         MessageCreateBuilder().apply {
             setContent(content)
             setFiles(
-                this@asMessage.embeds.map {
+                this@asMessage.attachments.map {
                     FileUpload.fromData(
                         it.data.inputStream,
                         it.embedName
