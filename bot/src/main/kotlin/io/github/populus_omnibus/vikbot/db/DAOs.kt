@@ -164,13 +164,13 @@ class Tag(id: EntityID<String>) : Entity<String>(id) {
     var title by TagTable.title
     var content by TagTable.content
 
-    val embeds by TagEmbed referrersOn TagEmbeds.tag
+    val attachments by TagAttachment referrersOn TagAttachments.tag
 }
 
-class TagEmbed(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<TagEmbed>(TagEmbeds)
+class TagAttachment(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<TagAttachment>(TagAttachments)
 
-    var tag by TagEmbeds.tag
-    var embedName by TagEmbeds.embedName
-    var data by TagEmbeds.embed
+    var tag by TagAttachments.tag
+    var embedName by TagAttachments.embedName
+    var data by TagAttachments.embed
 }

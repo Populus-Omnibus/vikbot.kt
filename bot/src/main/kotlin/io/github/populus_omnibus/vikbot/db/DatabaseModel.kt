@@ -89,7 +89,7 @@ object TagTable : IdTable<String>() {
     //val description = varchar("description", 256)
 }
 
-object TagEmbeds : IntIdTable() {
+object TagAttachments : IntIdTable() {
     val tag = reference("tag", TagTable, onDelete = ReferenceOption.CASCADE)
     val embedName = varchar("name", 256)
     val embed = blob("data")
