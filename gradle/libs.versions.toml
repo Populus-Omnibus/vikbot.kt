@@ -53,7 +53,7 @@ exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kot
 exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version.ref = "kotlinx-exposed" }
 #drivers
 exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.6.0" }
-exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.43.0.0" }
+exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.43.2.0" }
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
@@ -66,7 +66,7 @@ okio = { group = "com.squareup.okio", name = "okio", version = "3.6.0"}
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
 
-google-guava = { group = "com.google.guava", name = "guava", version = "32.1.2-jre" }
+google-guava = { group = "com.google.guava", name = "guava", version = "32.1.3-jre" }
 
 # jda-ktx looks promising, but if it drops support, I'm in big trouble. I'll jsut make my own stuff
 
