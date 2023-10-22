@@ -2,8 +2,10 @@ package io.github.populus_omnibus.vikbot.db
 
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.LongIdTable
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.json.json
 import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
@@ -22,19 +24,19 @@ object DiscordGuilds : LongIdTable(columnName = "guild") {
 }
 
 object HandledVoiceChannels : LongIdTable(columnName = "channel") {
-    val guild = reference("guild", DiscordGuilds)
+    val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
     val channel = id
     val channelType = enumeration<VoiceChannelType>("type")
 }
 
 object RssFeeds : IntIdTable() {
-    val guild = reference("guild", DiscordGuilds)
+    val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
     val feed = text("feed")
 }
 
 object RoleGroups : IntIdTable() {
     val name = varchar("name", 255)
-    val guild = reference("guild", DiscordGuilds)
+    val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
 
     val maxRolesAllowed = integer("maxRoles").default(25)
     val genericRoleId = long("genericRole").nullable()
@@ -44,8 +46,8 @@ object RoleGroups : IntIdTable() {
 }
 
 object PublishData : IntIdTable() {
-    val roleGroup = reference("group", RoleGroups).nullable()
-    val guildId = reference("guild", DiscordGuilds)
+    val roleGroup = reference("group", RoleGroups, onDelete = ReferenceOption.CASCADE).nullable()
+    val guildId = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
     val channelId = long("channel")
     val messageId = long("message")
 
@@ -56,7 +58,7 @@ object PublishData : IntIdTable() {
 }
 
 object RoleEntries : LongIdTable(columnName = "role") {
-    val group = reference("group", RoleGroups)
+    val group = reference("group", RoleGroups, onDelete = ReferenceOption.CASCADE)
     val roleId = id // just to make sure
     val description = text("description", eagerLoading = true).default("")
 
@@ -77,4 +79,19 @@ object UserMessages : LongIdTable() {
     val embedLinks = json<List<String>>("embeds", Json).default(listOf())
 }
 
+object TagTable : IdTable<String>() {
+    override val id = varchar("id", 64).entityId()
+    override val primaryKey = PrimaryKey(id)
+
+    val author = long("author").nullable()
+    //val title = varchar("title", 256).nullable()
+    val content = text("content")
+    //val description = varchar("description", 256)
+}
+
+object TagAttachments : IntIdTable() {
+    val tag = reference("tag", TagTable, onDelete = ReferenceOption.CASCADE)
+    val embedName = varchar("name", 256)
+    val embed = blob("data")
+}
 

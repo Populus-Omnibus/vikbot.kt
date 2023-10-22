@@ -1,9 +1,6 @@
 package io.github.populus_omnibus.vikbot.db
 
-import org.jetbrains.exposed.dao.IntEntity
-import org.jetbrains.exposed.dao.IntEntityClass
-import org.jetbrains.exposed.dao.LongEntity
-import org.jetbrains.exposed.dao.LongEntityClass
+import org.jetbrains.exposed.dao.*
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.and
@@ -158,4 +155,22 @@ class UserMessage(id: EntityID<Long>) : LongEntity(id) {
     var author by UserMessages.author
 
     var embedLinks by UserMessages.embedLinks
+}
+
+class Tag(id: EntityID<String>) : Entity<String>(id) {
+    companion object : EntityClass<String, Tag>(TagTable)
+
+    var author by TagTable.author
+    //var title by TagTable.title
+    var content by TagTable.content
+
+    val attachments by TagAttachment referrersOn TagAttachments.tag
+}
+
+class TagAttachment(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<TagAttachment>(TagAttachments)
+
+    var tag by TagAttachments.tag
+    var embedName by TagAttachments.embedName
+    var data by TagAttachments.embed
 }

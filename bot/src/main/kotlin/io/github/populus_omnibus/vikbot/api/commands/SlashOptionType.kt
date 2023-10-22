@@ -13,6 +13,11 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 interface SlashOptionType<T> {
 
     val type: OptionType
+
+    /**
+     * Option type has a custom tab complete action
+     * override [autoCompleteAction]
+     */
     val isAutoComplete: Boolean
         get() = false
 
