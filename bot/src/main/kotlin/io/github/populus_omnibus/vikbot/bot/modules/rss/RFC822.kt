@@ -65,7 +65,7 @@ object RFC822 {
             }
             // Time zones
             else -> when (timeZone) {
-                "Z", "UT", "GMT" -> 0
+                "Z", "UT", "GMT", "UTC" -> 0
                 "EST" -> (-5)
                 "EDT" -> (-4)
                 "CST" -> (-6)
