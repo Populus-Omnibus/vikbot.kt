@@ -174,3 +174,21 @@ class TagAttachment(id: EntityID<Int>) : IntEntity(id) {
     var embedName by TagAttachments.embedName
     var data by TagAttachments.embed
 }
+
+class McOfflineAccount(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<McOfflineAccount>(McOfflineAccounts)
+
+    var discordUserId by McOfflineAccounts.user
+
+    var uuid by McOfflineAccounts.accountId
+    var token by McOfflineAccounts.token
+    var displayName by McOfflineAccounts.displayName
+    var skinUrl by McOfflineAccounts.skinUrl
+}
+
+class McLinkedAccount(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<McLinkedAccount>(McLinkedAccounts)
+
+    var discordUserId by McLinkedAccounts.user
+    var uuid by McLinkedAccounts.accountId
+}
