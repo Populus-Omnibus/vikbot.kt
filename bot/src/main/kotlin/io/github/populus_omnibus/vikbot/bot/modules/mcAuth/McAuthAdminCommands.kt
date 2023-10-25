@@ -4,7 +4,6 @@ import io.github.populus_omnibus.vikbot.api.annotations.Command
 import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.*
 import io.github.populus_omnibus.vikbot.bot.toUserTag
-import io.github.populus_omnibus.vikbot.bot.vikauth.VikauthServer
 import io.github.populus_omnibus.vikbot.db.McOfflineAccount
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -53,7 +52,7 @@ object McAuthAdminCommands : CommandGroup("vikauthAdmin".lowercase(), "Offline m
                     if (account == null) {
                         event.reply("No account is used for this user")
                     } else {
-                        event.reply("Account(uuid=${account.id}, displayName=${account.displayName}, skinUrl=${account.skinUrl}")
+                        event.reply("Account(uuid=`${account.id}`, displayName=`${account.displayName}`, skinUrl=`${account.skinUrl}`)")
                     }
                 }.setEphemeral(ephemeral).complete()
             }
@@ -63,9 +62,10 @@ object McAuthAdminCommands : CommandGroup("vikauthAdmin".lowercase(), "Offline m
             val account by option("displayName".lowercase(), "The name of the account", ListOptionType(
                 { transaction { McOfflineAccount.all().limit(25).toSet() } }
             ) { it.displayName }).required()
+            val ephemeral by option("ephemeral", "Send as ephemeral message, default true", SlashOptionType.BOOLEAN).default(true)
 
             override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
-                event.reply("Account belongs to ${account.discordUserId.toUserTag()}").setEphemeral(true).complete()
+                event.reply("Account belongs to ${account.discordUserId.toUserTag()}").setEphemeral(ephemeral).complete()
             }
         }
 
@@ -73,12 +73,29 @@ object McAuthAdminCommands : CommandGroup("vikauthAdmin".lowercase(), "Offline m
             val account by option("uuid", "Account UUID", ListOptionType(
                 { transaction { McOfflineAccount.all().limit(25).toSet() } }
             ) { it.uuid.toString() })
+            val ephemeral by option("ephemeral", "Send as ephemeral message, default true", SlashOptionType.BOOLEAN).default(true)
 
             override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
                 if (account == null) {
                     event.reply("Account not found")
                 } else {
                     event.reply("Account belongs to ${account!!.discordUserId.toUserTag()}")
+                }.setEphemeral(ephemeral).complete()
+            }
+        }
+
+        this += object : SlashCommand("userToken".lowercase(), "Get a login token") {
+            val user by option("user", "Discord user", SlashOptionType.USER).required()
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
+                transaction {
+                    val account = McOfflineAccount.getByUser(user)
+
+                    if (account == null) {
+                        event.reply("No account is used for this user")
+                    } else {
+                        event.reply("Account(uuid=`${account.id}`, displayName=`${account.displayName}`, skinUrl=`${account.skinUrl}`, token=`${account.token}`)")
+                    }
                 }.setEphemeral(true).complete()
             }
         }

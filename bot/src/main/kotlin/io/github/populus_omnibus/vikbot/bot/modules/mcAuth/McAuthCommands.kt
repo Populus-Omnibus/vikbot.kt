@@ -48,7 +48,7 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
                     transaction {
                         val uuid: UUID = McOfflineAccount.find(McOfflineAccounts.user eq id).firstOrNull()?.uuid ?: UUID.randomUUID().also { newAccount = true }
 
-                        McOfflineAccounts.upsert {
+                        McOfflineAccounts.upsert(McOfflineAccounts.user) {
                             it[user] = id
 
                             it[accountId] = uuid
