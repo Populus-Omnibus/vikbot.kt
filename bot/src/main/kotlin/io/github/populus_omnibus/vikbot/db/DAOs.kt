@@ -1,8 +1,10 @@
 package io.github.populus_omnibus.vikbot.db
 
+import net.dv8tion.jda.api.entities.User
 import org.jetbrains.exposed.dao.*
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedIterable
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 
@@ -176,7 +178,13 @@ class TagAttachment(id: EntityID<Int>) : IntEntity(id) {
 }
 
 class McOfflineAccount(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<McOfflineAccount>(McOfflineAccounts)
+    companion object : IntEntityClass<McOfflineAccount>(McOfflineAccounts) {
+        fun getByUser(idLong: Long): McOfflineAccount? {
+            return McOfflineAccount.find(McOfflineAccounts.user eq idLong).firstOrNull()
+        }
+
+        fun getByUser(user: User): McOfflineAccount? = getByUser(user.idLong)
+    }
 
     var discordUserId by McOfflineAccounts.user
 
