@@ -18,13 +18,25 @@ import java.io.File
  */
 object Launch {
 
-    val logger by getLogger()
+    private val logger by getLogger()
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    @OptIn(ExperimentalSerializationApi::class)
     @JvmStatic
     fun main(args: Array<String>) {
+
+        loadConfigAndDB(args)
+
+        // dynamic module loading
+        logger.info { "Start loading modules" }
+        ModuleLoader(VikBotHandler)
+
+        logger.info { "Starting VikBot" }
+        VikBotHandler.start()
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun loadConfigAndDB(args: Array<String>) {
 
         val parser = ArgParser("VIKBOT")
 
@@ -36,13 +48,8 @@ object Launch {
             json.decodeFromStream<BotConfig>(input)
         }
 
+        logger.info { "Loading DB: ${VikBotHandler.config.database}" }
         DatabaseHandler.loadDatabase(VikBotHandler.config.database)
 
-        // dynamic module loading
-        logger.info { "Start loading modules" }
-        ModuleLoader(VikBotHandler)
-
-        logger.info { "Starting VikBot" }
-        VikBotHandler.start()
     }
 }
