@@ -1,6 +1,6 @@
 import org.gradle.kotlin.dsl.kotlin
 
-val targetJavaVersion = 17
+val targetJavaVersion = 21
 
 plugins {
     java
