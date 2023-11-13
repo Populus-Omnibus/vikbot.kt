@@ -1,6 +1,6 @@
 [versions]
 
-kotlin = "1.9.10"
+kotlin = "1.9.20"
 
 kotlinx-serialization = "1.6.0"
 
@@ -10,11 +10,11 @@ kotlinx-coroutines = "1.7.3"
 
 shadow = "8.1.1"
 
-discord-jda = "5.0.0-beta.16"
+discord-jda = "5.0.0-beta.17"
 
-junit = "5.10.0"
+junit = "5.10.1"
 
-kotlinx-exposed = "0.44.0"
+kotlinx-exposed = "0.44.1"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -53,13 +53,13 @@ exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kot
 exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version.ref = "kotlinx-exposed" }
 #drivers
 exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.6.0" }
-exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.43.2.1" }
+exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.43.2.2" }
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
 crypto-fernet = { group = "com.macasaet.fernet", name = "fernet-java8", version = "1.5.0" }
 
-rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.3" }
+rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.4" }
 
 okio = { group = "com.squareup.okio", name = "okio", version = "3.6.0"}
 
