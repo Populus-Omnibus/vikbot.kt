@@ -7,7 +7,7 @@ plugins {
 }
 
 dependencies {
-    //implementation(projects.api)
+    implementation(projects.api)
     implementation(libs.discord.jda)
     implementation(libs.bundles.kotlinx.serialization)
     implementation(libs.kotlin.reflect)
