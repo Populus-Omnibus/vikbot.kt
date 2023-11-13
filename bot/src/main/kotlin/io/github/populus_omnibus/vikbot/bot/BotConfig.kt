@@ -1,6 +1,5 @@
 package io.github.populus_omnibus.vikbot.bot
 
-import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -47,4 +46,8 @@ data class DatabaseAccess(
     val driver: String = "org.sqlite.JDBC",
     val username: String = "",
     val password: String = "",
-)
+) {
+    override fun toString(): String {
+        return "DatabaseAccess(address='$address', driver='$driver', username='$username')"
+    }
+}

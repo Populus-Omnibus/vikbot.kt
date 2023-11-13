@@ -1,13 +1,13 @@
-package io.github.populus_omnibus.vikbot.bot.vikauth
+package io.github.populus_omnibus.vikbot.bot.vikauth.migration
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 
-typealias MCAccounts = MutableMap<String, MCAccount>
+internal typealias MCAccounts = MutableMap<String, MCAccount>
 
 @Serializable
-data class MCAccount (
+internal data class MCAccount (
     val id: String,
     val token: String,
     @SerialName("displayname")

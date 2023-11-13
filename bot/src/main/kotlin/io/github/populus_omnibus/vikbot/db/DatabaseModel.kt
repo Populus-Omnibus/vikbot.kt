@@ -95,3 +95,33 @@ object TagAttachments : IntIdTable() {
     val embed = blob("data")
 }
 
+/**
+ * Vikauth entries
+ * - user is the linked discord account
+ * - offline acc has to be searchable by user, only one acc for every discord member
+ *
+ * - token for user login, this should be indexed
+ * - accountId is a uuid, this must be final
+ * - displayName is chosen by users
+ * - skinUrl is admin-accessible only, probably won't be used
+ */
+object McOfflineAccounts : IntIdTable() {
+    val user = long("user").uniqueIndex()
+
+    val accountId = uuid("uuid").uniqueIndex()
+    val token = varchar("token",16)
+    val displayName = varchar("display", 32)
+    val skinUrl = text("skin").nullable().default(null)
+
+}
+
+/**
+ * For whitelisting users and being trackable
+ * - user is the linked discord account
+ * - accountId is the uuid of the whitelisted account, for premium accounts, no display name is needed
+ */
+object McLinkedAccounts : IntIdTable() {
+    val user = long("user") // not unique, unlimited amount of account are allowed
+
+    val accountId = uuid("uuid").uniqueIndex()
+}

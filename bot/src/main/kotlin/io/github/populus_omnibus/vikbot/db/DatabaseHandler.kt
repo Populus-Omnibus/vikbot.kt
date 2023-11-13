@@ -34,6 +34,8 @@ object DatabaseHandler {
                         UserMessages,
                         TagTable,
                         TagAttachments,
+                        McOfflineAccounts,
+                        McLinkedAccounts,
                     )
                 }
             }

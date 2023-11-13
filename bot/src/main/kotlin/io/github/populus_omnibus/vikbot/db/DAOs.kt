@@ -1,8 +1,10 @@
 package io.github.populus_omnibus.vikbot.db
 
+import net.dv8tion.jda.api.entities.User
 import org.jetbrains.exposed.dao.*
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.SizedIterable
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 
@@ -173,4 +175,28 @@ class TagAttachment(id: EntityID<Int>) : IntEntity(id) {
     var tag by TagAttachments.tag
     var embedName by TagAttachments.embedName
     var data by TagAttachments.embed
+}
+
+class McOfflineAccount(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<McOfflineAccount>(McOfflineAccounts) {
+        fun getByUser(idLong: Long): McOfflineAccount? {
+            return McOfflineAccount.find(McOfflineAccounts.user eq idLong).firstOrNull()
+        }
+
+        fun getByUser(user: User): McOfflineAccount? = getByUser(user.idLong)
+    }
+
+    var discordUserId by McOfflineAccounts.user
+
+    var uuid by McOfflineAccounts.accountId
+    var token by McOfflineAccounts.token
+    var displayName by McOfflineAccounts.displayName
+    var skinUrl by McOfflineAccounts.skinUrl
+}
+
+class McLinkedAccount(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<McLinkedAccount>(McLinkedAccounts)
+
+    var discordUserId by McLinkedAccounts.user
+    var uuid by McLinkedAccounts.accountId
 }
