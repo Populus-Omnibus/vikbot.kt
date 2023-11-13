@@ -35,6 +35,7 @@ jobs:
         with:
           gradle-build-module: |-
             :bot
+            :api
         continue-on-error: true
       - name: capture build artifacts
         if: ${{ matrix.os == 'ubuntu-latest' }} # Only upload artifacts built from latest java on one OS

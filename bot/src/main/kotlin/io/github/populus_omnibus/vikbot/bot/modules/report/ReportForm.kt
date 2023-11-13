@@ -13,6 +13,7 @@ import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.bot.prettyPrint
 import io.github.populus_omnibus.vikbot.bot.toUserTag
 import io.github.populus_omnibus.vikbot.db.Servers
+import io.github.populus_omnibus.vikbot.plusAssign
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message

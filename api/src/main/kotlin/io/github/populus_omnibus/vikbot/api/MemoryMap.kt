@@ -1,6 +1,5 @@
 package io.github.populus_omnibus.vikbot.api
 
-import io.github.populus_omnibus.vikbot.VikBotHandler
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import net.dv8tion.jda.api.entities.Message
@@ -30,11 +29,6 @@ class MaintainEvent<K, T>(
     fun generateShutdownEvent(): () -> Unit = {
         map.entries.forEach { (key, pair) -> expireFunction(key, pair.second) }
     }
-}
-
-operator fun VikBotHandler.plusAssign(event: MaintainEvent<*, *>) {
-    maintainEvent += event.generateTimerEvent()
-    shutdownEvent += event.generateShutdownEvent()
 }
 
 fun <K, T> createMemory(): MutableMap<K, Pair<Instant, T>> = mutableMapOf<K, Pair<Instant, T>>().synchronized()

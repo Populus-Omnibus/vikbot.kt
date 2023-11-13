@@ -62,7 +62,7 @@ suspend operator fun <X> Event<out suspend (X) -> EventResult>.invoke(x: X): Eve
     return EventResult()
 }
 
-fun <T, P> Event< suspend (T) -> TypedEventResult<P>>.subscribe(index: Int, f: suspend (T) -> P? ) = set(index) { t ->
+fun <T, P> Event<suspend (T) -> TypedEventResult<P>>.subscribe(index: Int, f: suspend (T) -> P? ) = set(index) { t ->
     TypedEventResult(
         f(t)
     )
