@@ -15,6 +15,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.okio) // explicitly implement okio
 
     implementation(libs.slf4j)
     implementation(libs.slf4k)
