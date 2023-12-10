@@ -8,14 +8,10 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.db.McOfflineAccount
 import io.github.populus_omnibus.vikbot.db.McOfflineAccounts
 import kotlinx.coroutines.coroutineScope
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -153,16 +149,3 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
 
 
 }
-
-private val httpClient = OkHttpClient()
-
-private fun checkIfNameFree(name: String): Boolean {
-    val http = Request.Builder().apply {
-        url("https://api.mojang.com/users/profiles/minecraft/${name}")
-    }.build()
-    val data = String(httpClient.newCall(http).execute().body!!.byteStream().readAllBytes()).let {
-        Json.parseToJsonElement(it)
-    }
-    return (data as? JsonObject)?.containsKey("id") == true
-}
-
