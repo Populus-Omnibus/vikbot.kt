@@ -2,6 +2,8 @@ package io.github.populus_omnibus.vikbot.bot.vikauth
 
 import com.macasaet.fernet.StringValidator
 import com.macasaet.fernet.Token
+import io.github.populus_omnibus.vikbot.db.McLinkedAccount
+import io.github.populus_omnibus.vikbot.db.McLinkedAccounts
 import io.github.populus_omnibus.vikbot.db.McOfflineAccount
 import io.github.populus_omnibus.vikbot.db.McOfflineAccounts
 import kotlinx.coroutines.coroutineScope
@@ -15,16 +17,24 @@ import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.*
 
-class AuthHandler(val connection: Socket) {
+class AuthHandler(private val connection: Socket) {
     private suspend fun handleMessage(input: C2SVikAuthPacket): S2CVikAuthPacket? = coroutineScope {
         return@coroutineScope transaction {
-            McOfflineAccount.find(McOfflineAccounts.token eq input.token).firstOrNull()?.let {
-                S2CVikAuthPacket(
-                    token = it.token,
-                    displayName = it.displayName,
-                    id = it.uuid.toString()
-                )
-            }
+            if (input.premium) {
+                McLinkedAccount.find(McLinkedAccounts.accountId eq UUID.fromString(input.id)).firstOrNull()?.let {
+                    S2CVikAuthPacket(
+                        id = it.uuid.toString()
+                    )
+                }
+            } else {
+                McOfflineAccount.find(McOfflineAccounts.token eq input.username).firstOrNull()?.let {
+                    S2CVikAuthPacket(
+                        token = it.token,
+                        displayName = it.displayName,
+                        id = it.uuid.toString()
+                    )
+                }
+            } ?: S2CVikAuthPacket() // empty reply means access denied.
         }
     }
 
@@ -60,22 +70,4 @@ class AuthHandler(val connection: Socket) {
         }
     }
 
-    @Serializable
-    private data class C2SVikAuthPacket(
-        val token: String,
-    )
-
-    @Serializable
-    private data class S2CVikAuthPacket constructor(
-        val token: String,
-        val id: String,
-        @SerialName("displayname")
-        val displayName: String,
-        @SerialName("skin_url")
-        val skinUrl: String? = null,
-    ) {
-
-        val uuid: UUID
-            get() = UUID.fromString(id)
-    }
 }
