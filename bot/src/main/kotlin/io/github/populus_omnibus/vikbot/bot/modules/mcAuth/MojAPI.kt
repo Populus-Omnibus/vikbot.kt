@@ -26,7 +26,17 @@ internal fun nameToUuid(name: String): UUID? {
     val data = String(httpClient.newCall(http).execute().body!!.byteStream().readAllBytes()).let {
         Json.parseToJsonElement(it)
     }
-    return (data as? JsonObject)?.get("id")?.jsonPrimitive?.content?.let { UUID.fromString(it) }
+    return (data as? JsonObject)?.get("id")?.jsonPrimitive?.content?.toUuid()
+}
+
+private val uuidHyphens = Regex("([a-f0-9]{8})([a-f0-9]{4})(4[a-f0-9]{3})([89aAbB][a-f0-9]{3})([a-f0-9]{12})")
+
+fun CharSequence.toUuid(): UUID {
+    return if (this.contains("-")) {
+        UUID.fromString(this.toString())
+    } else {
+        UUID.fromString(uuidHyphens.replace(this, "$1-$2-$3-$4-$5"))
+    }
 }
 
 internal fun getUserSkin(id: UUID): Pair<ByteBuffer, Boolean>? {

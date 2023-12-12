@@ -5,14 +5,19 @@ import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
+import io.github.populus_omnibus.vikbot.bot.toUserTag
+import io.github.populus_omnibus.vikbot.db.McLinkedAccount
+import io.github.populus_omnibus.vikbot.db.McLinkedAccounts
 import io.github.populus_omnibus.vikbot.db.McOfflineAccount
 import io.github.populus_omnibus.vikbot.db.McOfflineAccounts
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.upsert
@@ -25,7 +30,7 @@ import kotlin.streams.asSequence
 object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for BME VIK server") {
     private val logger by getLogger()
     private val random: SecureRandom = SecureRandom.getInstanceStrong()
-    private val validator = Regex("[\\d\\w_]+")
+    private val validator = Regex("[\\w_]+")
     private val tokenChars = "_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toList()
     init {
         this += object : SlashCommand("register", "Create or update account, reset token") {
@@ -93,6 +98,133 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
             } else {
                 event.reply("You don't have an account\nPlease create one with `/mcauth register <displayName>").setEphemeral(true).complete()
             }
+        }
+
+        this += object : SlashCommand("whitelist", "Whitelist your account(s)") {
+            val nameOrId by option("name", "Account name or UUID", SlashOptionType.STRING).required()
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
+                // Defer reply, we have time to play with mojang api
+                val rdy = async { event.deferReply().setEphemeral(true).complete()!! }
+
+                val uuid = try {
+                    nameOrId.toUuid()
+                } catch (e: IllegalArgumentException) {
+                    null
+                } ?: nameToUuid(nameOrId)
+                if (uuid == null) {
+                    rdy.await().editOriginal("Invalid name or UUID") // complete after if
+                } else {
+                    rdy.await()
+                    transaction {
+                        val acc = McLinkedAccount.find() { McLinkedAccounts.accountId eq uuid }.firstOrNull()
+                        if (acc != null) {
+                            if (acc.discordUserId == event.user.idLong) {
+                                event.hook.editOriginal("You have already whitelisted this account.")
+                            } else {
+                                event.hook.editOriginal("This account is already whitelisted by ${acc.discordUserId.toUserTag()}")
+                            }
+                        } else {
+                            McLinkedAccounts.insert {
+                                it[accountId] = uuid
+                                it[user] = event.user.idLong
+                            }
+                            event.hook.editOriginal("Account whitelisted\nhttps://namemc.com/profile/$uuid")
+                        }
+                    }
+                }.complete()
+            }
+        }
+
+        this += object : SlashCommand("remove", "Unwhitelist your account(s)") {
+            val nameOrId by option("name", "Account name or UUID", SlashOptionType.STRING).required()
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
+                // Defer reply, we have time to play with mojang api
+                val rdy = async { event.deferReply().setEphemeral(true).complete()!! }
+
+                val uuid = try {
+                    nameOrId.toUuid()
+                } catch (e: IllegalArgumentException) {
+                    null
+                } ?: nameToUuid(nameOrId) ?: run {
+                    rdy.await().editOriginal("Invalid name or UUID").complete(); return@coroutineScope
+                } // complete after if
+
+                transaction {
+                    val account = McLinkedAccount.find { McLinkedAccounts.accountId eq uuid }.firstOrNull()
+
+                    if (account != null) {
+                        if (account.discordUserId == event.user.idLong) {
+                            account.delete()
+                            event.hook.editOriginal("Account removed")
+                        } else {
+                            event.reply("This account is does not belong to you")
+                        }
+                    } else {
+                        event.reply("Unknown account")
+                    }
+                }.complete()
+            }
+        }
+
+        this += object : SlashCommand("whois", "get the owner of an account") {
+            val nameOrId by option("name", "Account name or UUID", SlashOptionType.STRING).required()
+
+                override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
+                    // Defer reply, we have time to play with mojang api
+                    val rdy = async { event.deferReply().setEphemeral(true).complete()!! }
+
+                    // first check for offline accounts
+
+                    val uuid = try {
+                        nameOrId.toUuid() // Names are too long for valid UUIDs, name looking like UUIDs are not possible
+                    } catch (e: IllegalArgumentException) {
+                        null
+                    }
+
+                    val offlineAccount = transaction {
+                        if (uuid != null) {
+                            McOfflineAccount.find { McOfflineAccounts.accountId eq uuid }
+                        } else {
+                            McOfflineAccount.find { McOfflineAccounts.displayName eq nameOrId }
+                        }.firstOrNull()?.discordUserId
+                    }
+
+                    val userId = offlineAccount ?: (uuid ?: nameToUuid(nameOrId))?.let {id ->
+                        transaction {
+                            McLinkedAccount.find { McLinkedAccounts.accountId eq id }.firstOrNull()?.discordUserId
+                        }
+                    }
+
+                    rdy.await()
+                    if (userId != null) {
+                        event.hook.editOriginal("This account is owned by ${userId.toUserTag()}").complete()
+                    } else {
+                        event.hook.editOriginal("Unknown account").complete()
+                    }
+                }
+        }
+
+        this += SlashCommand("listAccounts".lowercase(), "List your accounts") {event ->
+
+            transaction {
+                val account = McOfflineAccount.getByUser(event.user)
+                val onlineAccounts = McLinkedAccount.find { McLinkedAccounts.user eq event.user.idLong }.toList()
+
+                if (account == null && onlineAccounts.isEmpty()) {
+                    event.reply("You have no accounts registered or whitelisted")
+                } else {
+                    val builder = StringBuilder()
+                    if (account != null) {
+                        builder.append("Offline account: `${account.displayName}`, UUID: `${account.uuid}`\n")
+                    }
+                    if (onlineAccounts.isNotEmpty()) {
+                        builder.append("Online accounts: \n- ${onlineAccounts.joinToString("\n- ") { "https://namemc.com/profile/${it.uuid}" }}")
+                    }
+                    event.reply(builder.toString())
+                }
+            }.setEphemeral(true).complete()
         }
 
         this += SlashCommand("help", "Get help info") { event ->
