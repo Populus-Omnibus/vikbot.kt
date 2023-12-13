@@ -21,6 +21,7 @@ data class BotConfig(
     val adminId: Long,
     val vikAuthPort: Int = 12345,
     val vikAuthFernet: String,
+    var vikAuthChannel: Long? = null, // the only option which can be changed in runtime
     val useRoleTags: Boolean = true,
     val database: DatabaseAccess = DatabaseAccess(),
 ) {
