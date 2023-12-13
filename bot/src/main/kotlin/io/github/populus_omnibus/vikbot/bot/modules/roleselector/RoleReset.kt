@@ -6,7 +6,7 @@ import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.db.Servers
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -21,7 +21,7 @@ import org.slf4j.kotlin.getLogger
 @Command(CommandType.SERVER)
 object RoleReset :
     CommandGroup("rolereset", "Admin-only commands for adding and editing messages that allow for resetting roles", {
-        adminOnly()
+        administrator()
     }) {
     internal val logger by getLogger()
 

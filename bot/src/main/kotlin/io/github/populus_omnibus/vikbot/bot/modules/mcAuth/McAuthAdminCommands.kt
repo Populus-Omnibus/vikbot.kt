@@ -17,7 +17,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 @Command(type = CommandType.OWNER)
 object McAuthAdminCommands : CommandGroup("vikauthAdmin".lowercase(), "Offline minecraft account tool",
     {
-        adminOnly()
+        administrator()
     }) {
     init {
         this += object : SlashCommand("update", "Create (or edit) someones account") {
