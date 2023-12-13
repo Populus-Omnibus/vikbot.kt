@@ -3,16 +3,16 @@ package io.github.populus_omnibus.vikbot.bot.vikauth
 import com.macasaet.fernet.StringValidator
 import com.macasaet.fernet.Token
 import io.github.populus_omnibus.vikbot.VikBotHandler
+import io.github.populus_omnibus.vikbot.bot.toUserTag
 import io.github.populus_omnibus.vikbot.db.McLinkedAccount
 import io.github.populus_omnibus.vikbot.db.McLinkedAccounts
 import io.github.populus_omnibus.vikbot.db.McOfflineAccount
 import io.github.populus_omnibus.vikbot.db.McOfflineAccounts
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import net.dv8tion.jda.api.EmbedBuilder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.Socket
@@ -26,6 +26,7 @@ class AuthHandler(private val connection: Socket) {
                 McLinkedAccount.find(McLinkedAccounts.accountId eq UUID.fromString(input.id)).firstOrNull()?.let {
                     S2CVikAuthPacket(
                         id = it.uuid.toString(),
+                        displayName = input.username,
                         allowed = true,
                     )
                 }
@@ -86,9 +87,36 @@ class AuthHandler(private val connection: Socket) {
     }
 
     private suspend fun sendMessage(c2s: C2SVikAuthPacket, s2c: S2CVikAuthPacket? = null) = coroutineScope {
-        if (c2s.login) {
-            //VikBotHandler.jda.
+        val channel = VikBotHandler.config.vikAuthChannel?.let { VikBotHandler.jda.getTextChannelById(it) } ?: return@coroutineScope
+
+        val serverStr = if (c2s.serverName != null) "${c2s.serverName}" else "a server"
+        val userId by lazy {
+            if (c2s.premium) {
+                McLinkedAccount.find(McLinkedAccounts.accountId eq c2s.uuid).first().discordUserId
+            } else {
+                McOfflineAccount.find(McOfflineAccounts.token eq c2s.username).first().discordUserId
+            }
         }
+
+        if (c2s.login && s2c != null) {
+            transaction {
+
+                val embed = EmbedBuilder().apply {
+                    setTitle("${s2c.displayName} joined $serverStr")
+                    setDescription("""
+                        ${userId.toUserTag()} is now playing on $serverStr.
+                    """.trimIndent())
+                }.build()
+                channel.sendMessageEmbeds(embed)
+            }
+        } else {
+            transaction {
+                val embed = EmbedBuilder().apply {
+                    setTitle("${c2s.username} left $serverStr")
+                }.build()
+                channel.sendMessageEmbeds(embed)
+            }
+        }.complete()
     }
 }
 

@@ -1,5 +1,6 @@
 package io.github.populus_omnibus.vikbot.bot.modules.mcAuth
 
+import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Command
 import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.*
@@ -128,6 +129,16 @@ object McAuthAdminCommands : CommandGroup("vikauthAdmin".lowercase(), "Offline m
         this += SlashCommand("start", "Start VikAuth service") {
             McAuthModule.start()
             it.reply("Server started").setEphemeral(true).complete()
+        }
+
+        this += object : SlashCommand("setLogging".lowercase(), "Set MC server logging, default is disabled") {
+            val channel by option("channel", "Channel to send join/leave messages", SlashOptionType.CHANNEL)
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                VikBotHandler.config.vikAuthChannel = channel?.idLong
+                VikBotHandler.config.save()
+                event.reply("Logging channel set to ${channel?.asMention ?: "none"}").setEphemeral(true).complete()
+            }
         }
     }
 
