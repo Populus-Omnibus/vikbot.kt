@@ -80,6 +80,7 @@ object Tags {
                                 it.placeholder = "Tags are useful, pre-defined messages, write here your content!"
                             }.build())
                         }.let {
+                            defer.join()
                             event.replyModal(it.build()).queue()
                         }
 
