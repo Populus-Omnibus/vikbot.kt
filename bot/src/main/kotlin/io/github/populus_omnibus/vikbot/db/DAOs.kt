@@ -159,6 +159,17 @@ class UserMessage(id: EntityID<Long>) : LongEntity(id) {
     var embedLinks by UserMessages.embedLinks
 }
 
+class UserWarning(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<UserWarning>(UserWarnings)
+
+    var guildId by UserWarnings.guildId
+    var userId by UserWarnings.userId
+    var reason by UserWarnings.reason
+    var timestamp by UserWarnings.timestamp
+    var issuer by UserWarnings.issuer
+    var messageId by UserWarnings.messageId
+}
+
 class Tag(id: EntityID<String>) : Entity<String>(id) {
     companion object : EntityClass<String, Tag>(TagTable)
 

@@ -32,6 +32,7 @@ object DatabaseHandler {
                         PublishData,
                         RoleEntries,
                         UserMessages,
+                        UserWarnings,
                         TagTable,
                         TagAttachments,
                         McOfflineAccounts,

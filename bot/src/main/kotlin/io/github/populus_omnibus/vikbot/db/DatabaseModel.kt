@@ -79,6 +79,15 @@ object UserMessages : LongIdTable() {
     val embedLinks = json<List<String>>("embeds", Json).default(listOf())
 }
 
+object UserWarnings : IntIdTable() {
+    val guildId = long("guild")
+    val userId = long("user")
+    val reason = text("reason")
+    val timestamp = timestamp("timestamp").clientDefault { Clock.System.now() }
+    val issuer = long("issuer")
+    val messageId = long("messageid").nullable().default(null)
+}
+
 object TagTable : IdTable<String>() {
     override val id = varchar("id", 64).entityId()
     override val primaryKey = PrimaryKey(id)
