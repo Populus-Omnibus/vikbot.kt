@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Member
 import java.time.OffsetDateTime
 import java.time.ZoneId
 
-val Member?.isAdmin: Boolean
+val Member?.isBotAdmin: Boolean
     get() = this?.roles?.any { it.idLong == VikBotHandler.config.adminId } ?: false
 
 fun Long.toUserTag() = "<@$this>"
