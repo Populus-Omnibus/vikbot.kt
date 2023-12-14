@@ -9,6 +9,7 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.api.plusAssign
+import io.github.populus_omnibus.vikbot.bot.chunked
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.expiringReplies
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.interactionDeletionWarning
 import io.github.populus_omnibus.vikbot.db.*
@@ -94,11 +95,19 @@ object RoleSelectorCommands :
                         else generic?.name
                     } ?: "<none>") + "\n\t$groupOutput"
                 }
+                val outputClamped = outputStringData.map {
+                    it.chunked(2000)
+                }.flatMap { it }
 
-                event.reply(outputStringData.let {
-                    if (it.isEmpty()) "server has no groups"
-                    else it.joinToString("\n")
-                }).complete()
+                outputClamped.let {
+                    if (it.isEmpty()) event.reply("server has no groups").complete()
+                    else {
+                        event.reply(it.removeFirst()).complete()
+                        it.forEach { chunk ->
+                            event.channel.sendMessage(chunk).complete()
+                        }
+                    }
+                }
             }
 
             fun formattedOutput(source: Pair<Role, RoleEntry>): String {
