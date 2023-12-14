@@ -98,7 +98,7 @@ object RoleSelectorCommands :
                 event.reply(outputStringData.let {
                     if (it.isEmpty()) "server has no groups"
                     else it.joinToString("\n")
-                }).complete()
+                }).setAllowedMentions(emptyList()).complete()
             }
 
             fun formattedOutput(source: Pair<Role, RoleEntry>): String {
