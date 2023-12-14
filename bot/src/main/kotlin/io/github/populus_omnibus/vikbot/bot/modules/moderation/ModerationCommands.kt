@@ -49,13 +49,17 @@ object ModerationCommands :
                 val channelId = result?.groups?.get("channel")?.value?.toLongOrNull()
                 val messageId = result?.groups?.get("msg")?.value?.toLongOrNull()
                 val messageParam = bot.jda.getTextChannelById(channelId ?: 0)?.retrieveMessageById(messageId ?: 0)?.complete()
-                if (time == null && channelId == null && messageParam == null) {
-                    event.reply("Please specify at least one of the options").setEphemeral(true).complete()
-                    return@coroutineScope
-                }
-                if(messageParam == null) {
-                    event.reply("Parameter message not found, please provide a valid link").setEphemeral(true).complete()
-                    return@coroutineScope
+                if (messageParam == null) {
+                    //if message was passed in, but that message doesn't exist
+                    if(channelId != null || messageId != null) {
+                        event.reply("Parameter message not found, please provide a valid link").setEphemeral(true).complete()
+                        return@coroutineScope
+                    }
+                    //if neither limit was passed in
+                    if(time == null) {
+                        event.reply("Please specify at least one of the options").setEphemeral(true).complete()
+                        return@coroutineScope
+                    }
                 }
 
                 val toDelete = run {
