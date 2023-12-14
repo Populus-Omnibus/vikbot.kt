@@ -48,13 +48,19 @@ object ModerationCommands :
                 val result = pattern.matchEntire(lastMessageURL ?: "")
                 val channelId = result?.groups?.get("channel")?.value?.toLongOrNull()
                 val messageId = result?.groups?.get("msg")?.value?.toLongOrNull()
-                if (time == null && channelId == null && messageId == null) {
+                val messageParam = bot.jda.getTextChannelById(channelId ?: 0)?.retrieveMessageById(messageId ?: 0)?.complete()
+                if (time == null && channelId == null && messageParam == null) {
                     event.reply("Please specify at least one of the options").setEphemeral(true).complete()
                     return@coroutineScope
                 }
+                if(messageParam == null) {
+                    event.reply("Parameter message not found, please provide a valid link").setEphemeral(true).complete()
+                    return@coroutineScope
+                }
+
                 val toDelete = run {
                     val history = event.channel.iterableHistory.asSequence()
-                    history.takeWhile { it.idLong != messageId }
+                    history.takeWhile { it.idLong != messageParam.idLong }
                         .takeWhile {
                             it.timeCreated.toEpochSecond() > (System.currentTimeMillis() / 1000 - (time
                                 ?: 1_000_000) * 60)
