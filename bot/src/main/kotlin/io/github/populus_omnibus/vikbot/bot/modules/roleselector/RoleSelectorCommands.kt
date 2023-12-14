@@ -179,7 +179,7 @@ object RoleSelectorCommands :
                             } catch (_: Exception) {
                                 optionBuild
                             }
-                        }).setMinValues(0).setMaxValues(group.maxRolesAllowed).build()
+                        }).setMinValues(0).setMaxValues(group.maxRolesAllowed).setPlaceholder(groupName).build()
 
 
                     (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
