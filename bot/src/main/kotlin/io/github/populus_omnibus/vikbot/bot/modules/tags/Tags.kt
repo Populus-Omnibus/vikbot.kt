@@ -5,11 +5,10 @@ import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.moderator
 import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
-import io.github.populus_omnibus.vikbot.bot.isAdmin
 import io.github.populus_omnibus.vikbot.db.*
 import io.github.populus_omnibus.vikbot.plusAssign
 import kotlinx.coroutines.coroutineScope
@@ -38,7 +37,9 @@ object Tags {
 
         bot.globalCommands += object : SlashCommand("tag", "Collection of helpful pre-defined messages") {
             val tag: Tag by option("id", "Tag ID", TagSlashOption).required()
-            val ephemeral by option("ephemeral", "make it ephemeral, default true", SlashOptionType.BOOLEAN).default(true)
+            val ephemeral by option("ephemeral", "make it ephemeral, default true", SlashOptionType.BOOLEAN).default(
+                true
+            )
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
                 tag.asMessage().let {
@@ -49,7 +50,7 @@ object Tags {
         }
 
         bot.ownerServerCommands += CommandGroup("tags", "Collection of helpful pre-defined messages") {
-            adminOnly()
+            moderator()
         }.also { commandGroup ->
             commandGroup += object : SlashCommand("add", "add a new tag, admin only") {
                 val tagId by option("id", "new tag id", SlashOptionType.STRING).required()
@@ -58,37 +59,34 @@ object Tags {
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) = coroutineScope {
 
-                    if (event.member.isAdmin) {
-                        val defer = launch { event.deferReply(true) }
-                        if (transaction { Tag.findById(tagId) != null }) {
-                            event.reply("Tag is already exists, modify or delete it first").setEphemeral(true).queue()
-                            return@coroutineScope
-                        }
-
-
-                        tagId
-                        val attachmentName = attachment?.fileName
-
-                        attachment?.proxy?.download()?.get()?.let {
-                            attachmentMap[tagId] = Clock.System.now() to EncodedFileUpload(
-                                embedName = attachmentName!!,
-                                embed = it.readAllBytes()
-                            )
-
-                        }
-
-                        Modal.create("tagEdit:${tagId}:create", "Create a new tag: $tagId").apply {
-                            addActionRow(TextInput.create("content", "Tag content", TextInputStyle.PARAGRAPH).also {
-                                it.value = text
-                                it.placeholder = "Tags are useful, pre-defined messages, write here your content!"
-                            }.build())
-                        }.let {
-                            event.replyModal(it.build()).queue()
-                        }
-
-                    } else {
-                        event.reply("You don't have permission to manage tags").setEphemeral(true).queue()
+                    val defer = launch { event.deferReply(true) }
+                    if (transaction { Tag.findById(tagId) != null }) {
+                        event.reply("Tag is already exists, modify or delete it first").setEphemeral(true).queue()
+                        return@coroutineScope
                     }
+
+
+                    tagId
+                    val attachmentName = attachment?.fileName
+
+                    attachment?.proxy?.download()?.get()?.let {
+                        attachmentMap[tagId] = Clock.System.now() to EncodedFileUpload(
+                            embedName = attachmentName!!,
+                            embed = it.readAllBytes()
+                        )
+
+                    }
+
+                    Modal.create("tagEdit:${tagId}:create", "Create a new tag: $tagId").apply {
+                        addActionRow(TextInput.create("content", "Tag content", TextInputStyle.PARAGRAPH).also {
+                            it.value = text
+                            it.placeholder = "Tags are useful, pre-defined messages, write here your content!"
+                        }.build())
+                    }.let {
+                        defer.join()
+                        event.replyModal(it.build()).queue()
+                    }
+
 
                 }
             }
@@ -99,45 +97,44 @@ object Tags {
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
                     val defer = launch { event.deferReply(true) }
-                    if (event.member.isAdmin) {
 
-                        val attachmentName = attachment?.fileName
+                    val attachmentName = attachment?.fileName
 
-                        attachment?.proxy?.download()?.get()?.let {
-                            attachmentMap[tag.id.value] = Clock.System.now() to EncodedFileUpload(
-                                embed = it.readAllBytes(),
-                                embedName = attachmentName!!
+                    attachment?.proxy?.download()?.get()?.let {
+                        attachmentMap[tag.id.value] = Clock.System.now() to EncodedFileUpload(
+                            embed = it.readAllBytes(),
+                            embedName = attachmentName!!
+                        )
+                    }
+
+                    transaction {
+                        Modal.create("tagEdit:${tag.id.value}:edit", "Edit tag: ${tag.id.value}").apply {
+                            addActionRow(
+                                TextInput.create(
+                                    "content",
+                                    "tag ${tag.id.value}",
+                                    TextInputStyle.PARAGRAPH
+                                ).also {
+                                    it.value = tag.content
+                                    it.placeholder = "This is a placeholder text..."
+                                }.build()
                             )
                         }
-
-                        transaction {
-                            Modal.create("tagEdit:${tag.id.value}:edit", "Edit tag: ${tag.id.value}").apply {
-                                addActionRow(
-                                    TextInput.create(
-                                        "content",
-                                        "tag ${tag.id.value}",
-                                        TextInputStyle.PARAGRAPH
-                                    ).also {
-                                        it.value = tag.content
-                                        it.placeholder = "This is a placeholder text..."
-                                    }.build()
-                                )
-                            }
-                        }.build().let {
-                            defer.join()
-                            event.replyModal(it).queue()
-                        }
-
-                    } else {
+                    }.build().let {
                         defer.join()
-                        event.hook.sendMessage("You don't have permission to manage tags").setEphemeral(true).complete()
+                        event.replyModal(it).queue()
                     }
+
                 }
             }
 
             commandGroup += object : SlashCommand("list", "List available tags") {
                 val filter by option("filter", "tag filter", SlashOptionType.STRING).default("")
-                val ephemeral by option("ephemeral", "make it ephemeral, default true", SlashOptionType.BOOLEAN).default(true)
+                val ephemeral by option(
+                    "ephemeral",
+                    "make it ephemeral, default true",
+                    SlashOptionType.BOOLEAN
+                ).default(true)
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     transaction {
@@ -158,7 +155,11 @@ object Tags {
 
             commandGroup += object : SlashCommand("get", "Get a tag by id, similar to /tag command") {
                 val tag by option("id", "Tag ID", TagSlashOption).required()
-                val ephemeral by option("ephemeral", "make it ephemeral, default true", SlashOptionType.BOOLEAN).default(true)
+                val ephemeral by option(
+                    "ephemeral",
+                    "make it ephemeral, default true",
+                    SlashOptionType.BOOLEAN
+                ).default(true)
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
                     tag.asMessage().let { event.reply(it).setEphemeral(ephemeral).complete() }
@@ -169,22 +170,18 @@ object Tags {
                 val tag by option("id", "Tag ID", TagSlashOption).required()
 
                 override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                    if (event.member.isAdmin) {
-                        val embed = transaction {
-                            EmbedBuilder().apply {
-                                setAuthor(tag.id.value)
-                                setTitle("Confirm deleting tag: ${tag.id.value}")
-                                setDescription(tag.content)
-                            }.build()
-                        }
-                        event.replyEmbeds(embed).setEphemeral(true).addActionRow(
-                            Button.primary("deleteTag:${tag.id.value}", "Yes, delete this"),
-                            Button.danger("cancelmodal", "Cancel")
-                        ).complete()
-
-                    } else {
-                        event.reply("You don't have permission to manage tags").setEphemeral(true).complete()
+                    val embed = transaction {
+                        EmbedBuilder().apply {
+                            setAuthor(tag.id.value)
+                            setTitle("Confirm deleting tag: ${tag.id.value}")
+                            setDescription(tag.content)
+                        }.build()
                     }
+                    event.replyEmbeds(embed).setEphemeral(true).addActionRow(
+                        Button.primary("deleteTag:${tag.id.value}", "Yes, delete this"),
+                        Button.danger("cancelmodal", "Cancel")
+                    ).complete()
+
                 }
             }
 
@@ -204,7 +201,7 @@ object Tags {
 
         bot += attachmentMap.maintainEvent()
 
-        bot.modalEvents += IdentifiableInteractionHandler("tagEdit") {event ->
+        bot.modalEvents += IdentifiableInteractionHandler("tagEdit") { event ->
             val id = event.modalId.split(":")[1]
             val replace = event.modalId.split(":")[2] == "edit"
 

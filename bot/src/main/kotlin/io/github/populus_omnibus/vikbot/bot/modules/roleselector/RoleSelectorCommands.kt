@@ -7,7 +7,7 @@ import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.api.plusAssign
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.expiringReplies
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.interactionDeletionWarning
@@ -26,7 +26,7 @@ import org.slf4j.kotlin.getLogger
 @Command(CommandType.SERVER)
 object RoleSelectorCommands :
     CommandGroup("roleselector", "Admin-only commands for adding and editing role selectors", {
-        adminOnly()
+        administrator()
     }) {
     internal val logger by getLogger()
 
