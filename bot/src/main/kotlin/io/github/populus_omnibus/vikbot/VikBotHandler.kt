@@ -9,6 +9,7 @@ import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableList
 import io.github.populus_omnibus.vikbot.api.interactions.invoke
 import io.github.populus_omnibus.vikbot.api.invoke
 import io.github.populus_omnibus.vikbot.bot.BotConfig
+import io.github.populus_omnibus.vikbot.bot.isBotAdmin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -95,8 +96,12 @@ object VikBotHandler : EventListener {
             val forRestart = option("restart", "Stop for restart is true", SlashOptionType.BOOLEAN).default(false)
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                event.reply("stopping").setEphemeral(true).queue {
-                    Runtime.getRuntime().exit(if (event[forRestart]) 0 else 4)
+                if (event.member?.isBotAdmin == true) {
+                    event.reply("stopping").setEphemeral(true).queue {
+                        Runtime.getRuntime().exit(if (event[forRestart]) 0 else 4)
+                    }
+                } else {
+                    event.reply("You are not an admin").setEphemeral(true).queue()
                 }
             }
         }
@@ -104,7 +109,6 @@ object VikBotHandler : EventListener {
         globalCommands += SlashCommand("ping", "quick self test") {
             it.reply("pong\nclient latency: ${it.jda.gatewayPing}").setEphemeral(true).complete()
         }
-
     }
 
 
