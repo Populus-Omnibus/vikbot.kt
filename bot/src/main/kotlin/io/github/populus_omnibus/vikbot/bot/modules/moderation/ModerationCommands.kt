@@ -7,7 +7,7 @@ import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.moderator
 import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.minutes
 @Command(CommandType.SERVER)
 object ModerationCommands :
     CommandGroup("moderation", "Admin-only commands for executing moderation tasks, such as a channel purge", {
-        adminOnly()
+        moderator()
     }) {
     internal val logger by getLogger()
     private var deletionRequests = createMemory<Long, List<Message>>()

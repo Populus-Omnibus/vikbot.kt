@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import org.jetbrains.exposed.sql.transactions.transaction
 
 @Command(type = CommandType.SERVER)
-object MessageLoggerCommand : CommandGroup("logger", "Message logger", {adminOnly()}) {
+object MessageLoggerCommand : CommandGroup("logger", "Message logger", {operator()}) {
     init {
         this += object : SlashCommand("setChannel".lowercase(), "Set deleted messages channel") {
             val channel by option("channel", "channel", SlashOptionType.CHANNEL).required()

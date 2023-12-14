@@ -5,7 +5,7 @@ import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.operator
 import io.github.populus_omnibus.vikbot.db.RssFeed
 import io.github.populus_omnibus.vikbot.db.RssFeeds
 import io.github.populus_omnibus.vikbot.db.Servers
@@ -19,7 +19,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 
 @Command(type = CommandType.SERVER)
-object RssCommands : CommandGroup("rss", "news handling", { adminOnly() } ) {
+object RssCommands : CommandGroup("rss", "news handling", { operator() } ) {
     init {
         this += object : SlashCommand("setNewsChannel".lowercase(), "Set news channel on this server") {
 
