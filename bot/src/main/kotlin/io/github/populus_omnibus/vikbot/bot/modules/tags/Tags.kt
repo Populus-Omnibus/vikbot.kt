@@ -2,10 +2,7 @@ package io.github.populus_omnibus.vikbot.bot.modules.tags
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
-import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
-import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
-import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.*
 import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
@@ -49,7 +46,7 @@ object Tags {
         }
 
         bot.ownerServerCommands += CommandGroup("tags", "Collection of helpful pre-defined messages") {
-            adminOnly()
+            moderator()
         }.also { commandGroup ->
             commandGroup += object : SlashCommand("add", "add a new tag, admin only") {
                 val tagId by option("id", "new tag id", SlashOptionType.STRING).required()
@@ -83,6 +80,7 @@ object Tags {
                                 it.placeholder = "Tags are useful, pre-defined messages, write here your content!"
                             }.build())
                         }.let {
+                            defer.join()
                             event.replyModal(it.build()).queue()
                         }
 

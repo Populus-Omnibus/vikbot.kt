@@ -3,6 +3,7 @@ package io.github.populus_omnibus.vikbot
 import io.github.populus_omnibus.vikbot.api.Event
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
+import io.github.populus_omnibus.vikbot.api.commands.operator
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableList
 import io.github.populus_omnibus.vikbot.api.interactions.invoke
@@ -89,7 +90,7 @@ object VikBotHandler : EventListener {
 
     init {
         ownerServerCommands += object : SlashCommand("stop", "Stops the bot (owner only)", configure = {
-            defaultPermissions = DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
+            operator()
         }) {
             val forRestart = option("restart", "Stop for restart is true", SlashOptionType.BOOLEAN).default(false)
 

@@ -5,7 +5,8 @@ import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.administrator
+import io.github.populus_omnibus.vikbot.api.commands.operator
 import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
@@ -40,7 +41,7 @@ object ReportForm {
         bot += fallbackMsgData.maintainEvent(15.minutes)
 
         bot.serverCommands += object :
-            SlashCommand("setreportchannel", "sets the channel to use in this guild for receiving reports", { adminOnly() }) {
+            SlashCommand("setreportchannel", "sets the channel to use in this guild for receiving reports", { operator() }) {
             val channel by option("channel", "target channel, not supplying this option will cause a reset", SlashOptionType.CHANNEL)
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) {

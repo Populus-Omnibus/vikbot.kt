@@ -3,6 +3,7 @@ package io.github.populus_omnibus.vikbot.api.commands
 import io.github.populus_omnibus.vikbot.api.getValue
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableHandler
 import kotlinx.coroutines.*
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
@@ -145,7 +146,23 @@ open class SlashCommand(name: String, val description: String, configure: SlashC
     }
 }
 
-fun SlashCommandData.adminOnly(target: Boolean = true) {
+/**
+ * Command is for server operator only, this is the highest permission
+ */
+fun SlashCommandData.operator(target: Boolean = true) {
     defaultPermissions = if (target) DefaultMemberPermissions.DISABLED else DefaultMemberPermissions.ENABLED
 }
 
+/**
+ * Server managers, moderators. Anyone having access to manage permissions
+ */
+fun SlashCommandData.administrator() {
+    defaultPermissions = DefaultMemberPermissions.enabledFor(Permission.MANAGE_PERMISSIONS)
+}
+
+/**
+ * Server moderators, anyone having access to moderate members. These commands aren't very dangerous, anyone trusted to moderate members can use them
+ */
+fun SlashCommandData.moderator() {
+    defaultPermissions = DefaultMemberPermissions.enabledFor(Permission.MODERATE_MEMBERS)
+}

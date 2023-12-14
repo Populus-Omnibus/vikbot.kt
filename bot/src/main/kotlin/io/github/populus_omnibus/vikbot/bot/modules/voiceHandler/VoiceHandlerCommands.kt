@@ -4,7 +4,7 @@ import io.github.populus_omnibus.vikbot.api.annotations.Command
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.adminOnly
+import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.db.HandledVoiceChannel
 import io.github.populus_omnibus.vikbot.db.HandledVoiceChannels
 import io.github.populus_omnibus.vikbot.db.Servers
@@ -16,7 +16,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 
 @Command
-object VoiceHandlerCommands : CommandGroup("voice", "manage voice channel manager", {adminOnly()}) {
+object VoiceHandlerCommands : CommandGroup("voice", "manage voice channel manager", {
+    administrator()
+}) {
     init {
         this += object : SlashCommand("addChannel".lowercase(), "Set a channel to be managed") {
             val channel by option("channel", "Select a voice channel", SlashOptionType.CHANNEL).required()
