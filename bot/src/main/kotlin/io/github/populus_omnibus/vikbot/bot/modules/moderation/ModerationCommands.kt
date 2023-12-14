@@ -51,7 +51,7 @@ object ModerationCommands :
                 val messageParam = bot.jda.getTextChannelById(channelId ?: 0)?.retrieveMessageById(messageId ?: 0)?.complete()
                 if (messageParam == null) {
                     //if message was passed in, but that message doesn't exist
-                    if(channelId != null || messageId != null) {
+                    if(lastMessageURL != null) {
                         event.reply("Parameter message not found, please provide a valid link").setEphemeral(true).complete()
                         return@coroutineScope
                     }
@@ -64,7 +64,7 @@ object ModerationCommands :
 
                 val toDelete = run {
                     val history = event.channel.iterableHistory.asSequence()
-                    history.takeWhile { it.idLong != messageParam.idLong }
+                    history.takeWhile { it.idLong != (messageParam?.idLong ?: 0) }
                         .takeWhile {
                             it.timeCreated.toEpochSecond() > (System.currentTimeMillis() / 1000 - (time
                                 ?: 1_000_000) * 60)
