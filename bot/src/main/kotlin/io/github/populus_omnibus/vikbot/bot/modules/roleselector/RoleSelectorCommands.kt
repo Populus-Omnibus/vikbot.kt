@@ -104,7 +104,7 @@ object RoleSelectorCommands :
                     else {
                         event.reply(it.removeFirst()).complete()
                         it.forEach { chunk ->
-                            event.channel.sendMessage(chunk).complete()
+                            event.channel.sendMessage(chunk).setAllowedMentions(emptyList()).complete()
                         }
                     }
                 }
