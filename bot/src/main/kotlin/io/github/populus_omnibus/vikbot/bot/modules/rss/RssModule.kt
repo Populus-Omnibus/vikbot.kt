@@ -1,6 +1,6 @@
 package io.github.populus_omnibus.vikbot.bot.modules.rss
 
-import com.prof18.rssparser.RssParser
+import com.prof18.rssparser.RssParserBuilder
 import com.prof18.rssparser.model.RssItem
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
@@ -29,7 +29,7 @@ object RssModule {
     private val logger by getLogger()
 
     private var rssFeeds = mapOf<String, RssFeedObject>()
-    private val rssParser = RssParser()
+    private val rssParser = RssParserBuilder(callFactory = UnsafeOkHttp.client).build()
 
     private val feedUpdateDelay: Duration = 10.minutes
 
