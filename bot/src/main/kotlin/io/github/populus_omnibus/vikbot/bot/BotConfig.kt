@@ -23,6 +23,7 @@ data class BotConfig(
     val vikAuthFernet: String,
     var vikAuthChannel: Long? = null, // the only option which can be changed in runtime
     val useRoleTags: Boolean = true,
+    val activeTimeZone: String = "UTC", // CET for Hungary
     val database: DatabaseAccess = DatabaseAccess(),
 ) {
 

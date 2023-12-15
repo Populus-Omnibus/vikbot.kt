@@ -5,12 +5,12 @@ import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.api.commands.operator
 import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
+import io.github.populus_omnibus.vikbot.bot.localString
 import io.github.populus_omnibus.vikbot.bot.prettyPrint
 import io.github.populus_omnibus.vikbot.bot.toUserTag
 import io.github.populus_omnibus.vikbot.db.Servers
@@ -98,7 +98,7 @@ object ReportForm {
                         setDescription("**${reportedUser.idLong.toUserTag()} had their [message](${message.jumpUrl}) reported**")
                         addField("Content", message.contentRaw, false)
                         addField("Reason", reason, false)
-                        addField("Sent at", message.timeCreated.prettyPrint(true), false)
+                        addField("Sent at", message.timeCreated.localString, false)
                         addField("Reported by", reporter.idLong.toUserTag(), false)
                         setFooter(Clock.System.now().prettyPrint())
                         reportedMessage.attachments.filter { it.isImage }.getOrNull(0)?.let {
