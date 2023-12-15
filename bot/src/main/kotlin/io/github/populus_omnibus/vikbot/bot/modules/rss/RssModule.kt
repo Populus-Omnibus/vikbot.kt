@@ -4,6 +4,7 @@ import com.prof18.rssparser.RssParser
 import com.prof18.rssparser.model.RssItem
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
+import io.github.populus_omnibus.vikbot.bot.localString
 import io.github.populus_omnibus.vikbot.db.DiscordGuild
 import io.github.populus_omnibus.vikbot.db.DiscordGuilds
 import io.github.populus_omnibus.vikbot.db.RssFeeds
@@ -13,8 +14,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import org.jetbrains.exposed.sql.select
@@ -22,8 +21,6 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
-import java.time.format.TextStyle
-import java.util.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -107,8 +104,6 @@ object RssModule {
         }
     }
 
-    private val Instant.localString
-        get() = this.toLocalDateTime(TimeZone.of("CET")).run { "${dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)}, $dayOfMonth ${month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} $year $hour:$minute" }
 }
 
 data class RssFeedObject(
