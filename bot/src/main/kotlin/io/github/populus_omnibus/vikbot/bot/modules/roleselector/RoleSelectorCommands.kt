@@ -165,7 +165,12 @@ object RoleSelectorCommands :
                 }
 
                 val previous = transaction { group.lastPublished }?.let {
-                    event.guild!!.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()
+                    try {
+                        event.guild!!.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()
+                    } catch (t: Throwable) {
+                        logger.warn("Failed to delete previous role reset message", t)
+                        null
+                    }
                 }
 
 
