@@ -53,10 +53,11 @@ object RoleReset :
                     }
                 }
 
+                var i = 0
                 val buttons = buttonData.map {
                     listOf(
                         Button.danger("rolereset:${it.first}", it.second),
-                        Button.secondary("separator", "|").asDisabled()
+                        Button.secondary("separator${i++}", "|").asDisabled()
                     )
                 }.flatten()
                 if (buttons.size < 2) return@transaction
