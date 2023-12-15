@@ -254,6 +254,29 @@ object RoleSelectorCommands :
                 }
             }
         }
+
+        this += object : SlashCommand("rename", "Rename a role group") {
+            val groupName by option("name", "group to rename", RoleSelectorGroupAutocompleteString()).required()
+            val newName by option("newname", "new name for the group", SlashOptionType.STRING).required()
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent) {
+                transaction {
+                    event.guild?.idLong?.let {
+                        if (Servers[it].roleGroups.any { rg -> rg.name == newName }) {
+                            event.reply("name already taken").setEphemeral(true).queue()
+                            return@transaction
+                        }
+
+                        Servers[it].roleGroups[groupName]?.let { rg ->
+                            rg.name = newName
+                            event.reply("done").setEphemeral(true).queue()
+                            return@transaction
+                        }
+                        event.reply("failed").setEphemeral(true).queue()
+                    }
+                }
+            }
+        }
     }
 
 
