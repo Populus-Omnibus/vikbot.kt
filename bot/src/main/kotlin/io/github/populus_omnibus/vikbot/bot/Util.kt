@@ -2,9 +2,12 @@ package io.github.populus_omnibus.vikbot.bot
 
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import kotlinx.datetime.*
+import kotlinx.datetime.TimeZone
 import net.dv8tion.jda.api.entities.Member
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.format.TextStyle
+import java.util.*
 
 val Member?.isBotAdmin: Boolean
     get() = this?.roles?.any { it.idLong == VikBotHandler.config.adminId } ?: false
@@ -39,3 +42,17 @@ fun String.chunked(maxSize: Int): Sequence<String> = sequence {
     }
     yield(substring(index))
 }
+
+
+
+private val activeTimeZone by lazy { TimeZone.of(VikBotHandler.config.activeTimeZone) }
+
+val Instant.localString
+    get() = this.toLocalDateTime(activeTimeZone).run { "${dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)}, $dayOfMonth ${month.getDisplayName(
+        TextStyle.SHORT, Locale.ENGLISH)} $year $hour:$minute" }
+
+val java.time.Instant.localString
+    get() = this.toKotlinInstant().localString
+
+val OffsetDateTime.localString
+    get() = this.toInstant().localString
