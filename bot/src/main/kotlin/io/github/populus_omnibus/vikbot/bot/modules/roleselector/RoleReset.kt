@@ -63,8 +63,12 @@ object RoleReset :
 
                 //delete previous resetter
                 serverEntry.lastRoleResetMessage?.let {
-                    bot.jda.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()
-                        ?.delete()?.complete()
+                    try {
+                        bot.jda.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()
+                            ?.delete()?.complete()
+                    } catch (t: Throwable) {
+                        logger.error("Failed to delete previous role reset message", t)
+                    }
                 }
                 event.deferEdit().complete()
 
