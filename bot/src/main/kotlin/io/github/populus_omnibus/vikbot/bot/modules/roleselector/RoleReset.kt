@@ -11,9 +11,6 @@ import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteraction
 import io.github.populus_omnibus.vikbot.db.Servers
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
-import net.dv8tion.jda.api.interactions.components.text.TextInput
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.getLogger
@@ -29,56 +26,35 @@ object RoleReset :
     fun init(bot: VikBotHandler) {
         this += object : SlashCommand("publish", "create a role reset message") {
             override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                event.replyModal(Modal.create("roleresetpublish", "Publishing role resetter")
-                        .addActionRow(TextInput.create("data", "Data (role group name \\n user-facing string)", TextInputStyle.PARAGRAPH).build())
-                        .build()
-                ).complete()
-            }
-        }
+                transaction {
+                    val serverEntry = Servers[event.guild!!.idLong]
 
-        bot.modalEvents += IdentifiableInteractionHandler("roleresetpublish") { event ->
-            val buttonData = event.getValue("data")?.asString?.split("\n")?.windowed(2, 2)?.map { Pair(it[0], it[1]) }
-                ?: run {
-                    return@IdentifiableInteractionHandler
-                }
+                    var i = 0
+                    val buttons = serverEntry.roleGroups.sortedBy { it.name }.map {
+                        listOf(
+                            Button.danger("rolereset:${it.name}", it.name),
+                            Button.secondary("separator${i++}", "|").asDisabled()
+                        )
+                    }.flatten()
+                    buttons.removeLast()
+                    if (buttons.isEmpty()) return@transaction
 
-            transaction {
-                val serverEntry = Servers[event.guild!!.idLong]
-
-                buttonData.filterNot { serverEntry.roleGroups.contains(it.first) }.let { pairs ->
-                    if (pairs.isNotEmpty()) {
-                        event.reply("Following groups not found: ${pairs.joinToString(", ") { it.first }}")
-                            .setEphemeral(true).complete()
-                        return@transaction
+                    //delete previous resetter
+                    serverEntry.lastRoleResetMessage?.let {
+                        try {
+                            bot.jda.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()
+                                ?.delete()?.complete()
+                        } catch (t: Throwable) {
+                            logger.error("Failed to delete previous role reset message", t)
+                        }
                     }
+
+                    //remove last placeholder before sending
+                    val msg = event.channel.sendMessage(
+                        MessageCreateBuilder().addActionRow(buttons).build()
+                    ).complete()
+                    msg?.let { serverEntry.setLastRoleResetMessage(it.channel.idLong, it.idLong) } ?: serverEntry.lastRoleResetMessage?.delete()
                 }
-
-                var i = 0
-                val buttons = buttonData.map {
-                    listOf(
-                        Button.danger("rolereset:${it.first}", it.second),
-                        Button.secondary("separator${i++}", "|").asDisabled()
-                    )
-                }.flatten()
-                if (buttons.size < 2) return@transaction
-
-                //delete previous resetter
-                serverEntry.lastRoleResetMessage?.let {
-                    try {
-                        bot.jda.getTextChannelById(it.channelId)?.retrieveMessageById(it.messageId)?.complete()
-                            ?.delete()?.complete()
-                    } catch (t: Throwable) {
-                        logger.error("Failed to delete previous role reset message", t)
-                    }
-                }
-                event.deferEdit().complete()
-
-
-                //remove last placeholder before sending
-                val msg = event.channel.sendMessage(
-                    MessageCreateBuilder().addActionRow(buttons.subList(0, buttons.size - 1)).build()
-                ).complete()
-                msg?.let { serverEntry.setLastRoleResetMessage(it.channel.idLong, it.idLong) } ?: serverEntry.lastRoleResetMessage?.delete()
             }
         }
 
