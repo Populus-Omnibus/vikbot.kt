@@ -102,7 +102,7 @@ object RoleSelectorCommands :
                 outputClamped.let {
                     if (it.isEmpty()) event.reply("server has no groups").complete()
                     else {
-                        event.reply(it.removeFirst()).complete()
+                        event.reply(it.removeFirst()).setAllowedMentions(emptyList()).complete()
                         it.forEach { chunk ->
                             event.channel.sendMessage(chunk).setAllowedMentions(emptyList()).complete()
                         }

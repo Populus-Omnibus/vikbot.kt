@@ -9,9 +9,12 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.db.Servers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.getLogger
 
@@ -25,19 +28,25 @@ object RoleReset :
     @Module
     fun init(bot: VikBotHandler) {
         this += object : SlashCommand("publish", "create a role reset message") {
-            override suspend fun invoke(event: SlashCommandInteractionEvent) {
-                transaction {
+            override suspend fun invoke(event: SlashCommandInteractionEvent) = coroutineScope {
+                val task = launch { event.deferReply().setEphemeral(true).complete() }
+                newSuspendedTransaction {
                     val serverEntry = Servers[event.guild!!.idLong]
 
                     var i = 0
                     val buttons = serverEntry.roleGroups.sortedBy { it.name }.map {
-                        listOf(
-                            Button.danger("rolereset:${it.name}", it.name),
-                            Button.secondary("separator${i++}", "|").asDisabled()
-                        )
-                    }.flatten()
-                    buttons.removeLast()
-                    if (buttons.isEmpty()) return@transaction
+                        Button.danger("rolereset:${it.name}", it.name)
+                    }.chunked(2)
+                        .map {
+                            it.fold(listOf<Button>()) { acc, button ->
+                                acc + button + Button.secondary("separator${i++}", "|").asDisabled()
+                            }.dropLast(1).toList()
+                        }
+                    if (buttons.isEmpty()) {
+                        task.join()
+                        event.hook.editOriginal("No groups found").complete()
+                        return@newSuspendedTransaction
+                    }
 
                     //delete previous resetter
                     serverEntry.lastRoleResetMessage?.let {
@@ -51,9 +60,16 @@ object RoleReset :
 
                     //remove last placeholder before sending
                     val msg = event.channel.sendMessage(
-                        MessageCreateBuilder().addActionRow(buttons).build()
+                        MessageCreateBuilder().apply {
+                            buttons.forEach {
+                                addActionRow(it)
+                            }
+                        }.build()
                     ).complete()
                     msg?.let { serverEntry.setLastRoleResetMessage(it.channel.idLong, it.idLong) } ?: serverEntry.lastRoleResetMessage?.delete()
+
+                    task.join()
+                    event.hook.editOriginal("Published, but you already see it...").complete()
                 }
             }
         }
