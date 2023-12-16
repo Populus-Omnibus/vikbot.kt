@@ -31,12 +31,13 @@ object RoleReset :
 
                     var i = 0
                     val buttons = serverEntry.roleGroups.sortedBy { it.name }.map {
-                        listOf(
-                            Button.danger("rolereset:${it.name}", it.name),
-                            Button.secondary("separator${i++}", "|").asDisabled()
-                        )
-                    }.flatten()
-                    buttons.removeLast()
+                        Button.danger("rolereset:${it.name}", it.name)
+                    }.chunked(3)
+                        .map {
+                            it.fold(listOf<Button>()) { acc, button ->
+                                acc + button + Button.secondary("separator${i++}", "|").asDisabled()
+                            }.dropLast(1).toList()
+                        }
                     if (buttons.isEmpty()) return@transaction
 
                     //delete previous resetter
@@ -51,7 +52,11 @@ object RoleReset :
 
                     //remove last placeholder before sending
                     val msg = event.channel.sendMessage(
-                        MessageCreateBuilder().addActionRow(buttons).build()
+                        MessageCreateBuilder().apply {
+                            buttons.forEach {
+                                addActionRow(it)
+                            }
+                        }.build()
                     ).complete()
                     msg?.let { serverEntry.setLastRoleResetMessage(it.channel.idLong, it.idLong) } ?: serverEntry.lastRoleResetMessage?.delete()
                 }
