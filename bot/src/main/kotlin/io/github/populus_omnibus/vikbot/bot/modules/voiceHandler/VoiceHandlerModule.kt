@@ -53,9 +53,9 @@ object VoiceHandlerModule {
                             val channel = event.guild.getChannelById(VoiceChannel::class.java, chId)
                             if (channel != null && channel.members.isEmpty()) {
                                 channel.delete().complete()
-                            }
-                            transaction {
-                                tmpChannel.delete()
+                                transaction {
+                                    tmpChannel.delete()
+                                }
                             }
                         }
                 }
