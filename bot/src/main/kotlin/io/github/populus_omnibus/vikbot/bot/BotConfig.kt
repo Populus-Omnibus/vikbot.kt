@@ -24,7 +24,6 @@ data class BotConfig(
     val vikAuthFernet: String,
     var vikAuthChannel: Long? = null, // VikAuth logging channel
     var syslogChannel: Long? = null, // bot syslog channel, primarily for updater
-    val updaterToken: String = "default_token",
     val useRoleTags: Boolean = true,
     val activeTimeZone: String = "UTC", // CET for Hungary
     val database: DatabaseAccess = DatabaseAccess(),

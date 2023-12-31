@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import okio.use
 import java.io.File
+import java.net.InetSocketAddress
 
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -29,39 +30,43 @@ object UpdaterUtil : (Int) -> Unit {
 
     @Module
     fun init(bot: VikBotHandler) {
-        val server = HttpServer.create()
-        server.createContext("/api/vikbot/update") { exchange ->
-            try {
-                if (!exchange.requestMethod.equals("POST", ignoreCase = true)) {
-                    throw IllegalArgumentException("Invalid request method")
-                }
+        val server = HttpServer.create().apply {
+            createContext("/api/vikbot/update") { exchange ->
+                try {
+                    if (!exchange.requestMethod.equals("POST", ignoreCase = true)) {
+                        throw IllegalArgumentException("Invalid request method")
+                    }
 
-                val token: UpdaterToken = exchange.requestBody.use { reader ->
-                    Json.decodeFromStream(reader)
-                }
-                if (token.token != VikBotHandler.config.updaterToken) {
-                    throw IllegalArgumentException("Invalid request")
-                }
+                    val token: UpdaterToken = exchange.requestBody.use { reader ->
+                        Json.decodeFromStream(reader)
+                    }
+                    if (token.token != VikBotHandler.config.updaterToken) {
+                        throw IllegalArgumentException("Invalid request")
+                    }
 
-                exchange.responseHeaders.add("Content-Type", "text/plain")
-                exchange.sendResponseHeaders(200, 0)
+                    exchange.responseHeaders.add("Content-Type", "text/plain")
+                    exchange.sendResponseHeaders(200, 0)
 
-                exchange.responseBody.use { response ->
-                    response.write("OK :3".toByteArray())
-                }
+                    exchange.responseBody.use { response ->
+                        response.write("OK :3".toByteArray())
+                    }
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    buildBot()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                exchange.responseHeaders.add("Content-Type", "text/plain")
-                exchange.sendResponseHeaders(400, 0)
-                exchange.responseBody.use { response ->
-                    response.write(e.message?.toByteArray() ?: "Unknown error".toByteArray())
+                    CoroutineScope(Dispatchers.IO).launch {
+                        buildBot()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    exchange.responseHeaders.add("Content-Type", "text/plain")
+                    exchange.sendResponseHeaders(400, 0)
+                    exchange.responseBody.use { response ->
+                        response.write(e.message?.toByteArray() ?: "Unknown error".toByteArray())
+                    }
                 }
             }
+            bind(InetSocketAddress("0.0.0.0", config.), 0)
+            start()
         }
+
     }
 
 
