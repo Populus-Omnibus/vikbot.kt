@@ -83,6 +83,8 @@ object UpdaterUtil : (Int) -> Unit {
     private suspend fun buildBot(): Unit = mutex.withLock {
         withContext(Dispatchers.IO) {
             try {
+                readyToRestart -= this@UpdaterUtil // Don't restart while building
+
                 Syslog.queueLog("Update requested, updating repo...")
 
                 // pull repo
