@@ -1,0 +1,21 @@
+# Post a specific thing to update the bot
+
+name: update
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-curl:
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        env:
+          token: ${{ secrets.updateToken }}
+        run: |
+          curl --location 'kosmx.dev/api/vikbot/update' \
+          --header 'Content-Type: application/json' \
+          --data '{
+              "token": "'${{ env.token }}'",
+          }'
