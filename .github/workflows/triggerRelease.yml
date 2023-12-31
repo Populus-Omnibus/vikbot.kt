@@ -14,8 +14,8 @@ jobs:
         env:
           token: ${{ secrets.updateToken }}
         run: |
-          curl --location 'kosmx.dev/api/vikbot/update' \
+          curl -X POST 'kosmx.dev/api/vikbot/update' \
           --header 'Content-Type: application/json' \
           --data '{
-              "token": "'${{ env.token }}'",
+              "token": "'${{ env.token }}'"
           }'
