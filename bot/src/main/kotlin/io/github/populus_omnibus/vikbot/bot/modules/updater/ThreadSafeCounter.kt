@@ -25,6 +25,7 @@ class ThreadSafeCounter {
 
     operator fun plusAssign(observer: (Int) -> Unit) {
         observers.add(observer)
+        observer(count)
     }
 
     operator fun minusAssign(observer: (Int) -> Unit) {
