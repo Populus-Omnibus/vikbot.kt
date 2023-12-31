@@ -49,7 +49,7 @@ object Launch {
             json.decodeFromStream<BotConfig>(input)
         }
 
-        if (VikBotHandler.config.updaterToken == "default_token") {
+        if (VikBotHandler.config.updater.updaterToken == "default_token") {
             logger.warn { "Updater token is default, if you're in production, please change it!" }
         }
 
