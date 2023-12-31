@@ -40,7 +40,7 @@ object UpdaterUtil : (Int) -> Unit {
                     val token: UpdaterToken = exchange.requestBody.use { reader ->
                         Json.decodeFromStream(reader)
                     }
-                    if (token.token != VikBotHandler.config.updaterToken) {
+                    if (token.token != config.updaterToken) {
                         throw IllegalArgumentException("Invalid request")
                     }
 
@@ -63,7 +63,7 @@ object UpdaterUtil : (Int) -> Unit {
                     }
                 }
             }
-            bind(InetSocketAddress("0.0.0.0", config.), 0)
+            bind(InetSocketAddress("0.0.0.0", config.serverPort), 0)
             start()
         }
 

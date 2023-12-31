@@ -9,6 +9,8 @@ data class UpdaterConfig(
     val git: String = "git",
     val directory: String = directory(repo),
     val branch: String = "origin/main",
+    val serverPort: Int = 8778,
+    val updaterToken: String = "default_token",
 ) {
     private companion object Default {
         const val REPO: String = "https://github.com/Populus-Omnibus/vikbot.kt.git"
