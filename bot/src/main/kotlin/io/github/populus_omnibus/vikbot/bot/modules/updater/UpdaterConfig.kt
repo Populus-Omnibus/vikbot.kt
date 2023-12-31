@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdaterConfig(
-    val jvm: String = System.getProperty("java.home") + "/bin/java",
+    val jvm: String = System.getProperty("java.home"),
     val repo: String = REPO,
     val git: String = "git",
     val directory: String = directory(repo),

@@ -3,6 +3,8 @@ package io.github.populus_omnibus.vikbot.bot.modules.updater
 import com.sun.net.httpserver.HttpServer
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
+import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
+import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.bot.modules.Syslog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,16 +16,17 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import okio.use
+import org.slf4j.kotlin.error
+import org.slf4j.kotlin.getLogger
 import java.io.File
 import java.net.InetSocketAddress
 
 
 @OptIn(ExperimentalSerializationApi::class)
 object UpdaterUtil : (Int) -> Unit {
+    private val logger by getLogger()
     private val mutex = Mutex()
     private val readyToRestart = ThreadSafeCounter()
-
-    private val jvm = System.getProperty("java.home")
 
     private val config: UpdaterConfig
         get() = VikBotHandler.config.updater
@@ -67,10 +70,17 @@ object UpdaterUtil : (Int) -> Unit {
             start()
         }
 
+        bot.ownerServerCommands += SlashCommand("update", "Update bot and restart", {administrator()}) {
+            CoroutineScope(Dispatchers.IO).launch {
+                buildBot()
+            }
+            it.reply("Update started, please wait...").setEphemeral(true).complete()
+        }
+
     }
 
 
-    suspend fun buildBot(): Unit = mutex.withLock {
+    private suspend fun buildBot(): Unit = mutex.withLock {
         withContext(Dispatchers.IO) {
             try {
                 Syslog.queueLog("Update requested, updating repo...")
@@ -115,7 +125,7 @@ object UpdaterUtil : (Int) -> Unit {
                 readyToRestart += this@UpdaterUtil
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                logger.error(e) { "Updater failed: ${e.message}" }
             }
         }
     }
