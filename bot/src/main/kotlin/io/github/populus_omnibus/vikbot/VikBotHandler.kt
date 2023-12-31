@@ -10,12 +10,12 @@ import io.github.populus_omnibus.vikbot.api.interactions.invoke
 import io.github.populus_omnibus.vikbot.api.invoke
 import io.github.populus_omnibus.vikbot.bot.BotConfig
 import io.github.populus_omnibus.vikbot.bot.isBotAdmin
+import io.github.populus_omnibus.vikbot.bot.modules.Syslog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
-import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
@@ -35,7 +35,6 @@ import net.dv8tion.jda.api.events.message.MessageUpdateEvent
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.EventListener
-import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.utils.MemberCachePolicy
@@ -130,6 +129,7 @@ object VikBotHandler : EventListener {
         logger.info("Bot is ready")
 
         Runtime.getRuntime().addShutdownHook(Thread {
+            Syslog.log("Bot is shutting down")
             logger.info("Shutting down")
             timer.cancel()
             shutdownEvent.forEach { it() }
@@ -141,6 +141,10 @@ object VikBotHandler : EventListener {
                 maintainEvent.forEach{ it.invoke() }
             }
         }, 1000, 1000)
+
+        // Bot is on
+        Syslog.log("Bot is online")
+        logger.info("Bot is online")
     }
 
     override fun onEvent(event: GenericEvent) {

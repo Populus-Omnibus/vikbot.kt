@@ -11,6 +11,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
+import org.slf4j.kotlin.warn
 import java.io.File
 
 /**
@@ -46,6 +47,10 @@ object Launch {
 
         VikBotHandler.config = File(configFile).inputStream().use { input ->
             json.decodeFromStream<BotConfig>(input)
+        }
+
+        if (VikBotHandler.config.updater.updaterToken == "default_token") {
+            logger.warn { "Updater token is default, if you're in production, please change it!" }
         }
 
         logger.info { "Loading DB: ${VikBotHandler.config.database}" }

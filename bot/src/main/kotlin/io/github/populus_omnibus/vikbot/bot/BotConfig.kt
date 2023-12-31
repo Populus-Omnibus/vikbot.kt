@@ -1,5 +1,6 @@
 package io.github.populus_omnibus.vikbot.bot
 
+import io.github.populus_omnibus.vikbot.bot.modules.updater.UpdaterConfig
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -21,10 +22,12 @@ data class BotConfig(
     val adminId: Long,
     val vikAuthPort: Int = 12345,
     val vikAuthFernet: String,
-    var vikAuthChannel: Long? = null, // the only option which can be changed in runtime
+    var vikAuthChannel: Long? = null, // VikAuth logging channel
+    var syslogChannel: Long? = null, // bot syslog channel, primarily for updater
     val useRoleTags: Boolean = true,
     val activeTimeZone: String = "UTC", // CET for Hungary
     val database: DatabaseAccess = DatabaseAccess(),
+    val updater: UpdaterConfig = UpdaterConfig(),
 ) {
 
     @Transient
