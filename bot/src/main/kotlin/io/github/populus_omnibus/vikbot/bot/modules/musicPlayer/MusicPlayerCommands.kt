@@ -4,7 +4,11 @@ import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
+import io.github.populus_omnibus.vikbot.bot.localString
+import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.Clock
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import org.slf4j.kotlin.getLogger
 import kotlin.collections.set
@@ -36,10 +40,34 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                     event.hook.editOriginal("You must be in a voice channel to use this command").complete()
                     return@coroutineScope
                 }
-                player.joinNow(channel)
+                player.join(channel)
                 event.hook.editOriginal("Joined channel <#${channel.idLong}>").complete()
                 Thread.sleep(2000)
                 player.leave()
+            }
+        }
+        this += object :
+            SlashCommand("next", "show the current playlist") {
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent) = coroutineScope {
+                //TODO: lock?
+                val player = playerInstances[event.guild!!.idLong] ?: MusicPlayer(event.guild!!)
+                if(!player.isInChannel) {
+                    event.reply("Not currently connected").setEphemeral(true).complete()
+                    return@coroutineScope
+                }
+                event.deferReply().complete()
+                val embed = EmbedBuilder().apply {
+                    val track = player.currentTrack
+                    setTitle("Playing in " + player.channel!!.idLong.toChannelTag())
+                    addField("Current track", track?.let {it.title + " (" + it.duration + ")"} ?: "<none>", false)
+                    val nextDetails = player.playlist.subList(0, minOf(5, player.playlist.size)).mapIndexed { index, musicTrack ->
+                        "#${index + 1}: ${musicTrack.title} (${musicTrack.duration})"
+                    }.chunked(1500).first().joinToString("\n")
+                    addField("Up next", nextDetails, false)
+                    setFooter(Clock.System.now().localString)
+                }.build()
+                event.hook.editOriginalEmbeds(embed).complete()
             }
         }
         bot.guildInitEvent += {
