@@ -7,33 +7,47 @@ import java.util.*
 
 class MusicPlayer(
     var guild: Guild,
-    var channel: AudioChannelUnion? = null,
     var currentTrack: MusicTrack? = null,
     val playlist: MutableList<MusicTrack> = mutableListOf(),
     val timer: Timer = Timer(),
 ) {
-
+    val isInChannel: Boolean
+        get() = guild.audioManager.isConnected
+    val channel: AudioChannelUnion?
+        get() = guild.audioManager.connectedChannel
+    private val sendingHandler = CustomSendingHandler()
     private val mutex = kotlinx.coroutines.sync.Mutex()
-    init {
-        guild.audioManager.connectTimeout = 1000L
+
+    companion object {
+        const val TIMEOUT = 1000L
     }
 
-    private suspend fun joinNow() {
-        mutex.withLock {
-            channel?.let {
-                guild.audioManager.openAudioConnection(it)
-            }
-        }
+    init {
+        guild.audioManager.connectTimeout = TIMEOUT
+        guild.audioManager.sendingHandler = sendingHandler
     }
-    suspend fun joinNow(channel: AudioChannelUnion?) {
+
+    suspend fun join(channel: AudioChannelUnion?) {
         mutex.withLock {
-            this.channel = channel
+            guild.audioManager.openAudioConnection(channel)
         }
-        joinNow()
     }
     suspend fun leave() {
         mutex.withLock {
             guild.audioManager.closeAudioConnection()
+        }
+    }
+    suspend fun queue(track: MusicTrack) {
+        mutex.withLock {
+            playlist.add(track)
+        }
+    }
+    suspend fun playImmediately() {
+        mutex.withLock {
+            currentTrack?.let {
+                sendingHandler.resetBuffer()
+                sendingHandler.putData(it.audioData ?: return@let)
+            }
         }
     }
 }
