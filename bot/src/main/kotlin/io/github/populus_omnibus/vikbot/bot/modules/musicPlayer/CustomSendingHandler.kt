@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 
 class CustomSendingHandler : AudioSendHandler {
     private var byteBuffer: MutableList<Byte> = mutableListOf()
-    private var bitrate = 128000u //bytes per second
+    var bitrateKbps = 128u
 
     fun putData(data: ByteArray) {
         byteBuffer.addAll(data.toList())
@@ -18,8 +18,9 @@ class CustomSendingHandler : AudioSendHandler {
 
     override fun provide20MsAudio(): ByteBuffer? {
         //pop first 20ms of audio
-        val data = byteBuffer.take(bitrate.toInt() / 50)
-        byteBuffer = byteBuffer.drop(bitrate.toInt() / 50).toMutableList()
-        return ByteBuffer.wrap(data.toByteArray())
+        val data = byteBuffer.take(kbpsToBps(bitrateKbps) / 50).toByteArray()
+            byteBuffer = byteBuffer.drop(kbpsToBps(bitrateKbps) / 50).toMutableList()
+        return ByteBuffer.wrap(data)
     }
+    private fun kbpsToBps(kbps: UInt) = (kbps.toDouble() / 8 * 1000).toInt()
 }

@@ -4,14 +4,19 @@ import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
+import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.bot.localString
+import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.ytWrapper.YtDlpWrapper
+import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorGroupAutocompleteString
 import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import org.slf4j.kotlin.getLogger
 import kotlin.collections.set
+import kotlin.time.Duration.Companion.seconds
 
 //@Command(type = CommandType.SERVER)
 //replaced by init statements
@@ -21,8 +26,8 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
 
     @Module
     fun init(bot: VikBotHandler) {
-        if(!dependencyCheck()) {
-            logger.info("Music player module requires yt-dlp and ffmpeg to be installed")
+        if(!YtDlpWrapper.dependenciesMet) {
+            logger.info("Music player module requires yt-dlp to be installed")
             return
         }
         this += object :
@@ -70,21 +75,29 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                 event.hook.editOriginalEmbeds(embed).complete()
             }
         }
+        this += object :
+        SlashCommand("playnow", "play a track immediately") {
+            val url by option(
+                "url", "url of track", SlashOptionType.STRING
+            ).required()
+
+            override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
+                val player = playerInstances[event.guild!!.idLong] ?: MusicPlayer(event.guild!!)
+                player.join(event.member!!.voiceState!!.channel)
+                val track = MusicTrack(
+                    title = "test",
+                    url = url,
+                    duration = 0.seconds,
+                )
+                player.queue(track)
+                player.rotate()
+                player.playImmediately()
+                event.reply("Playing ${track.title}").setEphemeral(true).complete()
+            }
+        }
         bot.guildInitEvent += {
             playerInstances[it.guild.idLong] = MusicPlayer(it.guild)
         }
         bot.serverCommands += this
-    }
-
-    //check if yt-dlp and ffmpeg are installed
-    //the music player module requires both, we're effectively denying user access
-    private fun dependencyCheck(): Boolean {
-        return try {
-            //check if ffmpeg and yt-dlp correspond to a valid OS command
-            ProcessBuilder("ffmpeg", "-version").start().waitFor() == 0 &&
-                    ProcessBuilder("yt-dlp", "--version").start().waitFor() == 0
-        } catch (t: Throwable) {
-            false
-        }
     }
 }

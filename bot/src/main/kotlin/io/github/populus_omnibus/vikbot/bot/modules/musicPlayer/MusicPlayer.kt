@@ -1,5 +1,6 @@
 package io.github.populus_omnibus.vikbot.bot.modules.musicPlayer
 
+import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.ytWrapper.YtDlpWrapper
 import kotlinx.coroutines.sync.withLock
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
@@ -42,11 +43,18 @@ class MusicPlayer(
             playlist.add(track)
         }
     }
+    suspend fun rotate() {
+        mutex.withLock {
+            currentTrack = playlist.removeFirstOrNull()
+            if(playlist.isNotEmpty()) playlist.first().resolve()
+        }
+    }
     suspend fun playImmediately() {
         mutex.withLock {
             currentTrack?.let {
+                sendingHandler.bitrateKbps = it.audioData!!.bitrate
                 sendingHandler.resetBuffer()
-                sendingHandler.putData(it.audioData ?: return@let)
+                sendingHandler.putData(it.audioData!!.rawData)
             }
         }
     }
