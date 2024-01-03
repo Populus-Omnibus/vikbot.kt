@@ -6,11 +6,18 @@ plugins {
     vikbot.repos
 }
 
+repositories {
+    maven {
+        url = uri("https://m2.dv8tion.net/releases")
+    }
+}
+
 dependencies {
     implementation(projects.api)
     implementation(libs.discord.jda)
     implementation(libs.bundles.kotlinx.serialization)
     implementation(libs.kotlin.reflect)
+    implementation("com.sedmelluq:lavaplayer:1.3.77")
 
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlin.cli)
