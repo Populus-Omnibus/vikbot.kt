@@ -7,8 +7,7 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.bot.chunkedMaxLength
 import io.github.populus_omnibus.vikbot.bot.localString
-import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.GuildMusicManager
-import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.GuildMusicManager.MusicQueryType
+import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.GuildMusicManager.MusicQueryType
 import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import kotlinx.coroutines.coroutineScope

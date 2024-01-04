@@ -1,10 +1,13 @@
-package io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer
+package io.github.populus_omnibus.vikbot.bot.modules.musicPlayer
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.AudioPlayerSendHandler
+import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.TrackScheduler
+import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.YtQueryLoadResultHandler
 import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.coroutines.sync.withLock
 import net.dv8tion.jda.api.entities.Guild

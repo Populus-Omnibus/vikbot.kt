@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
+import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.GuildMusicManager
 
 class TrackScheduler(val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
     var currentTrack: AudioTrack? = null
