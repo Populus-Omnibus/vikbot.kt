@@ -33,10 +33,10 @@ fun Instant.prettyPrint(escaped: Boolean = false) = this.toLocalDateTime(TimeZon
 
 fun OffsetDateTime.prettyPrint(escaped: Boolean = false) = this.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime().prettyPrint(escaped)
 
-fun String.chunked(maxSize: Int): Sequence<String> = sequence {
+fun String.chunkedMaxLength(maxSize: Int, separator: Char = '\n'): Sequence<String> = sequence {
     var index = 0
-    while (index + maxSize < this@chunked.length) {
-        val n = this@chunked.lastIndexOf(startIndex = maxSize, char = '\n')
+    while (index + maxSize < this@chunkedMaxLength.length) {
+        val n = this@chunkedMaxLength.lastIndexOf(startIndex = maxSize, char = separator)
         yield(substring(index, n))
         index = n
     }

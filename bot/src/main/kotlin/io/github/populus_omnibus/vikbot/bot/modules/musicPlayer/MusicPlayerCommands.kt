@@ -5,6 +5,7 @@ import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
+import io.github.populus_omnibus.vikbot.bot.chunkedMaxLength
 import io.github.populus_omnibus.vikbot.bot.localString
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.GuildMusicManager
 import io.github.populus_omnibus.vikbot.bot.toChannelTag
@@ -48,7 +49,6 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
             SlashCommand("next", "show the current playlist") {
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) = coroutineScope {
-                //TODO: lock?
                 val manager = playerInstances[event.guild!!.idLong] ?: GuildMusicManager(event.guild!!)
                 if(!manager.isInChannel) {
                     event.reply("Not currently connected").setEphemeral(true).complete()
@@ -56,13 +56,12 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                 }
                 event.deferReply().complete()
                 val embed = EmbedBuilder().apply {
-                    val scheduler = manager.trackScheduler
-                    val track = scheduler.currentTrack
+                    val (current, next) = manager.trackQuery()
                     setTitle("Playing in " + manager.channel!!.idLong.toChannelTag())
-                    addField("Current track", track?.let {it.info.title + " (" + it.duration + ")"} ?: "<none>", false)
-                    val nextDetails = scheduler.playlist.subList(0, minOf(5, scheduler.playlist.size)).mapIndexed { index, musicTrack ->
+                    addField("Current track", current?.let {it.info.title + " (" + it.duration + ")"} ?: "<none>", false)
+                    val nextDetails = next.subList(0, minOf(5, next.size)).mapIndexed { index, musicTrack ->
                         "#${index + 1}: ${musicTrack.info.title} (${musicTrack.duration})"
-                    }.chunked(1500).first().joinToString("\n")
+                    }.joinToString("\n").chunkedMaxLength(1500).first()
                     addField("Up next", nextDetails, false)
                     setFooter(Clock.System.now().localString)
                 }.build()
@@ -71,12 +70,13 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
         }
         this += object :
         SlashCommand("playnow", "play a track immediately") {
-            val url by option(
-                "url", "url of track", SlashOptionType.STRING
-            )
+            val query by option(
+                "query", "expression to search", SlashOptionType.STRING
+            ).required()
 
             override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
                 val player = playerInstances[event.guild!!.idLong] ?: GuildMusicManager(event.guild!!)
+                event.deferReply().complete()
                 if(!player.isInChannel) {
                     //join channel
                     val channel = event.member!!.voiceState!!.channel
@@ -86,8 +86,7 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                     }
                     player.join(channel)
                 }
-                event.deferReply().setEphemeral(true).complete()
-                val track = player.queryYt("never gonna give you up")
+                val track = player.queryYt(query)
                 if (track == null) {
                     event.hook.editOriginal("Could not find track").complete()
                     return@coroutineScope

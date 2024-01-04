@@ -20,13 +20,14 @@ class GuildMusicManager(
         get() = guild.audioManager.connectedChannel
     private val player: AudioPlayer = playerManager.createPlayer()
     private val sendingHandler = AudioPlayerSendHandler(player)
-    internal val trackScheduler = TrackScheduler(this)
+    private val trackScheduler = TrackScheduler(this)
     private val mutex = kotlinx.coroutines.sync.Mutex()
     private val timer = Timer()
 
     init {
         guild.audioManager.connectTimeout = TIMEOUT
         guild.audioManager.sendingHandler = sendingHandler
+        player.volume = 50
         player.addListener(trackScheduler)
     }
 
@@ -64,8 +65,13 @@ class GuildMusicManager(
         mutex.withLock {
             playerManager.loadItemSync("ytsearch: $query", loadResultHandler)
             return loadResultHandler.result.firstOrNull()
-            }
         }
+    }
+    suspend fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
+        mutex.withLock {
+            return Pair(trackScheduler.currentTrack, trackScheduler.playlist)
+        }
+    }
 
     fun onFinish() {
         timer.schedule(object : TimerTask() {
