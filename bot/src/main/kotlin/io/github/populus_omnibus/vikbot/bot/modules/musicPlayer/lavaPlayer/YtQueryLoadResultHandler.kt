@@ -15,7 +15,7 @@ enum class QueryLoadResultState {
 
 class YtQueryLoadResultHandler : AudioLoadResultHandler {
     val result: MutableList<AudioTrack> = mutableListOf()
-    var errored = QueryLoadResultState.UNINITIALIZED
+    private var errored = QueryLoadResultState.UNINITIALIZED
     override fun trackLoaded(track: AudioTrack) {
         result.add(track)
         errored = QueryLoadResultState.TRACK_LOADED

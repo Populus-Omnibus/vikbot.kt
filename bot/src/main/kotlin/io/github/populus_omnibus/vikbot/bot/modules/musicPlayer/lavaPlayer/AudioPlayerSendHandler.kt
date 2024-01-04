@@ -9,11 +9,12 @@ class AudioPlayerSendHandler(private val audioPlayer: AudioPlayer) : AudioSendHa
     private var lastFrame: AudioFrame? = null
 
     override fun canProvide(): Boolean {
+        if(lastFrame != null) return true
         lastFrame = audioPlayer.provide()
         return lastFrame != null
     }
 
-    override fun provide20MsAudio(): ByteBuffer = ByteBuffer.wrap(lastFrame!!.data)
+    override fun provide20MsAudio(): ByteBuffer = ByteBuffer.wrap(lastFrame!!.data.also { lastFrame = null })
 
     override fun isOpus() = true
 }
