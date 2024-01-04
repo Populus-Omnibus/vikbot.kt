@@ -6,7 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.GuildMusicManager
 
-class TrackScheduler(val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
+class TrackScheduler(private val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
     var currentTrack: AudioTrack? = null
     val playlist: MutableList<AudioTrack> = mutableListOf()
     private var pausedPosition: Long? = null
@@ -18,13 +18,18 @@ class TrackScheduler(val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
             player.playTrack(currentTrack)
         }
     }
-    fun playImmediately(track: AudioTrack, player: AudioPlayer) {
+    fun playNow(track: AudioTrack, player: AudioPlayer) {
         playlist.clear()
         currentTrack = track
         player.playTrack(currentTrack)
     }
     fun skip(player: AudioPlayer) {
+        player.stopTrack()
         rotate()
+        if(currentTrack == null) {
+            musicPlayer.onFinish()
+            return
+        }
         player.playTrack(currentTrack)
     }
     private fun rotate() {
@@ -46,13 +51,11 @@ class TrackScheduler(val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack, endReason: AudioTrackEndReason) {
-        if (endReason.mayStartNext) {
-            rotate()
-            player.playTrack(currentTrack ?: run {
-                musicPlayer.onFinish()
-                return
-            })
-        }
+        rotate()
+        player.playTrack(currentTrack ?: run {
+            musicPlayer.onFinish()
+            return
+        })
 
         // endReason == FINISHED: A track finished or died by an exception (mayStartNext = true).
         // endReason == LOAD_FAILED: Loading of a track failed (mayStartNext = true).
@@ -69,5 +72,4 @@ class TrackScheduler(val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
     override fun onTrackStuck(player: AudioPlayer, track: AudioTrack, thresholdMs: Long) {
         // Audio track has been unable to provide us any audio, might want to just start a new track
     }
-
 }

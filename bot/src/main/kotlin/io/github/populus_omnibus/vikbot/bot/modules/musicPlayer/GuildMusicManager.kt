@@ -54,7 +54,7 @@ class GuildMusicManager(
         private var playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
             AudioSourceManagers.registerRemoteSources(this)
         }
-        public fun clampVolume(volume: Int) = volume.coerceIn(0, ABSOLUTE_MAX_VOLUME)
+        fun clampVolume(volume: Int) = volume.coerceIn(0, ABSOLUTE_MAX_VOLUME)
     }
 
 
@@ -68,9 +68,13 @@ class GuildMusicManager(
             guild.audioManager.closeAudioConnection()
         }
     }
-    suspend fun queue(track: AudioTrack) {
+
+    suspend fun queue(track: AudioTrack, playNow: Boolean = false) {
         mutex.withLock {
-            trackScheduler.queue(track, player)
+            when {
+                playNow -> trackScheduler.playNow(track, player)
+                else -> trackScheduler.queue(track, player)
+            }
         }
     }
     suspend fun skip() {
