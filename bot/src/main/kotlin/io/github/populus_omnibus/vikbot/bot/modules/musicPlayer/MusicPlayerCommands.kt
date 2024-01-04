@@ -9,7 +9,7 @@ import io.github.populus_omnibus.vikbot.bot.chunkedMaxLength
 import io.github.populus_omnibus.vikbot.bot.localString
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.GuildMusicManager
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.GuildMusicManager.MusicQueryType
-import io.github.populus_omnibus.vikbot.bot.prettyPrint
+import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
@@ -41,10 +41,10 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                 val embed = EmbedBuilder().apply {
                     val (current, next) = manager.trackQuery()
                     setTitle("Playing in " + manager.channel!!.idLong.toChannelTag())
-                    addField("Current track", current?.let {it.info.title + " (" + it.duration.milliseconds.prettyPrint() + ")"} ?: "<none>", false)
+                    addField("Current track", current?.let {it.info.title + " (" + it.duration.milliseconds.stringify() + ")"} ?: "<none>", false)
 
                     val nextDetails = next.subList(0, minOf(5, next.size)).mapIndexed { index, musicTrack ->
-                        "#${index + 1}: ${musicTrack.info.title} (${musicTrack.duration.milliseconds.prettyPrint()})"
+                        "#${index + 1}: ${musicTrack.info.title} (${musicTrack.duration.milliseconds.stringify()})"
                     }.joinToString("\n").chunkedMaxLength(1500).first()
                     addField("Up next", nextDetails, false)
                     setFooter(Clock.System.now().localString)

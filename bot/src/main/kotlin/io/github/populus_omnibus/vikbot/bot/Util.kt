@@ -58,9 +58,10 @@ val java.time.Instant.localString
 val OffsetDateTime.localString
     get() = this.toInstant().localString
 
-val Duration.stringified
-    get() = this.toComponents { hours, minutes, seconds, _ ->
-        (if(hours > 0) "${hours.padTime()}:" else "") +
-            "${minutes.padTime()}:" +
+fun Duration.stringify(showZeroHours: Boolean = false): String {
+    return this.toComponents { hours, minutes, seconds, _ ->
+        (if (hours > 0 || showZeroHours) "${hours.padTime()}:" else "") +
+                "${minutes.padTime()}:" +
                 seconds.padTime()
     }
+}
