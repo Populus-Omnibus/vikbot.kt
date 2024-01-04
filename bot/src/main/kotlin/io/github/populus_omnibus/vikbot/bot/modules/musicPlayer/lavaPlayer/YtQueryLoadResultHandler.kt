@@ -4,7 +4,9 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import org.slf4j.kotlin.*
+import org.slf4j.kotlin.getLogger
+import org.slf4j.kotlin.info
+import org.slf4j.kotlin.warn
 
 enum class QueryLoadResultState {
     TRACK_LOADED,
