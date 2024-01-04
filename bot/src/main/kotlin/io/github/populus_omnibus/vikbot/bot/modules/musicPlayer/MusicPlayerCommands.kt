@@ -5,7 +5,10 @@ import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
-import io.github.populus_omnibus.vikbot.bot.*
+import io.github.populus_omnibus.vikbot.bot.chunkedMaxLength
+import io.github.populus_omnibus.vikbot.bot.isBotAdmin
+import io.github.populus_omnibus.vikbot.bot.stringify
+import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
@@ -38,7 +41,7 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                         "#${index + 1}: ${musicTrack.info.title} (${musicTrack.duration.milliseconds.stringify()})"
                     }.joinToString("\n").chunkedMaxLength(1500).first()
                     addField("Up next", nextDetails, false)
-                    setFooter(Clock.System.now().localString)
+                    setFooter(Clock.System.now().stringify())
                 }.build()
                 event.hook.editOriginalEmbeds(embed).complete()
             }
