@@ -20,6 +20,7 @@ class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
     var reportChannel by DiscordGuilds.reportChannel
     var deletedMessagesChannel by DiscordGuilds.deletedMessagesChannel
     var messageLoggingLevel by DiscordGuilds.messageLoggingLevel
+    var vcVolume by DiscordGuilds.vcVolume
 
     /**
      * This will contain all handled voice channels, including temporary ones

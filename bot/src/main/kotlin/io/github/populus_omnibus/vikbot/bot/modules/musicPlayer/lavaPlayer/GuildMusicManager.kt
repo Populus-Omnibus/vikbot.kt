@@ -5,9 +5,11 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.coroutines.sync.withLock
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 
@@ -18,6 +20,16 @@ class GuildMusicManager(
         get() = guild.audioManager.isConnected
     val channel: AudioChannelUnion?
         get() = guild.audioManager.connectedChannel
+    var volume: Int
+        get() = player.volume
+        set(value) {
+            val clamped = clampVolume(value)
+            player.volume = clamped
+            transaction {
+                Servers[guild.idLong].vcVolume = clamped
+            }
+        }
+
     private val player: AudioPlayer = playerManager.createPlayer()
     private val sendingHandler = AudioPlayerSendHandler(player)
     private val trackScheduler = TrackScheduler(this)
@@ -27,16 +39,19 @@ class GuildMusicManager(
     init {
         guild.audioManager.connectTimeout = TIMEOUT
         guild.audioManager.sendingHandler = sendingHandler
-        player.volume = 50
+        player.volume = transaction {
+            Servers[guild.idLong].vcVolume
+        }
         player.addListener(trackScheduler)
     }
 
     companion object {
+        private const val ABSOLUTE_MAX_VOLUME = 100
         const val TIMEOUT = 1000L
-        private var playerManager: AudioPlayerManager = DefaultAudioPlayerManager()
-        init {
-            AudioSourceManagers.registerRemoteSources(playerManager)
+        private var playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
+            AudioSourceManagers.registerRemoteSources(this)
         }
+        public fun clampVolume(volume: Int) = volume.coerceIn(0, ABSOLUTE_MAX_VOLUME)
     }
 
 
@@ -60,13 +75,19 @@ class GuildMusicManager(
             trackScheduler.rotate()
         }
     }
-    suspend fun queryYt(query: String): AudioTrack? {
-        val loadResultHandler = YtQueryLoadResultHandler()
+    suspend fun queryAudio(query: String, type: MusicQueryType = MusicQueryType.RawURL): AudioTrack? {
         mutex.withLock {
-            playerManager.loadItemSync("ytsearch: $query", loadResultHandler)
+            val queryString = when (type) {
+                MusicQueryType.RawURL -> query
+                MusicQueryType.YouTubeSearch -> "ytsearch: $query"
+            }
+            val loadResultHandler = YtQueryLoadResultHandler()
+            playerManager.loadItemSync(queryString, loadResultHandler)
             return loadResultHandler.result.firstOrNull()
         }
     }
+
+
     suspend fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
         mutex.withLock {
             return Pair(trackScheduler.currentTrack, trackScheduler.playlist)
@@ -81,5 +102,9 @@ class GuildMusicManager(
                 }
             }
         }, 5000)
+    }
+    enum class MusicQueryType {
+        RawURL,
+        YouTubeSearch
     }
 }
