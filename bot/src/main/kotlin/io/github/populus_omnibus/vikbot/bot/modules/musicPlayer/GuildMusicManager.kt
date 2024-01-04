@@ -73,9 +73,9 @@ class GuildMusicManager(
             trackScheduler.queue(track, player)
         }
     }
-    suspend fun rotate() {
+    suspend fun skip() {
         mutex.withLock {
-            trackScheduler.rotate()
+            trackScheduler.skip(player)
         }
     }
     suspend fun queryAudio(query: String, type: MusicQueryType = MusicQueryType.RawURL): AudioTrack? {

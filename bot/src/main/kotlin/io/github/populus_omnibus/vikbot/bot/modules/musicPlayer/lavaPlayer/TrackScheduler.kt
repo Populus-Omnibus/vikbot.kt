@@ -9,7 +9,7 @@ import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.GuildMusicManage
 class TrackScheduler(val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
     var currentTrack: AudioTrack? = null
     val playlist: MutableList<AudioTrack> = mutableListOf()
-    var pausedPosition: Long? = null
+    private var pausedPosition: Long? = null
 
     fun queue(track: AudioTrack, player: AudioPlayer) {
         playlist.add(track)
@@ -18,7 +18,16 @@ class TrackScheduler(val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
             player.playTrack(currentTrack)
         }
     }
-    fun rotate() {
+    fun playImmediately(track: AudioTrack, player: AudioPlayer) {
+        playlist.clear()
+        currentTrack = track
+        player.playTrack(currentTrack)
+    }
+    fun skip(player: AudioPlayer) {
+        rotate()
+        player.playTrack(currentTrack)
+    }
+    private fun rotate() {
         currentTrack = playlist.removeFirstOrNull()
     }
 

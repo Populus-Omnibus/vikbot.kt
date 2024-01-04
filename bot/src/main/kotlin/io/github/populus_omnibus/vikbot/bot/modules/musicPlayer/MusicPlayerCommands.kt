@@ -31,11 +31,7 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
             SlashCommand("next", "show the current playlist") {
 
             override suspend fun invoke(event: SlashCommandInteractionEvent) = coroutineScope {
-                val manager = playerInstances[event.guild!!.idLong] ?: GuildMusicManager(event.guild!!)
-                if(!manager.isInChannel) {
-                    event.reply("Not currently connected").setEphemeral(true).complete()
-                    return@coroutineScope
-                }
+                val manager = managerGet(event) ?: return@coroutineScope
                 event.deferReply().complete()
                 val embed = EmbedBuilder().apply {
                     val (current, next) = manager.trackQuery()
@@ -51,30 +47,20 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                 event.hook.editOriginalEmbeds(embed).complete()
             }
         }
-        this += object : SlashCommand("playnow", "play a track immediately") {
+        this += object : SlashCommand("play", "queue a track for playback") {
             val query by option(
-                "query", "expression to search", SlashOptionType.STRING
-            ).required()
+                "query", "expression to search", SlashOptionType.STRING).required()
 
             override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
-                val player = playerInstances[event.guild!!.idLong] ?: GuildMusicManager(event.guild!!)
-                event.deferReply().complete()
-                if(!player.isInChannel) {
-                    //join channel
-                    val channel = event.member!!.voiceState!!.channel
-                    if (channel == null) {
-                        event.hook.editOriginal("You must be in a voice channel to use this command").complete()
-                        return@coroutineScope
-                    }
-                    player.join(channel)
-                }
-                val track = player.queryAudio(query,
+                val manager = managerGet(event) ?: return@coroutineScope
+                event.deferReply().setEphemeral(true).complete()
+                val track = manager.queryAudio(query,
                     query.toHttpUrlOrNull()?.let { MusicQueryType.RawURL } ?: MusicQueryType.YouTubeSearch)
                 if (track == null) {
                     event.hook.editOriginal("Could not find track").complete()
                     return@coroutineScope
                 }
-                player.queue(track)
+                manager.queue(track)
                 event.hook.editOriginal("Queued ${track.info.title}").complete()
             }
         }
@@ -84,17 +70,42 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
                 .required().default(0x46) //:3
 
             override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
-                val player = playerInstances[event.guild!!.idLong] ?: GuildMusicManager(event.guild!!)
+                val manager = playerInstances[event.guild!!.idLong] ?: GuildMusicManager(event.guild!!)
                 val actualVol = GuildMusicManager.clampVolume(volume)
-                player.volume = actualVol
+                manager.volume = actualVol
                 event.reply("Set volume to $actualVol%" +
                         (if(volume != actualVol) " (clamped from $volume%)" else ""))
                     .setEphemeral(true).complete()
             }
         }
+        this += object : SlashCommand("skip", "skip the current song") {
+            override suspend fun invoke(event: SlashCommandInteractionEvent): Unit = coroutineScope {
+                val manager = managerGet(event, false) ?: return@coroutineScope
+                manager.skip()
+                event.reply("Skipped").setEphemeral(true).complete()
+            }
+
+        }
         bot.guildInitEvent += {
             playerInstances[it.guild.idLong] = GuildMusicManager(it.guild)
         }
         bot.serverCommands += this
+    }
+
+    private suspend fun managerGet(event: SlashCommandInteractionEvent, joinIfNeeded: Boolean = true): GuildMusicManager? {
+        val manager = playerInstances.getOrDefault(event.guild!!.idLong, GuildMusicManager(event.guild!!))
+        if(!manager.isInChannel) {
+            if(!joinIfNeeded) {
+                event.reply("Not currently playing").setEphemeral(true).complete()
+                return null
+            }
+            event.member?.voiceState?.channel?.let {
+                manager.join(it)
+            } ?: run {
+                event.reply("No voice channel to connect to").setEphemeral(true).complete()
+                return null
+            }
+        }
+        return manager
     }
 }
