@@ -8,6 +8,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.*
+import kotlin.time.Duration
 
 val Member?.isBotAdmin: Boolean
     get() = this?.roles?.any { it.idLong == VikBotHandler.config.adminId } ?: false
@@ -18,12 +19,12 @@ fun Long.toRoleTag() = "<@$this>"
 
 fun Long.toChannelTag() = "<#$this>"
 
-private fun padTime(num: Int): String = num.toString().padStart(2, '0')
+private fun Number.padTime(length: Int = 2) = this.toString().padStart(length, '0')
 
 //This function prevents Discord from formatting a date/time using a markdown list syntax
 fun LocalDateTime.prettyPrint(escaped: Boolean = false): String {
     return this.let {
-        "$year${if (escaped) "\\." else "."} ${padTime(month.value)}. ${padTime(dayOfMonth)}. ${padTime(hour)}:${padTime(minute)}:${padTime(second)}"
+        "$year${if (escaped) "\\." else "."} ${month.value.padTime()}. ${dayOfMonth.padTime()}. ${hour.padTime()}:${minute.padTime()}:${second.padTime()}"
     }
 }
 
@@ -56,3 +57,10 @@ val java.time.Instant.localString
 
 val OffsetDateTime.localString
     get() = this.toInstant().localString
+
+val Duration.stringified
+    get() = this.toComponents { hours, minutes, seconds, _ ->
+        (if(hours > 0) "${hours.padTime()}:" else "") +
+            "${minutes.padTime()}:" +
+                seconds.padTime()
+    }
