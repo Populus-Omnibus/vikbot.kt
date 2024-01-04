@@ -5,35 +5,41 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.GuildMusicManager
+import kotlin.math.min
 
-class TrackScheduler(private val musicPlayer: GuildMusicManager) : AudioEventAdapter() {
+class TrackScheduler(private val manager: GuildMusicManager, private val player: AudioPlayer)
+    : AudioEventAdapter() {
     var currentTrack: AudioTrack? = null
     val playlist: MutableList<AudioTrack> = mutableListOf()
     private var pausedPosition: Long? = null
 
-    fun queue(track: AudioTrack, player: AudioPlayer) {
+    fun queue(track: AudioTrack) {
         playlist.add(track)
         if(currentTrack == null) {
-            rotate()
-            player.playTrack(currentTrack)
+            player.playTrack(playlist.removeFirstOrNull())
         }
     }
-    fun playNow(track: AudioTrack, player: AudioPlayer) {
-        playlist.clear()
-        currentTrack = track
-        player.playTrack(currentTrack)
+    fun playNow(track: AudioTrack) {
+        clear()
+        player.playTrack(track)
     }
-    fun skip(player: AudioPlayer) {
+    fun skip(player: AudioPlayer, num: Int) {
+        repeat(min(num-1, playlist.size)) {
+            playlist.removeFirstOrNull()
+        }
+        //stopping the track will trigger the onTrackEnd event
         player.stopTrack()
-        rotate()
-        if(currentTrack == null) {
-            musicPlayer.onFinish()
-            return
-        }
-        player.playTrack(currentTrack)
     }
-    private fun rotate() {
-        currentTrack = playlist.removeFirstOrNull()
+    fun pause() {
+        player.isPaused = true
+    }
+    fun resume() {
+        player.isPaused = false
+    }
+    fun clear() {
+        currentTrack = null
+        playlist.clear()
+        player.stopTrack()
     }
 
     override fun onPlayerPause(player: AudioPlayer) {
@@ -51,11 +57,15 @@ class TrackScheduler(private val musicPlayer: GuildMusicManager) : AudioEventAda
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack, endReason: AudioTrackEndReason) {
-        rotate()
-        player.playTrack(currentTrack ?: run {
-            musicPlayer.onFinish()
+        currentTrack = null
+        playlist.removeFirstOrNull()?.let {
+            player.playTrack(it)
             return
-        })
+        }
+        //timer starts when the last track ends
+        manager.leave()
+
+
 
         // endReason == FINISHED: A track finished or died by an exception (mayStartNext = true).
         // endReason == LOAD_FAILED: Loading of a track failed (mayStartNext = true).
