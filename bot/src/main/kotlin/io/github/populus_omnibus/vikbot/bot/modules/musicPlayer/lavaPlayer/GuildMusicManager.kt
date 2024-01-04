@@ -62,9 +62,7 @@ class GuildMusicManager(
     suspend fun queryYt(query: String): AudioTrack? {
         val loadResultHandler = YtQueryLoadResultHandler()
         mutex.withLock {
-            playerManager.loadItem(
-                "ytsearch: $query",
-                loadResultHandler)
+            playerManager.loadItemSync("ytsearch: $query", loadResultHandler)
             return loadResultHandler.result.firstOrNull()
             }
         }
