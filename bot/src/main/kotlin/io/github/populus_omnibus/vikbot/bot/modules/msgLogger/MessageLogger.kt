@@ -4,8 +4,8 @@ import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.api.isNotMe
+import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.bot.toChannelTag
-import io.github.populus_omnibus.vikbot.bot.localString
 import io.github.populus_omnibus.vikbot.db.*
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
@@ -87,7 +87,7 @@ object MessageLogger {
         }
         return EmbedBuilder().apply {
             setAuthor(userName, null, iconUrl)
-            setFooter(Clock.System.now().localString)
+            setFooter(Clock.System.now().stringify())
             setDescription("""
                     **<@$author> $title ${link?.let { "[message]($it)" } ?: "message"} in ${channelId.toChannelTag()}**
                     $contentRaw

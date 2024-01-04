@@ -4,7 +4,7 @@ import com.prof18.rssparser.RssParserBuilder
 import com.prof18.rssparser.model.RssItem
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.annotations.Module
-import io.github.populus_omnibus.vikbot.bot.localString
+import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.db.DiscordGuild
 import io.github.populus_omnibus.vikbot.db.DiscordGuilds
 import io.github.populus_omnibus.vikbot.db.RssFeeds
@@ -94,7 +94,7 @@ object RssModule {
                 setDescription(article.description)
                 setImage(article.image)
                 setAuthor(article.author)
-                setFooter(article.pubDate?.let { RFC822(it) }?.localString)
+                setFooter(article.pubDate?.let { RFC822(it) }?.stringify())
             }.build()
 
             servers.forEach { server ->

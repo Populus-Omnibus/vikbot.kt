@@ -10,8 +10,7 @@ import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.plusAssign
-import io.github.populus_omnibus.vikbot.bot.localString
-import io.github.populus_omnibus.vikbot.bot.prettyPrint
+import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.bot.toUserTag
 import io.github.populus_omnibus.vikbot.db.Servers
 import io.github.populus_omnibus.vikbot.plusAssign
@@ -98,9 +97,9 @@ object ReportForm {
                         setDescription("**${reportedUser.idLong.toUserTag()} had their [message](${message.jumpUrl}) reported**")
                         addField("Content", message.contentRaw, false)
                         addField("Reason", reason, false)
-                        addField("Sent at", message.timeCreated.localString, false)
+                        addField("Sent at", message.timeCreated.stringify(), false)
                         addField("Reported by", reporter.idLong.toUserTag(), false)
-                        setFooter(Clock.System.now().prettyPrint())
+                        setFooter(Clock.System.now().stringify())
                         reportedMessage.attachments.filter { it.isImage }.getOrNull(0)?.let {
                             setImage(it.url) //if the message contained an image, store that
                         }
