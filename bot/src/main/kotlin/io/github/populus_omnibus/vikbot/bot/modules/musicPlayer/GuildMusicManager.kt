@@ -70,14 +70,13 @@ class GuildMusicManager(
         mutex.withLock {
             guild.audioManager.openAudioConnection(channelToJoin)
             timer = Timer()
+
             //periodically check if voice channel is empty
             timer.schedule(object : TimerTask() {
                 override fun run() {
                     runBlocking {
-                        mutex.withLock {
-                            if (channel?.members?.all { it.user.isBot } == true)
-                                closeConn()
-                        }
+                        if (channel?.members?.all { it.user.isBot } == true)
+                            leave(true)
                     }
                 }
             }, EMPTY_CHANNEL_TIMEOUT, EMPTY_CHANNEL_TIMEOUT)
@@ -99,7 +98,7 @@ class GuildMusicManager(
 
     suspend fun skip(num: Int = 1) {
         mutex.withLock {
-            trackScheduler.skip(player, num)
+            trackScheduler.skip(num)
         }
     }
 
@@ -127,7 +126,7 @@ class GuildMusicManager(
             override fun run() {
                 runBlocking {
                     mutex.withLock {
-                        if (trackScheduler.currentTrack == null || immediate) {
+                        if (immediate || trackScheduler.currentTrack == null) {
                             trackScheduler.clear()
                             closeConn()
                         }
