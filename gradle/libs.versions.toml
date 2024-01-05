@@ -83,6 +83,8 @@ logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.4.1
 
 google-findbugs = { group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2" }
 
+lavaplayer = { group = "dev.arbjerg", name = "lavaplayer", version = "2.0.4" }
+
 [bundles]
 
 kotlinx-serialization = [

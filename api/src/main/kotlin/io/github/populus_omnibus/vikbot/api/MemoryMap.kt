@@ -2,6 +2,7 @@ package io.github.populus_omnibus.vikbot.api
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import net.dv8tion.jda.api.entities.ISnowflake
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.InteractionHook
 import kotlin.time.Duration
@@ -40,8 +41,8 @@ operator fun <K, T> MutableMap<K, Pair<Instant, T>>.set(key: K, value: T) {
     this[key] = Clock.System.now() to value
 }
 
-operator fun MutableMap<Long, Pair<Instant, Message>>.plusAssign(message: Message) {
-    this[message.idLong] = Clock.System.now() to message
+operator fun<T> MutableMap<Long, Pair<Instant, T>>.plusAssign(t: T) where T : ISnowflake {
+    this[t.idLong] = Clock.System.now() to t
 }
 
 operator fun MutableMap<Long, Pair<Instant, Message>>.plusAssign(interaction: InteractionHook) {

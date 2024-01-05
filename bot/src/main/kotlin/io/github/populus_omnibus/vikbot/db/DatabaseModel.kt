@@ -21,6 +21,7 @@ object DiscordGuilds : LongIdTable(columnName = "guild") {
     val deletedMessagesChannel = long("deletedMessages").nullable().default(null)
     val messageLoggingLevel = enumeration<MessageLoggingLevel>("messageLogging").default(MessageLoggingLevel.NONE)
     // managed channels and rss feeds will be a table, lists are inside out in database
+    val vcVolume = integer("vcVolume").default(70)
 }
 
 object HandledVoiceChannels : LongIdTable(columnName = "channel") {

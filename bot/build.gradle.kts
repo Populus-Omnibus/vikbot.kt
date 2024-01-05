@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.discord.jda)
     implementation(libs.bundles.kotlinx.serialization)
     implementation(libs.kotlin.reflect)
+    implementation(libs.lavaplayer)
 
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlin.cli)
