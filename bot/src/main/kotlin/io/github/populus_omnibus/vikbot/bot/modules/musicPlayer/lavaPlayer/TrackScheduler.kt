@@ -7,7 +7,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.GuildMusicManager
 import kotlin.math.min
 
-class TrackScheduler(private val manager: GuildMusicManager, var player: AudioPlayer)
+class TrackScheduler(private val manager: GuildMusicManager, private val player: AudioPlayer)
     : AudioEventAdapter() {
     var currentTrack: AudioTrack? = null
     val playlist: MutableList<AudioTrack> = mutableListOf()
