@@ -24,10 +24,10 @@ class TrackScheduler(private val manager: GuildMusicManager, private val player:
         player.playTrack(track)
     }
     fun skip(num: Int) {
-        repeat(min(num-1, playlist.size)) {
-            playlist.removeFirstOrNull()
-        }
         player.stopTrack()
+        repeat(min(num, playlist.size)) {
+            currentTrack = playlist.removeFirstOrNull()
+        }
         player.playTrack(currentTrack)
     }
     fun pause() {
