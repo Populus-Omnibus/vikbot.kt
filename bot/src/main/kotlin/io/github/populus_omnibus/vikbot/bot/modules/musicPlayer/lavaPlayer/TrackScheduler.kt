@@ -27,6 +27,7 @@ class TrackScheduler(private val manager: GuildMusicManager, private val player:
         repeat(min(num-1, playlist.size)) {
             playlist.removeFirstOrNull()
         }
+        player.stopTrack()
         player.playTrack(currentTrack)
     }
     fun pause() {
