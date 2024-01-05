@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.exposed.postgresql)
 
     implementation(libs.okio) // explicitly implement okio
+    implementation(libs.json.json)
     implementation(libs.crypto.fernet)
     implementation(libs.rssParser)
 
