@@ -38,6 +38,7 @@ class TrackScheduler(private val manager: GuildMusicManager, var player: AudioPl
     fun clear() {
         currentTrack = null
         playlist.clear()
+        player.isPaused = false
         player.stopTrack()
     }
 
