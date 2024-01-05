@@ -13,6 +13,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.kotlin.getLogger
 import kotlin.collections.set
@@ -23,6 +24,8 @@ import kotlin.time.Duration.Companion.milliseconds
 object MusicPlayerCommands : CommandGroup("music", "Music player") {
     internal val logger by getLogger()
     private val managerInstances: MutableMap<Long, GuildMusicManager> = mutableMapOf()
+
+    val hostFilter = Regex("^(localhost|(127.\\d.\\d.\\d)|::1)\$")
 
     @Module
     fun init(bot: VikBotHandler) {
@@ -142,7 +145,7 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
         val manager = managerGet(event) ?: return
         event.deferReply().setEphemeral(true).complete()
         val track = manager.queryAudio(query,
-            query.toHttpUrlOrNull()?.let { GuildMusicManager.MusicQueryType.RawURL } ?: GuildMusicManager.MusicQueryType.YouTubeSearch)
+            query.toHttpUrlOrNull()?.sanitizeUrl()?.let { GuildMusicManager.MusicQueryType.RawURL } ?: GuildMusicManager.MusicQueryType.YouTubeSearch)
         if (track == null) {
             event.hook.editOriginal("Could not find track").complete()
             return
@@ -150,4 +153,7 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
         manager.queue(track, isForced)
         event.hook.editOriginal("Queued ${track.info.title}").complete()
     }
+
+    private fun HttpUrl.sanitizeUrl(): HttpUrl? = this.takeUnless { this.host.matches(hostFilter) }
 }
+
