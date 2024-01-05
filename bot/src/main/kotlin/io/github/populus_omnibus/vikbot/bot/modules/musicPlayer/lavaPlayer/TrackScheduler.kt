@@ -20,15 +20,15 @@ class TrackScheduler(private val manager: GuildMusicManager, private val player:
         }
     }
     fun playNow(track: AudioTrack) {
-        clear()
+        this.clear()
         player.playTrack(track)
     }
-    fun skip(player: AudioPlayer, num: Int) {
-        repeat(min(num-1, playlist.size)) {
-            playlist.removeFirstOrNull()
-        }
-        //stopping the track will trigger the onTrackEnd event
+    fun skip(num: Int) {
         player.stopTrack()
+        repeat(min(num, playlist.size)) {
+            currentTrack = playlist.removeFirstOrNull()
+        }
+        player.playTrack(currentTrack)
     }
     fun pause() {
         player.isPaused = true
@@ -39,6 +39,7 @@ class TrackScheduler(private val manager: GuildMusicManager, private val player:
     fun clear() {
         currentTrack = null
         playlist.clear()
+        player.isPaused = false
         player.stopTrack()
     }
 
@@ -57,22 +58,14 @@ class TrackScheduler(private val manager: GuildMusicManager, private val player:
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack, endReason: AudioTrackEndReason) {
-        currentTrack = null
-        playlist.removeFirstOrNull()?.let {
-            player.playTrack(it)
-            return
+        if (endReason.mayStartNext) {
+            currentTrack = null
+            playlist.removeFirstOrNull()?.let {
+                player.playTrack(it)
+                return
+            }
+            manager.leave()
         }
-        //timer starts when the last track ends
-        manager.leave()
-
-
-
-        // endReason == FINISHED: A track finished or died by an exception (mayStartNext = true).
-        // endReason == LOAD_FAILED: Loading of a track failed (mayStartNext = true).
-        // endReason == STOPPED: The player was stopped.
-        // endReason == REPLACED: Another track started playing while this had not finished
-        // endReason == CLEANUP: Player hasn't been queried for a while, if you want you can put a
-        //                       clone of this back to your queue
     }
 
     override fun onTrackException(player: AudioPlayer, track: AudioTrack, exception: FriendlyException) {
