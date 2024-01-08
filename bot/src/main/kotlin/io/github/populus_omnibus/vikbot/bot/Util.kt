@@ -20,19 +20,6 @@ fun Long.toChannelTag() = "<#$this>"
 
 private fun Number.padTime(length: Int = 2) = this.toString().padStart(length, '0')
 
-//This function prevents Discord from formatting a date/time using a markdown list syntax
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun LocalDateTime.prettyPrint(escaped: Boolean = false): String = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun java.time.LocalDateTime.prettyPrint(escaped: Boolean = false) = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun Instant.prettyPrint(escaped: Boolean = false) = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun OffsetDateTime.prettyPrint(escaped: Boolean = false): String = this.stringify()
-
 fun String.chunkedMaxLength(maxSize: Int, separator: Char = '\n'): Sequence<String> = sequence {
     var index = 0
     while (index + maxSize < this@chunkedMaxLength.length) {
@@ -72,18 +59,6 @@ fun LocalDateTime.stringify(displaySeconds: Boolean = false) = this.toInstant(ac
 
 fun java.time.LocalDateTime.stringify(displaySeconds: Boolean = false) = this.toKotlinLocalDateTime().stringify(displaySeconds)
 
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-val Instant.localString
-    get() = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-val java.time.Instant.localString
-    get() = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-val OffsetDateTime.localString
-    get() = this.stringify()
 
 fun Duration.stringify(showZeroHours: Boolean = false): String {
     return this.toComponents { hours, minutes, seconds, _ ->
