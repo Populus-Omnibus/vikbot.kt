@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.AudioPlayerSendHandler
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.TrackScheduler
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.YtQueryLoadResultHandler
+import io.github.populus_omnibus.vikbot.bot.security.SecureRequestUtil
 import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
@@ -60,6 +61,10 @@ class GuildMusicManager(
         const val EMPTY_QUEUE_TIMEOUT = 60000L
         private var playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
             AudioSourceManagers.registerRemoteSources(this)
+
+            this.setHttpBuilderConfigurator { request ->
+                SecureRequestUtil.configureSecurely(request)
+            }
         }
 
         fun clampVolume(volume: Int) = volume.coerceIn(0, ABSOLUTE_MAX_VOLUME)
