@@ -26,6 +26,9 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
 
     @Module
     fun init(bot: VikBotHandler) {
+        bot.shutdownEvent += {
+            managerInstances.values.forEach { it.leave(true) }
+        }
         this += object :
             SlashCommand("next", "show the current playlist") {
 
