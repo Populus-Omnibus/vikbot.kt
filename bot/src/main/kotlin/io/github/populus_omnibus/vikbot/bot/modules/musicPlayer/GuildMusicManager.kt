@@ -68,7 +68,7 @@ class GuildMusicManager(
         const val API_TIMEOUT = 1000L
         const val EMPTY_CHANNEL_TIMEOUT = 30000L
         const val EMPTY_QUEUE_TIMEOUT = 60000L
-        const val TRACKING_UPDATE_FREQUENCY = 3000L
+        const val TRACKING_UPDATE_FREQUENCY = 1000L
         private var playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
             AudioSourceManagers.registerRemoteSources(this)
 
@@ -176,7 +176,9 @@ class GuildMusicManager(
         return EmbedBuilder().apply {
             val (current, next) = trackQuery()
             setTitle("Playing in " + channel?.idLong?.toChannelTag())
-            addField("Current track", current?.let {it.info.title + " (" + it.duration.milliseconds.stringify() + ")"} ?: "<none>", false)
+            addField("Current track", current?.let {
+                "${it.info.title} (${it.position.milliseconds.stringify()}/${it.duration.milliseconds.stringify()})"
+            } ?: "<none>", false)
 
             val nextDetails = next.subList(0, minOf(5, next.size)).mapIndexed { index, musicTrack ->
                 "#${index + 1}: ${musicTrack.info.title} (${musicTrack.duration.milliseconds.stringify()})"
