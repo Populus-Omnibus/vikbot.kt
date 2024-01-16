@@ -127,7 +127,7 @@ object MusicPlayerCommands : CommandGroup("music", "Music player") {
     private suspend fun playAudio(event: SlashCommandInteractionEvent, query: String, isForced: Boolean = false) {
         val manager = managerGet(event) ?: return
         event.deferReply().setEphemeral(true).complete()
-        val track = manager.queryAudio(query,
+        val track = manager.audioTrackQuery(query,
             query.toHttpUrlOrNull()?.let { GuildMusicManager.MusicQueryType.RawURL } ?: GuildMusicManager.MusicQueryType.YouTubeSearch)
         if (track == null) {
             event.hook.editOriginal("Could not find track").complete()

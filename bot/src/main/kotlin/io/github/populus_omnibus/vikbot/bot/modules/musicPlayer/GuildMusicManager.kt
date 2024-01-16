@@ -110,10 +110,6 @@ class GuildMusicManager(
         }
     }
 
-    fun closeConn() {
-        guild.audioManager.closeAudioConnection()
-    }
-
     suspend fun queue(track: AudioTrack, playNow: Boolean = false) {
         mutex.withLock {
             when {
@@ -129,26 +125,19 @@ class GuildMusicManager(
         }
     }
 
-    suspend fun queryAudio(query: String, type: MusicQueryType = MusicQueryType.RawURL): AudioTrack? {
+    suspend fun pause() {
         mutex.withLock {
-            val queryString = when (type) {
-                MusicQueryType.RawURL -> query
-                MusicQueryType.YouTubeSearch -> "ytsearch: $query"
-            }
-            val loadResultHandler = YtQueryLoadResultHandler()
-            playerManager.loadItemSync(queryString, loadResultHandler)
-            return loadResultHandler.result.firstOrNull()
+            trackScheduler.pause()
+        }
+    }
+    suspend fun resume() {
+        mutex.withLock {
+            trackScheduler.resume()
         }
     }
 
-
-    private fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
-        return Pair(trackScheduler.currentTrack, trackScheduler.playlist)
-    }
-
     fun leave(immediate : Boolean = false) {
-        val function = {
-            runBlocking {
+        val function = { runBlocking {
                 mutex.withLock {
                     if (immediate || trackScheduler.currentTrack == null) {
                         timer.cancel()
@@ -169,14 +158,29 @@ class GuildMusicManager(
             }, EMPTY_QUEUE_TIMEOUT)
         }
     }
-    suspend fun pause() {
-        mutex.withLock {
-            trackScheduler.pause()
-        }
+
+    private fun closeConn() {
+        guild.audioManager.closeAudioConnection()
     }
-    suspend fun resume() {
+
+    private fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
+        return Pair(trackScheduler.currentTrack, trackScheduler.playlist)
+    }
+
+    enum class MusicQueryType {
+        RawURL,
+        YouTubeSearch
+    }
+
+    suspend fun audioTrackQuery(query: String, type: MusicQueryType = MusicQueryType.RawURL): AudioTrack? {
         mutex.withLock {
-            trackScheduler.resume()
+            val queryString = when (type) {
+                MusicQueryType.RawURL -> query
+                MusicQueryType.YouTubeSearch -> "ytsearch: $query"
+            }
+            val loadResultHandler = YtQueryLoadResultHandler()
+            playerManager.loadItemSync(queryString, loadResultHandler)
+            return loadResultHandler.result.firstOrNull()
         }
     }
 
@@ -194,10 +198,5 @@ class GuildMusicManager(
             addField("Up next", nextDetails, false)
             setFooter(Clock.System.now().stringify())
         }.build()
-    }
-
-    enum class MusicQueryType {
-        RawURL,
-        YouTubeSearch
     }
 }
