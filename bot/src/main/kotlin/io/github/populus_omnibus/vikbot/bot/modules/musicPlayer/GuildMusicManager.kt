@@ -142,24 +142,32 @@ class GuildMusicManager(
     }
 
 
-    fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
+    private fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
         return Pair(trackScheduler.currentTrack, trackScheduler.playlist)
     }
 
     fun leave(immediate : Boolean = false) {
-        timer.schedule(object : TimerTask() {
-            override fun run() {
-                runBlocking {
-                    mutex.withLock {
-                        if (immediate || trackScheduler.currentTrack == null) {
-                            trackScheduler.clear()
-                            closeConn()
-                            trackerMessage?.delete()?.complete()
-                        }
+        val function = {
+            runBlocking {
+                mutex.withLock {
+                    if (immediate || trackScheduler.currentTrack == null) {
+                        timer.cancel()
+                        trackerMessage?.delete()?.complete()
+                        trackScheduler.clear()
+                        closeConn()
                     }
                 }
             }
-        }, if(immediate) 0L else EMPTY_QUEUE_TIMEOUT)
+        }
+
+        if(immediate) function()
+        else {
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    function()
+                }
+            }, EMPTY_QUEUE_TIMEOUT)
+        }
     }
     suspend fun pause() {
         mutex.withLock {
