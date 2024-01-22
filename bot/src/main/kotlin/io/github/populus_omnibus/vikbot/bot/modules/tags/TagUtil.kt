@@ -10,7 +10,6 @@ import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.jetbrains.exposed.sql.LikePattern
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 internal fun Tag.asMessage(): MessageCreateData {
@@ -46,9 +45,9 @@ internal object TagSlashOption : SlashOptionType<Tag> {
         // just some casual db injection stuff...
         val userString = event.focusedOption.value.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%")
         val ids = transaction {
-             TagTable.slice(TagTable.id).select {
-                 TagTable.id like LikePattern("${userString}%", '\\')
-             }
+            TagTable.select(TagTable.id).where {
+                TagTable.id like LikePattern("${userString}%", '\\')
+            }
                  .limit(25).map { it[TagTable.id].value }.toList()
         }
 
