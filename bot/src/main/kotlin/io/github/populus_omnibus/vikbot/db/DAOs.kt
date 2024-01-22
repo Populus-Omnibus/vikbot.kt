@@ -83,6 +83,15 @@ class RssFeed(id: EntityID<Int>) : IntEntity(id) {
     var guild by RssFeeds.guild
 }
 
+class RssRewrite(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<RssRewrite>(RssRewrites)
+
+    var guild by RssRewrites.guild
+    var feed by RssRewrites.feed
+    var regex by RssRewrites.regex
+    var replacement by RssRewrites.replacement
+}
+
 class RoleGroup(group: EntityID<Int>) : IntEntity(group) {
     companion object : IntEntityClass<RoleGroup>(RoleGroups)
 

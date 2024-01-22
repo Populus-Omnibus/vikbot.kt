@@ -35,6 +35,13 @@ object RssFeeds : IntIdTable() {
     val feed = text("feed")
 }
 
+object RssRewrites : IntIdTable() {
+    val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
+    val feed = reference("feed", RssFeeds, onDelete = ReferenceOption.CASCADE).nullable()
+    val regex = text("regex")
+    val replacement = text("replacement")
+}
+
 object RoleGroups : IntIdTable() {
     val name = varchar("name", 255)
     val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
