@@ -35,7 +35,6 @@ object MessageLogger {
         bot.messageDeleteEvent[80] = { event ->
             transaction {
                 val guild = Servers[event.guild.idLong]
-                if (event.channel.idLong == guild.sinkholeChannel) EventResult.CONSUME
                 if (guild.deletedMessagesChannel != null && guild.messageLoggingLevel >= MessageLoggingLevel.DELETED) {
                     val channel = event.jda.getTextChannelById(guild.deletedMessagesChannel!!)!!
 
@@ -54,7 +53,6 @@ object MessageLogger {
             if (msg is ReceivedMessage && msg.author.isNotMe) {
                 transaction {
                     val guild = Servers[event.guild.idLong]
-                    if (event.channel.idLong == guild.sinkholeChannel) EventResult.CONSUME
 
                     val oldMsg = UserMessage.findById(msg.idLong)
 
