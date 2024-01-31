@@ -71,15 +71,39 @@ object Sinkhole : CommandGroup("sinkhole", "just a /dev/null", { operator() } ) 
 
         VikBotHandler += toBeDeleted.maintainEvent(deletionDelay) { _, msg -> msg.delete().queue() }
 
-        VikBotHandler.messageReceivedEvent[16] = { event ->
+        VikBotHandler.messageReceivedEvent[32] = { event ->
             transaction {
                 val server = Servers[event.guild.idLong]
                 if((event.channel as? GuildMessageChannel)?.idLong == server.sinkholeChannel) {
                     toBeDeleted += event.message
                     EventResult.CONSUME
+                } else {
+                    EventResult.PASS
                 }
             }
-            EventResult.PASS
+        }
+
+        VikBotHandler.messageDeleteEvent[32] = { event ->
+            transaction {
+                val server = Servers[event.guild.idLong]
+                if ((event.channel as? GuildMessageChannel)?.idLong == server.sinkholeChannel) {
+                    toBeDeleted -= event.messageIdLong
+                    EventResult.CONSUME
+                } else {
+                    EventResult.PASS
+                }
+            }
+        }
+
+        VikBotHandler.messageUpdateEvent[32] = { event ->
+            transaction {
+                val server = Servers[event.guild.idLong]
+                if ((event.channel as? GuildMessageChannel)?.idLong == server.sinkholeChannel) {
+                    EventResult.CONSUME
+                } else {
+                    EventResult.PASS
+                }
+            }
         }
     }
 }
