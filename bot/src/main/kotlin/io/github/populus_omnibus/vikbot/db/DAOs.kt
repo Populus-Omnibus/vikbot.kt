@@ -19,6 +19,7 @@ class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
     var newsChannel by DiscordGuilds.newsChannel
     var reportChannel by DiscordGuilds.reportChannel
     var deletedMessagesChannel by DiscordGuilds.deletedMessagesChannel
+    var sinkholeChannel by DiscordGuilds.sinkholeChannel
     var messageLoggingLevel by DiscordGuilds.messageLoggingLevel
     var vcVolume by DiscordGuilds.vcVolume
 
