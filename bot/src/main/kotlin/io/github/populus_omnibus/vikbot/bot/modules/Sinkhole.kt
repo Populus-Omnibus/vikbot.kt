@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.seconds
 @Command(type = CommandType.SERVER)
 object Sinkhole : CommandGroup("sinkhole", "just a /dev/null", { operator() } ) {
     private val toBeDeleted = createMemory<Long, Message>()
-    private val deletionDelay = 3.seconds
+    private val deletionDelay = 30.seconds
 
     init {
         this += object : SlashCommand("set", "sets the current channel for this very fun feature") {
@@ -53,6 +53,7 @@ object Sinkhole : CommandGroup("sinkhole", "just a /dev/null", { operator() } ) 
                 event.hook.editOriginal("Channel removed from guild config").complete()
             }
         }
+
         VikBotHandler.guildInitEvent += {event ->
             val channelId = transaction {
                 val server = Servers[event.guild.idLong]
