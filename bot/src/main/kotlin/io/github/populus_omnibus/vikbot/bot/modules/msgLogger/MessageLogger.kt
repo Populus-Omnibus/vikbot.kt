@@ -77,7 +77,7 @@ object MessageLogger {
     }
 
 
-    fun UserMessage.toEmbed(jda: JDA, title: String, link: String? = null): EmbedBuilder {
+    private fun UserMessage.toEmbed(jda: JDA, title: String, link: String? = null): EmbedBuilder {
         var iconUrl: String? = null
         var userName: String = author.toString()
 
