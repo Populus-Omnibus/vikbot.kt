@@ -4,7 +4,7 @@ class ThreadSafeCounter {
     private var count = 0
     private val observers: MutableSet<(Int) -> Unit> = mutableSetOf()
 
-    private fun increment(): Int {
+    fun increment(): Int {
         return synchronized(this) {
             ++count
         }.also { count ->
@@ -12,7 +12,7 @@ class ThreadSafeCounter {
         }
     }
 
-    private fun decrement(): Int {
+    fun decrement(): Int {
         return synchronized(this) {
             --count
         }.also { count ->
