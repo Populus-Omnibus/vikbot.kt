@@ -16,8 +16,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.info
@@ -57,7 +55,7 @@ object RssModule {
         logger.info { "Updating RSS listener" }
         val feeds = transaction {
 
-            RssFeeds.slice(RssFeeds.feed).selectAll().withDistinct().map {
+            RssFeeds.select(RssFeeds.feed).withDistinct().map {
                 val feed = it[RssFeeds.feed]
                 feed to (rssFeeds[feed] ?: RssFeedObject(Clock.System.now()))
             }
@@ -85,7 +83,8 @@ object RssModule {
 
     private suspend fun postArticles(feed: String, articles: List<RssItem>) = coroutineScope {
         val servers = transaction {
-            RssFeeds.innerJoin(DiscordGuilds).slice(DiscordGuilds.columns).select { RssFeeds.feed eq feed }.let { DiscordGuild.wrapRows(it).toList() }
+            RssFeeds.innerJoin(DiscordGuilds).select(DiscordGuilds.columns).where { RssFeeds.feed eq feed }
+                .let { DiscordGuild.wrapRows(it).toList() }
         }
 
         for(article in articles) {
