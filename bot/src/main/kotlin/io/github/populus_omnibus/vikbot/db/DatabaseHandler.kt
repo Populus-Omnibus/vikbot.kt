@@ -28,6 +28,7 @@ object DatabaseHandler {
                         DiscordGuilds,
                         HandledVoiceChannels,
                         RssFeeds,
+                        RssRewrites,
                         RoleGroups,
                         PublishData,
                         RoleEntries,
