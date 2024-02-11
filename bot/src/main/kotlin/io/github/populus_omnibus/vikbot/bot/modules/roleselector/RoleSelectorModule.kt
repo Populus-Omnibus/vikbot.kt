@@ -43,8 +43,7 @@ object RoleSelectorModule {
 }
 
 /** This class should **never** be constructed in a direct message context, only in guilds. **/
-class RoleSelectorGroupAutocompleteString(
-) : SlashOptionType<String> {
+class RoleSelectorGroupAutocompleteString : SlashOptionType<String> {
     override val type = OptionType.STRING
     override val optionMapping = OptionMapping::getAsString
     override val isAutoComplete = true
