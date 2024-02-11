@@ -18,7 +18,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.upsert
 import org.slf4j.kotlin.getLogger
@@ -117,7 +117,7 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
                 } else {
                     rdy.await()
                     transaction {
-                        val acc = McLinkedAccount.find() { McLinkedAccounts.accountId eq uuid }.firstOrNull()
+                        val acc = McLinkedAccount.find { McLinkedAccounts.accountId eq uuid }.firstOrNull()
                         if (acc != null) {
                             if (acc.discordUserId == event.user.idLong) {
                                 event.hook.editOriginal("You have already whitelisted this account.")
@@ -258,7 +258,7 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
         while (true) {
             val token =
                 random.ints(0, tokenChars.size).asSequence().take(16).map { tokenChars[it] }.joinToString("")
-            if (transaction { McOfflineAccounts.select(McOfflineAccounts.token eq token).none() }) return token
+            if (transaction { McOfflineAccounts.selectAll().where(McOfflineAccounts.token eq token).none() }) return token
         }
     }
 
