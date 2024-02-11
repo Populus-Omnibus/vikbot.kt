@@ -117,7 +117,7 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
                 } else {
                     rdy.await()
                     transaction {
-                        val acc = McLinkedAccount.find() { McLinkedAccounts.accountId eq uuid }.firstOrNull()
+                        val acc = McLinkedAccount.find { McLinkedAccounts.accountId eq uuid }.firstOrNull()
                         if (acc != null) {
                             if (acc.discordUserId == event.user.idLong) {
                                 event.hook.editOriginal("You have already whitelisted this account.")
