@@ -85,7 +85,7 @@ google-findbugs = { group = "com.google.code.findbugs", name = "jsr305", version
 
 lavaplayer = { group = "dev.arbjerg", name = "lavaplayer", version = "2.1.0" }
 
-json-json = { group = "org.json", name = "json", version = "20231013" }
+json-json = { group = "org.json", name = "json", version = "20240205" }
 
 [bundles]
 
