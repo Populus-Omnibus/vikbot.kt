@@ -79,7 +79,7 @@ slf4j = { group = "org.slf4j", name = "slf4j-api", version = "2.0.12" }
 slf4k = { group = "ca.solo-studios", name = "slf4k", version = "0.5.3" }
 # Logback backend for slf4j
 ## The reliable, generic, fast and flexible logging framework for Java
-logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.4.14" }
+logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.5.0" }
 
 google-findbugs = { group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2" }
 
