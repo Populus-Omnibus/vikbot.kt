@@ -66,7 +66,7 @@ publishing {
     }
     repositories {
         maven {
-            name = "kosmx-dev"
+            name = "kosmxdev"
 
             url = uri("https://maven.kosmx.dev/")
 
