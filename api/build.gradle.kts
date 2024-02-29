@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 
     vikbot.repos
+    vikbot.publishing
 }
 
 dependencies {
