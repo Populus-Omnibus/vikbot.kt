@@ -20,7 +20,7 @@ kotlinx-exposed = "0.48.0"
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
-axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.16.1" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.17.0" }
 
 shadow-plugin = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 
