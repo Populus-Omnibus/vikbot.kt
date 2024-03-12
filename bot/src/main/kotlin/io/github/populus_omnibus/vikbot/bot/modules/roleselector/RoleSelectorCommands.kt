@@ -97,7 +97,7 @@ object RoleSelectorCommands :
                 }
                 val outputClamped = outputStringData.map {
                     it.chunkedMaxLength(2000)
-                }.flatMap { it }
+                }.flatMapTo(mutableListOf()) { it }
 
                 outputClamped.let {
                     if (it.isEmpty()) event.reply("server has no groups").complete()
