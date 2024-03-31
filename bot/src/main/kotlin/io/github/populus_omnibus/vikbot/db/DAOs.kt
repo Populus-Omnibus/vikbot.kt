@@ -84,6 +84,16 @@ class RssFeed(id: EntityID<Int>) : IntEntity(id) {
     var guild by RssFeeds.guild
 }
 
+class NickName(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<NickName>(NickCache)
+
+    var guild: DiscordGuild by DiscordGuild referencedOn NickCache.guild
+    var user: Long by NickCache.userId
+
+    var originalNick: String? by NickCache.originalNick
+    var assignedNick: String by NickCache.changedNick
+}
+
 class RoleGroup(group: EntityID<Int>) : IntEntity(group) {
     companion object : IntEntityClass<RoleGroup>(RoleGroups)
 
