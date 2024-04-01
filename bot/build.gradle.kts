@@ -52,4 +52,8 @@ tasks {
             )
         }
     }
+
+    shadowJar {
+        archiveFileName = "bot-all.jar"
+    }
 }
