@@ -3,6 +3,7 @@ package io.github.populus_omnibus.vikbot.bot.modules.aprilFoolsNicks
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Command
+import io.github.populus_omnibus.vikbot.api.annotations.CommandType
 import io.github.populus_omnibus.vikbot.api.commands.CommandGroup
 import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
@@ -23,7 +24,7 @@ import org.jetbrains.exposed.sql.upsert
 import java.security.SecureRandom
 import kotlin.random.asKotlinRandom
 
-@Command
+@Command(CommandType.SERVER)
 object NicknameCommands : CommandGroup("nick", "Nickname mayhem for april first", {administrator()}) {
     private var nameChanges = false
 
