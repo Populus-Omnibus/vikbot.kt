@@ -36,6 +36,18 @@ object RssFeeds : IntIdTable() {
     val feed = text("feed")
 }
 
+object NickCache : IntIdTable() {
+    val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
+    val userId = long("user")
+
+    val originalNick = varchar("originalNick", 32*4).nullable()
+    val changedNick = varchar("changedNick", 32*4)
+
+    init {
+        uniqueIndex(guild, userId)
+    }
+}
+
 object RoleGroups : IntIdTable() {
     val name = varchar("name", 255)
     val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
