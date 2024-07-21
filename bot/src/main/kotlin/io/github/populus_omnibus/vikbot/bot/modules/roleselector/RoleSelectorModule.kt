@@ -114,7 +114,7 @@ private constructor(
         val act = action@{
             group.roles.sortedBy { it.apiName }.getOrNull(currentPage)?.let { data ->
                 val builder = MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning)
-                val buttons = this.msg.actionRows[0]?.actionComponents ?: run {
+                val buttons = this.msg.actionRows[0]?.actionComponents?.toMutableList() ?: run {
                     RoleSelectorCommands.logger.error { "Buttons not found in a paginated message!" }
                     return@action
                 }
