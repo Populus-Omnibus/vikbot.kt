@@ -10,7 +10,7 @@ kotlinx-coroutines = "1.8.1"
 
 shadow = "8.1.1"
 
-discord-jda = "5.0.1"
+discord-jda = "5.0.2"
 
 junit = "5.10.3"
 
