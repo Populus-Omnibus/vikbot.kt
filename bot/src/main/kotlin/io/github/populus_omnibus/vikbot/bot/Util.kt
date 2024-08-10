@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.Member
 import java.time.OffsetDateTime
 import java.time.format.TextStyle
 import java.util.*
+import kotlin.time.Duration
 
 val Member?.isBotAdmin: Boolean
     get() = this?.roles?.any { it.idLong == VikBotHandler.config.adminId } ?: false
@@ -19,23 +20,10 @@ fun Long.toChannelTag() = "<#$this>"
 
 private fun Number.padTime(length: Int = 2) = this.toString().padStart(length, '0')
 
-//This function prevents Discord from formatting a date/time using a markdown list syntax
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun LocalDateTime.prettyPrint(escaped: Boolean = false): String = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun java.time.LocalDateTime.prettyPrint(escaped: Boolean = false) = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun Instant.prettyPrint(escaped: Boolean = false) = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-fun OffsetDateTime.prettyPrint(escaped: Boolean = false): String = this.stringify()
-
-fun String.chunked(maxSize: Int): Sequence<String> = sequence {
+fun String.chunkedMaxLength(maxSize: Int, separator: Char = '\n'): Sequence<String> = sequence {
     var index = 0
-    while (index + maxSize < this@chunked.length) {
-        val n = this@chunked.lastIndexOf(startIndex = maxSize, char = '\n')
+    while (index + maxSize < this@chunkedMaxLength.length) {
+        val n = this@chunkedMaxLength.lastIndexOf(startIndex = maxSize, char = separator)
         yield(substring(index, n))
         index = n
     }
@@ -72,14 +60,10 @@ fun LocalDateTime.stringify(displaySeconds: Boolean = false) = this.toInstant(ac
 fun java.time.LocalDateTime.stringify(displaySeconds: Boolean = false) = this.toKotlinLocalDateTime().stringify(displaySeconds)
 
 
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-val Instant.localString
-    get() = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-val java.time.Instant.localString
-    get() = this.stringify()
-
-@Deprecated("Use enString instead", ReplaceWith("stringify()"))
-val OffsetDateTime.localString
-    get() = this.stringify()
+fun Duration.stringify(showZeroHours: Boolean = false): String {
+    return this.toComponents { hours, minutes, seconds, _ ->
+        (if (hours > 0 || showZeroHours) "${hours.padTime()}:" else "") +
+                "${minutes.padTime()}:" +
+                seconds.padTime()
+    }
+}

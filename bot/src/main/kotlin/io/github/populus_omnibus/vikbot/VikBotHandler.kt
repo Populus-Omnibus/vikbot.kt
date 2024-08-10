@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
+import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
@@ -56,6 +57,7 @@ object VikBotHandler : EventListener {
     val guildVoiceUpdateEvent = Event.simple<GuildVoiceUpdateEvent>()
     val guildMemberRoleAddEvent = Event.simple<GuildMemberRoleAddEvent>()
     val guildMemberRoleRemoveEvent = Event.simple<GuildMemberRoleRemoveEvent>()
+    val guildMemberUpdateNicknameEvent = Event.simple<GuildMemberUpdateNicknameEvent>()
 
     val initEvent = mutableListOf<(JDA) -> Unit>().apply { add(::registerCommands) }
     val readyEvent = mutableListOf<(ReadyEvent) -> Unit>()
@@ -168,6 +170,7 @@ object VikBotHandler : EventListener {
                     }
                     is GuildMemberRoleAddEvent -> guildMemberRoleAddEvent(event)
                     is GuildMemberRoleRemoveEvent -> guildMemberRoleRemoveEvent(event)
+                    is GuildMemberUpdateNicknameEvent -> guildMemberUpdateNicknameEvent(event)
 
                     is ButtonInteractionEvent -> buttonEvents(event.button.id, event, "button")
                     is ModalInteractionEvent -> modalEvents(event.modalId, event, "modal")

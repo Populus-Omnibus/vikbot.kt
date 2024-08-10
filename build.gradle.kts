@@ -1,3 +1,8 @@
+plugins {
+    alias(libs.plugins.axion.release)
+}
 
-group = "dev.kosmx.vikbot"
-version = "1.0-SNAPSHOT"
+allprojects {
+    group = "io.github.populus-omnibus.vikbot"
+    version = rootProject.scmVersion.version
+}

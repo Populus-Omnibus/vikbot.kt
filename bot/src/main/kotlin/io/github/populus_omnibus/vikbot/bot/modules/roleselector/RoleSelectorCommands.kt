@@ -9,7 +9,7 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.api.plusAssign
-import io.github.populus_omnibus.vikbot.bot.chunked
+import io.github.populus_omnibus.vikbot.bot.chunkedMaxLength
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.expiringReplies
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.interactionDeletionWarning
 import io.github.populus_omnibus.vikbot.db.*
@@ -96,8 +96,8 @@ object RoleSelectorCommands :
                     } ?: "<none>") + "\n\t$groupOutput"
                 }
                 val outputClamped = outputStringData.map {
-                    it.chunked(2000)
-                }.flatMap { it }
+                    it.chunkedMaxLength(2000)
+                }.flatMapTo(mutableListOf()) { it }
 
                 outputClamped.let {
                     if (it.isEmpty()) event.reply("server has no groups").complete()

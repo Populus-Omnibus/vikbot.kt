@@ -1,24 +1,26 @@
 [versions]
 
-kotlin = "1.9.22"
+kotlin = "2.0.0"
 
-kotlinx-serialization = "1.6.2"
+kotlinx-serialization = "1.7.1"
 
 kotlinx-cli = "0.3.6"
 
-kotlinx-coroutines = "1.7.3"
+kotlinx-coroutines = "1.8.1"
 
 shadow = "8.1.1"
 
-discord-jda = "5.0.0-beta.19"
+discord-jda = "5.0.2"
 
-junit = "5.10.1"
+junit = "5.10.3"
 
-kotlinx-exposed = "0.45.0"
+kotlinx-exposed = "0.53.0"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.18.3" }
 
 shadow-plugin = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 
@@ -41,7 +43,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.5.0" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.6.0" }
 
 # Exposed
 exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version.ref = "kotlinx-exposed" }
@@ -52,36 +54,40 @@ exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version
 exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kotlin-datetime", version.ref = "kotlinx-exposed" }
 exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version.ref = "kotlinx-exposed" }
 #drivers
-exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.7.1" }
-exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.44.1.0" }
+exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.7.3" }
+exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.46.0.1" }
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
 crypto-fernet = { group = "com.macasaet.fernet", name = "fernet-java8", version = "1.5.0" }
 
-rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.6" }
+rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.8" }
 
-okio = { group = "com.squareup.okio", name = "okio", version = "3.7.0"}
+okio = { group = "com.squareup.okio", name = "okio", version = "3.9.0"}
 
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
 
-google-guava = { group = "com.google.guava", name = "guava", version = "33.0.0-jre" }
+google-guava = { group = "com.google.guava", name = "guava", version = "33.2.1-jre" }
 
 # jda-ktx looks promising, but if it drops support, I'm in big trouble. I'll jsut make my own stuff
 
 # extra
 
 # simple logging facade for Java
-slf4j = { group = "org.slf4j", name = "slf4j-api", version = "2.0.10" }
+slf4j = { group = "org.slf4j", name = "slf4j-api", version = "2.0.13" }
 # SLF4K logging for Kotlin
 ## SLF4K is a set of kotlin extensions for SLF4J
 slf4k = { group = "ca.solo-studios", name = "slf4k", version = "0.5.3" }
 # Logback backend for slf4j
 ## The reliable, generic, fast and flexible logging framework for Java
-logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.4.14" }
+logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.5.6" }
 
 google-findbugs = { group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2" }
+
+lavaplayer = { group = "dev.arbjerg", name = "lavaplayer", version = "2.2.1" }
+
+json-json = { group = "org.json", name = "json", version = "20240303" }
 
 [bundles]
 

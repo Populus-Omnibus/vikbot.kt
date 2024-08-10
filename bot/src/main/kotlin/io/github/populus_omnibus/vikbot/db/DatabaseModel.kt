@@ -19,8 +19,10 @@ object DiscordGuilds : LongIdTable(columnName = "guild") {
     val newsChannel = long("newsChannel").nullable().default(null)
     val reportChannel = long("reportChannel").nullable().default(null)
     val deletedMessagesChannel = long("deletedMessages").nullable().default(null)
+    val sinkholeChannel = long("sinkholeChannel").nullable().default(null)
     val messageLoggingLevel = enumeration<MessageLoggingLevel>("messageLogging").default(MessageLoggingLevel.NONE)
     // managed channels and rss feeds will be a table, lists are inside out in database
+    val vcVolume = integer("vcVolume").default(70)
 }
 
 object HandledVoiceChannels : LongIdTable(columnName = "channel") {
@@ -32,6 +34,18 @@ object HandledVoiceChannels : LongIdTable(columnName = "channel") {
 object RssFeeds : IntIdTable() {
     val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
     val feed = text("feed")
+}
+
+object NickCache : IntIdTable() {
+    val guild = reference("guild", DiscordGuilds, onDelete = ReferenceOption.CASCADE)
+    val userId = long("user")
+
+    val originalNick = varchar("originalNick", 32*4).nullable()
+    val changedNick = varchar("changedNick", 32*4)
+
+    init {
+        uniqueIndex(guild, userId)
+    }
 }
 
 object RoleGroups : IntIdTable() {

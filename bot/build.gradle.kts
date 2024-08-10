@@ -11,6 +11,8 @@ dependencies {
     implementation(libs.discord.jda)
     implementation(libs.bundles.kotlinx.serialization)
     implementation(libs.kotlin.reflect)
+    implementation("commons-codec:commons-codec:1.17.1")
+    implementation(libs.lavaplayer)
 
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlin.cli)
@@ -23,6 +25,7 @@ dependencies {
     implementation(libs.exposed.postgresql)
 
     implementation(libs.okio) // explicitly implement okio
+    implementation(libs.json.json)
     implementation(libs.crypto.fernet)
     implementation(libs.rssParser)
 
@@ -48,5 +51,9 @@ tasks {
                 "Main-Class" to "io.github.populus_omnibus.vikbot.Launch"
             )
         }
+    }
+
+    shadowJar {
+        archiveFileName = "bot-all.jar"
     }
 }

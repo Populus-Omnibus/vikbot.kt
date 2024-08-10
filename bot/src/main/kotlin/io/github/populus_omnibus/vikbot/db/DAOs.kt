@@ -19,7 +19,9 @@ class DiscordGuild(guild: EntityID<Long>) : LongEntity(guild) {
     var newsChannel by DiscordGuilds.newsChannel
     var reportChannel by DiscordGuilds.reportChannel
     var deletedMessagesChannel by DiscordGuilds.deletedMessagesChannel
+    var sinkholeChannel by DiscordGuilds.sinkholeChannel
     var messageLoggingLevel by DiscordGuilds.messageLoggingLevel
+    var vcVolume by DiscordGuilds.vcVolume
 
     /**
      * This will contain all handled voice channels, including temporary ones
@@ -80,6 +82,16 @@ class RssFeed(id: EntityID<Int>) : IntEntity(id) {
 
     var feed by RssFeeds.feed
     var guild by RssFeeds.guild
+}
+
+class NickName(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<NickName>(NickCache)
+
+    var guild: DiscordGuild by DiscordGuild referencedOn NickCache.guild
+    var user: Long by NickCache.userId
+
+    var originalNick: String? by NickCache.originalNick
+    var assignedNick: String by NickCache.changedNick
 }
 
 class RoleGroup(group: EntityID<Int>) : IntEntity(group) {

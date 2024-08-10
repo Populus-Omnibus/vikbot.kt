@@ -25,7 +25,7 @@ data class C2SVikAuthPacket(
  * For premium users, token will be null,
  */
 @Serializable
-data class S2CVikAuthPacket constructor(
+data class S2CVikAuthPacket(
     /**
      * if this is not explicitly specified, the connection is not allowed
      * For a request with premium = false, the user has to provide shared secret (it's genuine) then the mc server will send another challenge.

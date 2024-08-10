@@ -43,8 +43,7 @@ object RoleSelectorModule {
 }
 
 /** This class should **never** be constructed in a direct message context, only in guilds. **/
-class RoleSelectorGroupAutocompleteString(
-) : SlashOptionType<String> {
+class RoleSelectorGroupAutocompleteString : SlashOptionType<String> {
     override val type = OptionType.STRING
     override val optionMapping = OptionMapping::getAsString
     override val isAutoComplete = true
@@ -115,7 +114,7 @@ private constructor(
         val act = action@{
             group.roles.sortedBy { it.apiName }.getOrNull(currentPage)?.let { data ->
                 val builder = MessageEditBuilder().setEmbeds(getEmbed(data)).setContent(interactionDeletionWarning)
-                val buttons = this.msg.actionRows[0]?.actionComponents ?: run {
+                val buttons = this.msg.actionRows[0]?.actionComponents?.toMutableList() ?: run {
                     RoleSelectorCommands.logger.error { "Buttons not found in a paginated message!" }
                     return@action
                 }
