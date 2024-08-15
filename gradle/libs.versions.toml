@@ -14,7 +14,7 @@ discord-jda = "5.0.2"
 
 junit = "5.10.3"
 
-kotlinx-exposed = "0.53.0"
+kotlinx-exposed = "0.52.0"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
