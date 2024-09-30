@@ -12,7 +12,7 @@ shadow = "8.1.1"
 
 discord-jda = "5.1.0"
 
-junit = "5.11.0"
+junit = "5.11.1"
 
 kotlinx-exposed = "0.52.0"
 
