@@ -61,7 +61,7 @@ discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda"
 
 crypto-fernet = { group = "com.macasaet.fernet", name = "fernet-java8", version = "1.5.0" }
 
-rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.9" }
+rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.10" }
 
 okio = { group = "com.squareup.okio", name = "okio", version = "3.10.2"}
 
