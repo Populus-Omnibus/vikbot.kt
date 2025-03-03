@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: validate gradle wrapper
         uses: gradle/wrapper-validation-action@v1
       - name: setup jdk ${{ matrix.java }}
@@ -23,22 +23,17 @@ jobs:
         with:
           java-version: 21
           distribution: 'temurin'
-      - name: make gradle wrapper executable
-        if: ${{ runner.os != 'Windows' }}
-        run: chmod +x ./gradlew
-      - name: build
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build with Gradle
         run: ./gradlew build
       - name: Gradle Dependency Submission
         if: ${{ runner.os != 'Windows' }}
-        uses: mikepenz/gradle-dependency-submission@v0.8.6
-        with:
-          gradle-build-module: |-
-            :bot
-            :api
+        uses: gradle/actions/dependency-submission@v4 # According to docs, this should work without manually including sub-projects
         continue-on-error: true
       - name: capture build artifacts
         if: ${{ matrix.os == 'ubuntu-latest' }} # Only upload artifacts built from latest java on one OS
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: |
