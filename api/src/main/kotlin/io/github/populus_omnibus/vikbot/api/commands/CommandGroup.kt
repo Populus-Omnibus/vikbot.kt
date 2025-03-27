@@ -4,6 +4,8 @@ import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableList
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
+import net.dv8tion.jda.api.interactions.IntegrationType
+import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
@@ -13,6 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
 import net.dv8tion.jda.api.interactions.commands.localization.LocalizationFunction
 import net.dv8tion.jda.api.interactions.commands.localization.LocalizationMap
 import net.dv8tion.jda.api.utils.data.DataObject
+import org.jetbrains.annotations.UnmodifiableView
 import org.slf4j.kotlin.error
 import org.slf4j.kotlin.getLogger
 import java.util.function.Predicate
@@ -69,6 +72,14 @@ open class CommandGroup(name: String, description: String, configure: SlashComma
             error("Can't set guild-only property on sub-command")
         }
 
+        override fun setContexts(contexts: Collection<InteractionContextType?>): SlashCommandData {
+            error("Can't set context on usb-command")
+        }
+
+        override fun setIntegrationTypes(integrationTypes: Collection<IntegrationType?>): SlashCommandData {
+            error("Can't set integration type on sub-command")
+        }
+
         override fun setNSFW(nsfw: Boolean): SlashCommandData {
             error("Can't set NSFW property on sub-command")
         }
@@ -82,6 +93,9 @@ open class CommandGroup(name: String, description: String, configure: SlashComma
         override fun getDefaultPermissions(): DefaultMemberPermissions = group.defaultPermissions
 
         override fun isGuildOnly(): Boolean = group.isGuildOnly
+        override fun getContexts(): @UnmodifiableView Set<InteractionContextType?> = group.contexts
+
+        override fun getIntegrationTypes(): @UnmodifiableView Set<IntegrationType?> = group.integrationTypes
 
         override fun isNSFW(): Boolean = group.isNSFW
         override fun setDescription(description: String): SlashCommandData = apply {
