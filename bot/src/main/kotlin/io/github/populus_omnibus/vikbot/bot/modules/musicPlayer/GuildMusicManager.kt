@@ -5,17 +5,25 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import io.github.populus_omnibus.vikbot.bot.chunkedMaxLength
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.AudioPlayerSendHandler
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.TrackScheduler
 import io.github.populus_omnibus.vikbot.bot.modules.musicPlayer.lavaPlayer.YtQueryLoadResultHandler
 import io.github.populus_omnibus.vikbot.bot.security.SecureRequestUtil
+import io.github.populus_omnibus.vikbot.bot.stringify
+import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
+import kotlin.time.Duration.Companion.milliseconds
 
 
 class GuildMusicManager(
@@ -34,6 +42,7 @@ class GuildMusicManager(
                 Servers[guild.idLong].vcVolume = clamped
             }
         }
+    var trackerMessage : Message? = null
 
     private val player: AudioPlayer = playerManager.createPlayer()
     private val sendingHandler = AudioPlayerSendHandler(player)
@@ -59,6 +68,7 @@ class GuildMusicManager(
         const val API_TIMEOUT = 1000L
         const val EMPTY_CHANNEL_TIMEOUT = 30000L
         const val EMPTY_QUEUE_TIMEOUT = 60000L
+        const val TRACKING_UPDATE_FREQUENCY = 1000L
         private var playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
             AudioSourceManagers.registerRemoteSources(this)
 
@@ -85,11 +95,19 @@ class GuildMusicManager(
                     }
                 }
             }, EMPTY_CHANNEL_TIMEOUT, EMPTY_CHANNEL_TIMEOUT)
-        }
-    }
 
-    fun closeConn() {
-        guild.audioManager.closeAudioConnection()
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    runBlocking {
+                        trackerMessage?.editMessageEmbeds(generateTrackerMessageEmbed())?.complete()
+                    }
+                }
+            }, TRACKING_UPDATE_FREQUENCY, TRACKING_UPDATE_FREQUENCY)
+            channelToJoin?.asVoiceChannel()?.let {
+                val embed = generateTrackerMessageEmbed()
+                trackerMessage = it.sendMessageEmbeds(embed).complete()
+            }
+        }
     }
 
     suspend fun queue(track: AudioTrack, playNow: Boolean = false) {
@@ -107,39 +125,6 @@ class GuildMusicManager(
         }
     }
 
-    suspend fun queryAudio(query: String, type: MusicQueryType = MusicQueryType.RawURL): AudioTrack? {
-        mutex.withLock {
-            val queryString = when (type) {
-                MusicQueryType.RawURL -> query
-                MusicQueryType.YouTubeSearch -> "ytsearch: $query"
-            }
-            val loadResultHandler = YtQueryLoadResultHandler()
-            playerManager.loadItemSync(queryString, loadResultHandler)
-            return loadResultHandler.result.firstOrNull()
-        }
-    }
-
-
-    suspend fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
-        mutex.withLock {
-            return Pair(trackScheduler.currentTrack, trackScheduler.playlist)
-        }
-    }
-
-    fun leave(immediate : Boolean = false) {
-        timer.schedule(object : TimerTask() {
-            override fun run() {
-                runBlocking {
-                    mutex.withLock {
-                        if (immediate || trackScheduler.currentTrack == null) {
-                            trackScheduler.clear()
-                            closeConn()
-                        }
-                    }
-                }
-            }
-        }, if(immediate) 0L else EMPTY_QUEUE_TIMEOUT)
-    }
     suspend fun pause() {
         mutex.withLock {
             trackScheduler.pause()
@@ -151,8 +136,67 @@ class GuildMusicManager(
         }
     }
 
+    fun leave(immediate : Boolean = false) {
+        val function = { runBlocking {
+                mutex.withLock {
+                    if (immediate || trackScheduler.currentTrack == null) {
+                        timer.cancel()
+                        trackerMessage?.delete()?.complete()
+                        trackScheduler.clear()
+                        closeConn()
+                    }
+                }
+            }
+        }
+
+        if(immediate) function()
+        else {
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    function()
+                }
+            }, EMPTY_QUEUE_TIMEOUT)
+        }
+    }
+
+    private fun closeConn() {
+        guild.audioManager.closeAudioConnection()
+    }
+
+    private fun trackQuery(): Pair<AudioTrack?, List<AudioTrack>> {
+        return Pair(trackScheduler.currentTrack, trackScheduler.playlist)
+    }
+
     enum class MusicQueryType {
         RawURL,
         YouTubeSearch
+    }
+
+    suspend fun audioTrackQuery(query: String, type: MusicQueryType = MusicQueryType.RawURL): AudioTrack? {
+        mutex.withLock {
+            val queryString = when (type) {
+                MusicQueryType.RawURL -> query
+                MusicQueryType.YouTubeSearch -> "ytsearch: $query"
+            }
+            val loadResultHandler = YtQueryLoadResultHandler()
+            playerManager.loadItemSync(queryString, loadResultHandler)
+            return loadResultHandler.result.firstOrNull()
+        }
+    }
+
+    fun generateTrackerMessageEmbed(): MessageEmbed {
+        return EmbedBuilder().apply {
+            val (current, next) = trackQuery()
+            setTitle("Playing in " + channel?.idLong?.toChannelTag())
+            addField("Current track", current?.let {
+                "${it.info.title} (${it.position.milliseconds.stringify()}/${it.duration.milliseconds.stringify()})"
+            } ?: "<none>", false)
+
+            val nextDetails = next.subList(0, minOf(5, next.size)).mapIndexed { index, musicTrack ->
+                "#${index + 1}: ${musicTrack.info.title} (${musicTrack.duration.milliseconds.stringify()})"
+            }.joinToString("\n").chunkedMaxLength(1500).first()
+            addField("Up next", nextDetails, false)
+            setFooter(Clock.System.now().stringify())
+        }.build()
     }
 }
