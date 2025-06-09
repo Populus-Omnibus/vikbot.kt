@@ -55,7 +55,7 @@ exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kot
 exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version.ref = "kotlinx-exposed" }
 #drivers
 exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.7.5" }
-exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.49.1.0" }
+exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.50.1.0" }
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
