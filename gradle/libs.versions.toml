@@ -63,7 +63,7 @@ crypto-fernet = { group = "com.macasaet.fernet", name = "fernet-java8", version 
 
 rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.10" }
 
-okio = { group = "com.squareup.okio", name = "okio", version = "3.11.0"}
+okio = { group = "com.squareup.okio", name = "okio", version = "3.15.0"}
 
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 junit-engine = { group = "org.junit.platform", name = "junit-platform-launcher" }
