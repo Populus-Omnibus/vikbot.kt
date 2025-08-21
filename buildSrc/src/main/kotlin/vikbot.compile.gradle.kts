@@ -38,7 +38,9 @@ tasks {
                 )
                 if (ext.has("mainClass")) {
                     attributes(
-                        "Main-Class" to ext["mainClass"],
+                        mapOf(
+                            "Main-Class" to ext["mainClass"],
+                        )
                     )
                 }
             }

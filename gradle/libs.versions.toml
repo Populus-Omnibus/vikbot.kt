@@ -8,7 +8,7 @@ kotlinx-cli = "0.3.6"
 
 kotlinx-coroutines = "1.10.2"
 
-shadow = "8.1.1"
+shadow = "9.0.2"
 
 discord-jda = "5.3.2"
 
@@ -22,7 +22,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 
 axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.20.1" }
 
-shadow-plugin = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+shadow-plugin = { id = "c com.gradleup.shadow", version.ref = "shadow" }
 
 [libraries]
 
