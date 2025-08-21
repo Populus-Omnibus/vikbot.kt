@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
     implementation(gradlePlugin("org.jetbrains.kotlin.jvm", libs.versions.kotlin))
-    implementation(gradlePlugin("com.github.johnrengelman.shadow", libs.versions.shadow))
+    implementation(gradlePlugin("com.gradleup.shadow", libs.versions.shadow))
 }
 
 tasks.compileJava {

@@ -45,10 +45,12 @@ tasks {
         useJUnitPlatform()
     }
 
-    jar{
+    jar {
         manifest {
-            attributes (
-                "Main-Class" to "io.github.populus_omnibus.vikbot.Launch"
+            attributes(
+                mapOf(
+                    "Main-Class" to "io.github.populus_omnibus.vikbot.Launch"
+                )
             )
         }
     }
