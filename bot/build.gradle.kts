@@ -11,7 +11,7 @@ dependencies {
     implementation(libs.discord.jda)
     implementation(libs.bundles.kotlinx.serialization)
     implementation(libs.kotlin.reflect)
-    implementation("commons-codec:commons-codec:1.18.0")
+    implementation("commons-codec:commons-codec:1.19.0")
     implementation(libs.lavaplayer)
 
     implementation(libs.kotlinx.datetime)
