@@ -1,26 +1,26 @@
 [versions]
 
-kotlin = "2.1.20"
+kotlin = "2.3.20"
 
-kotlinx-serialization = "1.8.1"
+kotlinx-serialization = "1.11.0"
 
 kotlinx-cli = "0.3.6"
 
 kotlinx-coroutines = "1.10.2"
 
-shadow = "9.0.2"
+shadow = "9.3.0"
 
-discord-jda = "5.3.2"
+discord-jda = "6.4.1"
 
-junit = "5.12.2"
+junit = "6.0.3"
 
-kotlinx-exposed = "0.61.0"
+kotlinx-exposed = "1.2.0"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
-axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.20.1" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.21.1" }
 
 shadow-plugin = { id = "c com.gradleup.shadow", version.ref = "shadow" }
 
@@ -43,7 +43,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.6.2" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version = "0.7.1" }
 
 # Exposed
 exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version.ref = "kotlinx-exposed" }
@@ -54,21 +54,21 @@ exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version
 exposed-kotlin-datetime = { group = "org.jetbrains.exposed", name = "exposed-kotlin-datetime", version.ref = "kotlinx-exposed" }
 exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version.ref = "kotlinx-exposed" }
 #drivers
-exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.7.5" }
-exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.50.3.0" }
+exposed-postgresql = { group = "org.postgresql", name = "postgresql", version = "42.7.10" }
+exposed-sqlite = { group = "org.xerial", name = "sqlite-jdbc", version = "3.53.0.0" }
 
 discord-jda = { group = "net.dv8tion", name = "JDA", version.ref = "discord-jda" }
 
 crypto-fernet = { group = "com.macasaet.fernet", name = "fernet-java8", version = "1.5.0" }
 
-rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.0.10" }
+rssParser = { group = "com.prof18.rssparser", name = "rssparser", version = "6.1.5" }
 
-okio = { group = "com.squareup.okio", name = "okio", version = "3.16.0"}
+okio = { group = "com.squareup.okio", name = "okio", version = "3.17.0"}
 
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 junit-engine = { group = "org.junit.platform", name = "junit-platform-launcher" }
 
-google-guava = { group = "com.google.guava", name = "guava", version = "33.4.8-jre" }
+google-guava = { group = "com.google.guava", name = "guava", version = "33.6.0-jre" }
 
 # jda-ktx looks promising, but if it drops support, I'm in big trouble. I'll jsut make my own stuff
 
@@ -81,13 +81,13 @@ slf4j = { group = "org.slf4j", name = "slf4j-api", version = "2.0.17" }
 slf4k = { group = "ca.solo-studios", name = "slf4k", version = "0.5.4" }
 # Logback backend for slf4j
 ## The reliable, generic, fast and flexible logging framework for Java
-logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.5.18" }
+logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.5.32" }
 
 google-findbugs = { group = "com.google.code.findbugs", name = "jsr305", version = "3.0.2" }
 
 lavaplayer = { group = "dev.arbjerg", name = "lavaplayer", version = "2.2.4" }
 
-json-json = { group = "org.json", name = "json", version = "20250107" }
+#json-json = { group = "org.json", name = "json", version = "20250107" }
 
 [bundles]
 
