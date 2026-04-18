@@ -14,17 +14,18 @@ import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.bot.toUserTag
 import io.github.populus_omnibus.vikbot.db.Servers
 import io.github.populus_omnibus.vikbot.plusAssign
-import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.components.label.Label
+import net.dv8tion.jda.api.components.textinput.TextInput
+import net.dv8tion.jda.api.components.textinput.TextInputStyle
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.build.Commands
-import net.dv8tion.jda.api.interactions.components.text.TextInput
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import net.dv8tion.jda.api.interactions.modals.Modal
-import org.jetbrains.exposed.sql.transactions.transaction
+import net.dv8tion.jda.api.modals.Modal
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
 object ReportForm {
@@ -59,8 +60,10 @@ object ReportForm {
         bot.messageContextInteractionEvent[64] = { event ->
             if (event.name == APP_NAME) {
                 val modal = Modal.create("reportform:${event.target.idLong}", "Report message")
-                    .addActionRow(TextInput.create("reportReason", "Information about report (can be empty)", TextInputStyle.PARAGRAPH)
-                        .setRequired(false).build()
+                    .addComponents(Label.of("Information about report (can be empty)",
+                        TextInput.create("reportReason", TextInputStyle.PARAGRAPH).apply {
+                            isRequired = false
+                        }.build())
                     ).build()
                 fallbackMsgData += event.target
                 event.replyModal(modal).complete()
@@ -99,7 +102,10 @@ object ReportForm {
                         addField("Reason", reason, false)
                         addField("Sent at", message.timeCreated.stringify(), false)
                         addField("Reported by", reporter.idLong.toUserTag(), false)
-                        setFooter(Clock.System.now().stringify())
+                        setFooter(
+                            Clock.System.now().stringify(
+                            displaySeconds = true
+                        ))
                         reportedMessage.attachments.filter { it.isImage }.getOrNull(0)?.let {
                             setImage(it.url) //if the message contained an image, store that
                         }

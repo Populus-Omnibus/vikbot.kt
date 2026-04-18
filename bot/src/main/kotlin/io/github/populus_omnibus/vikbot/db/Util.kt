@@ -1,8 +1,9 @@
 package io.github.populus_omnibus.vikbot.db
 
-import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.sql.SizedIterable
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.SizedIterable
+import org.jetbrains.exposed.v1.jdbc.selectAll
 
 object Servers {
     operator fun get(id: Long) = DiscordGuild.getOrCreate(id)

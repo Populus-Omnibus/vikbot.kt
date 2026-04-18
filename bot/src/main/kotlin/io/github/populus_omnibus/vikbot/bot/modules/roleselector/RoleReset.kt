@@ -11,11 +11,12 @@ import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteraction
 import io.github.populus_omnibus.vikbot.db.Servers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.kotlin.getLogger
 
 @Command(CommandType.SERVER)
@@ -30,7 +31,7 @@ object RoleReset :
         this += object : SlashCommand("publish", "create a role reset message") {
             override suspend fun invoke(event: SlashCommandInteractionEvent) = coroutineScope {
                 val task = launch { event.deferReply().setEphemeral(true).complete() }
-                newSuspendedTransaction {
+                suspendTransaction {
                     val serverEntry = Servers[event.guild!!.idLong]
 
                     var i = 0
@@ -45,7 +46,7 @@ object RoleReset :
                     if (buttons.isEmpty()) {
                         task.join()
                         event.hook.editOriginal("No groups found").complete()
-                        return@newSuspendedTransaction
+                        return@suspendTransaction
                     }
 
                     //delete previous resetter
@@ -62,7 +63,7 @@ object RoleReset :
                     val msg = event.channel.sendMessage(
                         MessageCreateBuilder().apply {
                             buttons.forEach {
-                                addActionRow(it)
+                                ActionRow.of(it)
                             }
                         }.build()
                     ).complete()

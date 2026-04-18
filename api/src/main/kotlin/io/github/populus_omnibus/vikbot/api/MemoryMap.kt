@@ -1,12 +1,12 @@
 package io.github.populus_omnibus.vikbot.api
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import net.dv8tion.jda.api.entities.ISnowflake
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.InteractionHook
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 
 class MaintainEvent<K, T>(

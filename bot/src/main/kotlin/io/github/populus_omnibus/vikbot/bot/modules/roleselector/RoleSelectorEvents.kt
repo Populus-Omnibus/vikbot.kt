@@ -9,18 +9,18 @@ import io.github.populus_omnibus.vikbot.db.RoleEntries
 import io.github.populus_omnibus.vikbot.db.RoleGroup
 import io.github.populus_omnibus.vikbot.db.Servers
 import io.github.populus_omnibus.vikbot.db.size
+import net.dv8tion.jda.api.components.label.Label
+import net.dv8tion.jda.api.components.textinput.TextInput
+import net.dv8tion.jda.api.components.textinput.TextInputStyle
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
-import net.dv8tion.jda.api.interactions.components.ActionRow
-import net.dv8tion.jda.api.interactions.components.text.TextInput
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import net.dv8tion.jda.api.interactions.modals.Modal
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.notInList
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.batchUpsert
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.transactions.transaction
+import net.dv8tion.jda.api.modals.Modal
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.notInList
+import org.jetbrains.exposed.v1.jdbc.batchUpsert
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 
 object RoleSelectorEvents {
@@ -96,14 +96,14 @@ object RoleSelectorEvents {
                     }
 
                     "modify" -> {
-                        val ti1 = TextInput.create("name", "Full name (default if empty)", TextInputStyle.SHORT)
-                            .setRequired(false).build()
-                        val ti2 =
-                            TextInput.create("description", "Description", TextInputStyle.SHORT).setRequired(false)
-                                .build()
+                        val ti1 = Label.of("Full name (default if empty)", TextInput.create("name", TextInputStyle.SHORT)
+                            .setRequired(false).build())
+                        val ti2 = Label.of("Description",
+                            TextInput.create("description", TextInputStyle.SHORT).setRequired(false)
+                                .build())
                         it.replyModal(
-                            Modal.create("rolegroupeditlooks", "Edit role").addComponents(ActionRow.of(ti1))
-                                .addComponents(ActionRow.of(ti2)).build()
+                            Modal.create("rolegroupeditlooks", "Edit role").addComponents(ti1)
+                                .addComponents(ti2).build()
                         ).queue()
                         return@transaction
                     }

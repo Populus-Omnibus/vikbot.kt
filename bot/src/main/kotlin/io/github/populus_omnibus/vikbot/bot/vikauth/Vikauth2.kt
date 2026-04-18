@@ -1,8 +1,12 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.github.populus_omnibus.vikbot.bot.vikauth
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 
 @Serializable
@@ -15,8 +19,8 @@ data class C2SVikAuthPacket(
 
 ) {
 
-    val uuid: UUID
-        get() = UUID.fromString(id)
+    val uuid: Uuid
+        get() = Uuid.parse(id)
 }
 
 
@@ -39,6 +43,6 @@ data class S2CVikAuthPacket(
     val skinUrl: String = "",
 ) {
 
-    val uuid: UUID
-        get() = UUID.fromString(id)
+    val uuid: Uuid
+        get() = Uuid.parse(id)
 }

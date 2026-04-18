@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.github.populus_omnibus.vikbot.bot.vikauth
 
 import com.macasaet.fernet.StringValidator
@@ -10,20 +12,20 @@ import io.github.populus_omnibus.vikbot.db.McOfflineAccount
 import io.github.populus_omnibus.vikbot.db.McOfflineAccounts
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import net.dv8tion.jda.api.EmbedBuilder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.net.Socket
 import java.nio.ByteBuffer
-import java.util.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class AuthHandler(private val connection: Socket) {
     private suspend fun handleMessage(input: C2SVikAuthPacket): S2CVikAuthPacket = coroutineScope {
         return@coroutineScope transaction {
             if (input.premium) {
-                McLinkedAccount.find(McLinkedAccounts.accountId eq UUID.fromString(input.id)).firstOrNull()?.let {
+                McLinkedAccount.find(McLinkedAccounts.accountId eq Uuid.parse(input.id)).firstOrNull()?.let {
                     S2CVikAuthPacket(
                         id = it.uuid.toString(),
                         displayName = input.username,

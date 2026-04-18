@@ -9,19 +9,22 @@ import io.github.populus_omnibus.vikbot.api.commands.SlashCommand
 import io.github.populus_omnibus.vikbot.api.commands.SlashOptionType
 import io.github.populus_omnibus.vikbot.api.commands.administrator
 import io.github.populus_omnibus.vikbot.api.plusAssign
+import io.github.populus_omnibus.vikbot.bot.addActionRow
 import io.github.populus_omnibus.vikbot.bot.chunkedMaxLength
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.expiringReplies
 import io.github.populus_omnibus.vikbot.bot.modules.roleselector.RoleSelectorModule.interactionDeletionWarning
 import io.github.populus_omnibus.vikbot.db.*
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.selections.EntitySelectMenu
+import net.dv8tion.jda.api.components.selections.SelectOption
+import net.dv8tion.jda.api.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.kotlin.getLogger
 
 @Command(CommandType.SERVER)
@@ -190,7 +193,7 @@ object RoleSelectorCommands :
                     (event.hook.interaction.channel as? GuildMessageChannel)?.let { //should convert, but just in case...
                         transaction {
                             group.updateLastPublished(
-                                it.idLong, it.sendMessage("").addActionRow(menu).complete().idLong
+                                it.idLong, it.sendMessage("").addComponents(ActionRow.of(menu)).complete().idLong
                             )
                         }
 

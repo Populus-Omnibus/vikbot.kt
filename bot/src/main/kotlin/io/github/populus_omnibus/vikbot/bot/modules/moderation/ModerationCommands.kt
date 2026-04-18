@@ -12,11 +12,12 @@ import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
 import io.github.populus_omnibus.vikbot.api.set
+import io.github.populus_omnibus.vikbot.bot.addActionRow
 import io.github.populus_omnibus.vikbot.plusAssign
 import kotlinx.coroutines.coroutineScope
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.interactions.components.buttons.Button
 import org.slf4j.kotlin.getLogger
 import kotlin.time.Duration.Companion.minutes
 
@@ -78,6 +79,7 @@ object ModerationCommands :
                 val message = response.retrieveOriginal().complete()
                 deletionRequests[message.idLong] = toDelete
             }
+
         }
 
         bot.buttonEvents += IdentifiableInteractionHandler("purgeyes") { event ->
@@ -98,8 +100,7 @@ object ModerationCommands :
     }
 
     private fun processAndDisableButtons(msg: Message) {
-        msg.editMessage(msg.contentRaw).setActionRow(msg.actionRows[0].components
-            .map { c -> (c as? Button)?.asDisabled() }).complete()
+        msg.editMessage(msg.contentRaw).setComponents(msg.componentTree.asDisabled()).complete()
         deletionRequests -= msg.idLong
     }
 }
