@@ -15,7 +15,7 @@ import io.github.populus_omnibus.vikbot.plusAssign
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 

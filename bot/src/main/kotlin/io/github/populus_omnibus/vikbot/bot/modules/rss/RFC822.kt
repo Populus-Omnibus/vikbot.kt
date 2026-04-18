@@ -1,7 +1,9 @@
 package io.github.populus_omnibus.vikbot.bot.modules.rss
 
 import kotlinx.datetime.*
+import kotlinx.datetime.LocalDateTime
 import java.lang.IllegalArgumentException
+import kotlin.time.Instant
 
 /**
  * Helper object to parse RFC-822 time format from RSS feed
@@ -41,8 +43,8 @@ object RFC822 {
         try {
             val local = LocalDateTime(
                 year = result.groupValues[3].toInt(),
-                monthNumber = Month.valueOf(result.groupValues[2]).ordinal + 1,
-                dayOfMonth = result.groupValues[1].toInt(),
+                month = Month.valueOf(result.groupValues[2]).ordinal + 1,
+                day = result.groupValues[1].toInt(),
                 hour = result.groupValues[4].toInt(),
                 minute = result.groupValues[5].toInt(),
                 second = result.groupValues[6].ifEmpty { "00" }.toInt(),

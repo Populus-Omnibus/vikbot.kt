@@ -1,10 +1,10 @@
 package io.github.populus_omnibus.vikbot.db
 
 import io.github.populus_omnibus.vikbot.bot.DatabaseAccess
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.kotlin.getLogger
 import org.slf4j.kotlin.warn
 import java.sql.Connection

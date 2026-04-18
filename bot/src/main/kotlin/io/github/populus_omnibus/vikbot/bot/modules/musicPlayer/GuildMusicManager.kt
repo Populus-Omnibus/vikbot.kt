@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.*
 
 
@@ -71,7 +71,7 @@ class GuildMusicManager(
     }
 
 
-    suspend fun join(channelToJoin: AudioChannelUnion?) {
+    suspend fun join(channelToJoin: AudioChannelUnion) {
         mutex.withLock {
             guild.audioManager.openAudioConnection(channelToJoin)
             timer = Timer()

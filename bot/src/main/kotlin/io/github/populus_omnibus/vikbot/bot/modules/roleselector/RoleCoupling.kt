@@ -4,7 +4,7 @@ import io.github.populus_omnibus.vikbot.VikBotHandler
 import io.github.populus_omnibus.vikbot.api.EventResult
 import io.github.populus_omnibus.vikbot.api.annotations.Module
 import io.github.populus_omnibus.vikbot.db.Servers
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 object RoleCoupling {
 

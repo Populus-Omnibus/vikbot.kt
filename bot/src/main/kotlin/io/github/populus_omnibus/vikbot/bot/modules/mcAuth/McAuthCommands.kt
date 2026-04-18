@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.github.populus_omnibus.vikbot.bot.modules.mcAuth
 
 import io.github.populus_omnibus.vikbot.api.annotations.Command
@@ -16,15 +18,16 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.upsert
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
 import org.slf4j.kotlin.getLogger
 import java.security.SecureRandom
-import java.util.*
 import kotlin.streams.asSequence
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Command(type = CommandType.OWNER)
 object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for BME VIK server") {
@@ -47,7 +50,7 @@ object McAuthCommands : CommandGroup("mcauth", "Minecraft offline accounts for B
                     val id = event.user.idLong
                     var newAccount = false
                     transaction {
-                        val uuid: UUID = McOfflineAccount.find(McOfflineAccounts.user eq id).firstOrNull()?.uuid ?: UUID.randomUUID().also { newAccount = true }
+                        val uuid: Uuid = McOfflineAccount.find(McOfflineAccounts.user eq id).firstOrNull()?.uuid ?: Uuid.random().also { newAccount = true }
 
                         McOfflineAccounts.upsert(McOfflineAccounts.user) {
                             it[user] = id

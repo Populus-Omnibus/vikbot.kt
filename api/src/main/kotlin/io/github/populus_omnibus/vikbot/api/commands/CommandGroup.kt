@@ -68,10 +68,6 @@ open class CommandGroup(name: String, description: String, configure: SlashComma
             error("Can't set permission on sub-command")
         }
 
-        override fun setGuildOnly(guildOnly: Boolean): SlashCommandData {
-            error("Can't set guild-only property on sub-command")
-        }
-
         override fun setContexts(contexts: Collection<InteractionContextType?>): SlashCommandData {
             error("Can't set context on usb-command")
         }
@@ -92,7 +88,6 @@ open class CommandGroup(name: String, description: String, configure: SlashComma
 
         override fun getDefaultPermissions(): DefaultMemberPermissions = group.defaultPermissions
 
-        override fun isGuildOnly(): Boolean = group.isGuildOnly
         override fun getContexts(): @UnmodifiableView Set<InteractionContextType?> = group.contexts
 
         override fun getIntegrationTypes(): @UnmodifiableView Set<IntegrationType?> = group.integrationTypes

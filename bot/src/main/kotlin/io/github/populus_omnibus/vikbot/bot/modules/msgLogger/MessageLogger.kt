@@ -7,12 +7,12 @@ import io.github.populus_omnibus.vikbot.api.isNotMe
 import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import io.github.populus_omnibus.vikbot.db.*
-import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.internal.entities.ReceivedMessage
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.upsert
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
+import kotlin.time.Clock
 
 object MessageLogger {
 

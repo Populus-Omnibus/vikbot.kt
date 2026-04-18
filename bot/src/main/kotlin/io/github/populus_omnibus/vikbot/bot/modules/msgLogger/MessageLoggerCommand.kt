@@ -7,7 +7,7 @@ import io.github.populus_omnibus.vikbot.db.MessageLoggingLevel
 import io.github.populus_omnibus.vikbot.db.Servers
 import io.github.populus_omnibus.vikbot.db.UserMessage
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 @Command(type = CommandType.SERVER)
 object MessageLoggerCommand : CommandGroup("logger", "Message logger", {operator()}) {

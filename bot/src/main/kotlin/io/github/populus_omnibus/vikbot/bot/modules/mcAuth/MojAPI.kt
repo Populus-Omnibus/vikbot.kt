@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.github.populus_omnibus.vikbot.bot.modules.mcAuth
 
 import kotlinx.serialization.json.*
@@ -5,6 +7,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.nio.ByteBuffer
 import java.util.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 
 private val httpClient = OkHttpClient()
@@ -13,17 +17,17 @@ internal fun checkIfNameFree(name: String): Boolean {
     val http = Request.Builder().apply {
         url("https://api.mojang.com/users/profiles/minecraft/${name}")
     }.build()
-    val data = String(httpClient.newCall(http).execute().body!!.byteStream().readAllBytes()).let {
+    val data = String(httpClient.newCall(http).execute().body.byteStream().readAllBytes()).let {
         Json.parseToJsonElement(it)
     }
     return (data as? JsonObject)?.containsKey("id") == true
 }
 
-internal fun nameToUuid(name: String): UUID? {
+internal fun nameToUuid(name: String): Uuid? {
     val http = Request.Builder().apply {
         url("https://api.mojang.com/users/profiles/minecraft/${name}")
     }.build()
-    val data = String(httpClient.newCall(http).execute().body!!.byteStream().readAllBytes()).let {
+    val data = String(httpClient.newCall(http).execute().body.byteStream().readAllBytes()).let {
         Json.parseToJsonElement(it)
     }
     return (data as? JsonObject)?.get("id")?.jsonPrimitive?.content?.toUuid()
@@ -31,11 +35,11 @@ internal fun nameToUuid(name: String): UUID? {
 
 private val uuidHyphens = Regex("([a-f0-9]{8})([a-f0-9]{4})(4[a-f0-9]{3})([89aAbB][a-f0-9]{3})([a-f0-9]{12})")
 
-fun CharSequence.toUuid(): UUID {
+fun CharSequence.toUuid(): Uuid {
     return if (this.contains("-")) {
-        UUID.fromString(this.toString())
+        Uuid.parse(this.toString())
     } else {
-        UUID.fromString(uuidHyphens.replace(this, "$1-$2-$3-$4-$5"))
+        Uuid.parse(uuidHyphens.replace(this, "$1-$2-$3-$4-$5"))
     }
 }
 
@@ -43,7 +47,7 @@ internal fun getUserSkin(id: UUID): Pair<ByteBuffer, Boolean>? {
     val http = Request.Builder().apply {
         url("https://sessionserver.mojang.com/session/minecraft/profile/${id}")
     }.build()
-    val data = String(httpClient.newCall(http).execute().body!!.byteStream().readAllBytes()).let {
+    val data = String(httpClient.newCall(http).execute().body.byteStream().readAllBytes()).let {
         Json.parseToJsonElement(it)
     }
 
@@ -57,6 +61,6 @@ internal fun getUserSkin(id: UUID): Pair<ByteBuffer, Boolean>? {
         url(skin)
     }.build()
 
-    return httpClient.newCall(skinHttp).execute().body!!.byteStream().readAllBytes().let { ByteBuffer.wrap(it) } to (skinObj["metadata"]?.jsonObject?.get("model")?.jsonPrimitive?.content == "slim")
+    return httpClient.newCall(skinHttp).execute().body.byteStream().readAllBytes().let { ByteBuffer.wrap(it) } to (skinObj["metadata"]?.jsonObject?.get("model")?.jsonPrimitive?.content == "slim")
 
 }

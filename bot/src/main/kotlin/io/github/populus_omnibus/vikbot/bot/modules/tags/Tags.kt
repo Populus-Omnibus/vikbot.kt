@@ -9,23 +9,25 @@ import io.github.populus_omnibus.vikbot.api.commands.moderator
 import io.github.populus_omnibus.vikbot.api.createMemory
 import io.github.populus_omnibus.vikbot.api.interactions.IdentifiableInteractionHandler
 import io.github.populus_omnibus.vikbot.api.maintainEvent
+import io.github.populus_omnibus.vikbot.bot.addActionRow
 import io.github.populus_omnibus.vikbot.db.*
 import io.github.populus_omnibus.vikbot.plusAssign
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.components.buttons.Button
+import net.dv8tion.jda.api.components.label.Label
+import net.dv8tion.jda.api.components.textinput.TextInput
+import net.dv8tion.jda.api.components.textinput.TextInputStyle
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.interactions.components.buttons.Button
-import net.dv8tion.jda.api.interactions.components.text.TextInput
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import net.dv8tion.jda.api.interactions.modals.Modal
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.statements.api.ExposedBlob
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.upsert
+import net.dv8tion.jda.api.modals.Modal
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
+import kotlin.time.Clock
 
 object Tags {
 
@@ -78,10 +80,10 @@ object Tags {
                     }
 
                     Modal.create("tagEdit:${tagId}:create", "Create a new tag: $tagId").apply {
-                        addActionRow(TextInput.create("content", "Tag content", TextInputStyle.PARAGRAPH).also {
+                        addComponents(Label.of("Tag content", TextInput.create("content", TextInputStyle.PARAGRAPH).also {
                             it.value = text
                             it.placeholder = "Tags are useful, pre-defined messages, write here your content!"
-                        }.build())
+                        }.build()))
                     }.let {
                         defer.join()
                         event.replyModal(it.build()).queue()
@@ -109,15 +111,16 @@ object Tags {
 
                     transaction {
                         Modal.create("tagEdit:${tag.id.value}:edit", "Edit tag: ${tag.id.value}").apply {
-                            addActionRow(
+                            addComponents(
+                                Label.of(
+                                    "tag ${tag.id.value}",
                                 TextInput.create(
                                     "content",
-                                    "tag ${tag.id.value}",
                                     TextInputStyle.PARAGRAPH
                                 ).also {
                                     it.value = tag.content
                                     it.placeholder = "This is a placeholder text..."
-                                }.build()
+                                }.build())
                             )
                         }
                     }.build().let {
@@ -235,7 +238,7 @@ object Tags {
         }
 
         bot.buttonEvents += IdentifiableInteractionHandler("deleteTag") { event ->
-            val id = event.button.id!!.split(":")[1]
+            val id = event.button.customId!!.split(":")[1]
             transaction {
                 val tag = Tag.findById(id)
                 if (tag != null) {

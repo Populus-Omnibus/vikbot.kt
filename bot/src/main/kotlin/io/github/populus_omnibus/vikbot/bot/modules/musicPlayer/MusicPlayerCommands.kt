@@ -10,12 +10,12 @@ import io.github.populus_omnibus.vikbot.bot.isBotAdmin
 import io.github.populus_omnibus.vikbot.bot.stringify
 import io.github.populus_omnibus.vikbot.bot.toChannelTag
 import kotlinx.coroutines.coroutineScope
-import kotlinx.datetime.Clock
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.kotlin.getLogger
 import kotlin.collections.set
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
 //@Command(type = CommandType.SERVER)

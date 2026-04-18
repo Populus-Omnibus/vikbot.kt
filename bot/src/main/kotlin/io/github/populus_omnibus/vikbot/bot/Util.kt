@@ -3,11 +3,19 @@ package io.github.populus_omnibus.vikbot.bot
 import io.github.populus_omnibus.vikbot.VikBotHandler
 import kotlinx.datetime.*
 import kotlinx.datetime.TimeZone
+import net.dv8tion.jda.api.components.Component
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
+import net.dv8tion.jda.api.components.tree.MessageComponentTree
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import java.time.OffsetDateTime
 import java.time.format.TextStyle
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration
+import kotlin.time.Instant
+import kotlin.time.toKotlinInstant
 
 val Member?.isBotAdmin: Boolean
     get() = this?.roles?.any { it.idLong == VikBotHandler.config.adminId } ?: false
@@ -35,14 +43,14 @@ fun String.chunkedMaxLength(maxSize: Int, separator: Char = '\n'): Sequence<Stri
 private val activeTimeZone by lazy { TimeZone.of(VikBotHandler.config.activeTimeZone) }
 
 fun Instant.stringify(displaySeconds: Boolean = false): String {
-    return this.toLocalDateTime(activeTimeZone).run {
+    return toLocalDateTime(activeTimeZone).run {
         "${
-            dayOfWeek.getDisplayName(
+            dayOfWeek.toJavaDayOfWeek().getDisplayName(
                 TextStyle.SHORT,
                 Locale.ENGLISH
             )
         }, " +
-                "$year.${month.value.padTime()}.${dayOfMonth.padTime()}. " +
+                "$year.${month.number.padTime()}.${day.padTime()}. " +
                 "${hour.padTime()}:${minute.padTime()}${
                     if (displaySeconds) {
                         second.padTime()
@@ -66,4 +74,21 @@ fun Duration.stringify(showZeroHours: Boolean = false): String {
                 "${minutes.padTime()}:" +
                 seconds.padTime()
     }
+}
+
+
+fun <T: ReplyCallbackAction> T.addActionRow(
+    vararg buttons: ActionRowChildComponent
+) = apply {
+    addComponents(
+        ActionRow.of(listOf(*buttons))
+    )
+}
+
+inline fun <reified T: Component> MessageComponentTree.find(): T? {
+    return this.find<T>(T::class.java) { true }.getOrNull()
+}
+
+inline fun <reified T: Component> MessageComponentTree.findAll(): List<T> {
+    return this.findAll<T>(T::class.java)
 }

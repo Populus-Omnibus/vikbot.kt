@@ -1,13 +1,18 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package io.github.populus_omnibus.vikbot.db
 
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.dao.id.IntIdTable
-import org.jetbrains.exposed.dao.id.LongIdTable
-import org.jetbrains.exposed.sql.ReferenceOption
-import org.jetbrains.exposed.sql.json.json
-import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
+import org.jetbrains.exposed.v1.core.ReferenceOption
+import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
+import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.isNull
+import org.jetbrains.exposed.v1.datetime.timestamp
+import org.jetbrains.exposed.v1.json.json
+import kotlin.time.Clock
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  *  Database model, should be compatible with **PostgreSQL** and SQLite

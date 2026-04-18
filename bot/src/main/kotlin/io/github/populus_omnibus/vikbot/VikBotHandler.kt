@@ -172,7 +172,7 @@ object VikBotHandler : EventListener {
                     is GuildMemberRoleRemoveEvent -> guildMemberRoleRemoveEvent(event)
                     is GuildMemberUpdateNicknameEvent -> guildMemberUpdateNicknameEvent(event)
 
-                    is ButtonInteractionEvent -> buttonEvents(event.button.id, event, "button")
+                    is ButtonInteractionEvent -> buttonEvents(event.button.customId, event, "button")
                     is ModalInteractionEvent -> modalEvents(event.modalId, event, "modal")
                     is StringSelectInteractionEvent -> stringSelectEvents(event.componentId, event, "stringSelect")
                     is EntitySelectInteractionEvent -> entitySelectEvents(event.componentId, event, "entitySelect")

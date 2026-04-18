@@ -6,12 +6,13 @@ import io.github.populus_omnibus.vikbot.db.McOfflineAccounts
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.exposed.sql.batchUpsert
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.batchUpsert
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.slf4j.kotlin.getLogger
 import java.io.File
-import java.util.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 internal object MigrationUtil {
 
@@ -26,6 +27,7 @@ internal object MigrationUtil {
         Json.decodeFromStream<MCAccounts>(it).synchronized()
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     @JvmStatic
     fun main(args: Array<String>) {
 
@@ -35,7 +37,7 @@ internal object MigrationUtil {
             McOfflineAccounts.batchUpsert(accounts.asSequence(), McOfflineAccounts.user) { (user, account) ->
                 this[McOfflineAccounts.user] = user.toLong()
 
-                this[McOfflineAccounts.accountId] = UUID.fromString(account.id)
+                this[McOfflineAccounts.accountId] = Uuid.parse(account.id)
                 this[McOfflineAccounts.displayName] = account.displayName
                 this[McOfflineAccounts.token] = account.token
             }
